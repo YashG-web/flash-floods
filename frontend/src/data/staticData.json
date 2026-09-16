@@ -1,0 +1,1513 @@
+{
+  "locations": [
+    {
+      "id": "ward-12",
+      "name": "Ward 12 (Station Road & Central Bazaar)",
+      "type": "WARD",
+      "coordinates": [
+        30.092,
+        78.269
+      ],
+      "polygon": [
+        [
+          30.088,
+          78.264
+        ],
+        [
+          30.096,
+          78.265
+        ],
+        [
+          30.097,
+          78.274
+        ],
+        [
+          30.089,
+          78.273
+        ]
+      ],
+      "elevation": 348.0,
+      "slope": 4.5,
+      "soil_moisture": 81.5,
+      "rainfall": 42.0,
+      "drainage_condition": 22.0,
+      "historical_events": 4,
+      "sensor_water_level": 2.1,
+      "impervious_surface_pct": 82.0,
+      "citizen_reports_count": 14,
+      "waterlogging_trend": "increasing",
+      "expected_window": "Next 1\u20133 Hours",
+      "risk_trend": "Increasing \u2191",
+      "primary_drain_id": "DRN-CENTRAL-01",
+      "risk_probability": 34.8,
+      "risk_level": "MODERATE",
+      "risk_color": "#eab308",
+      "model_status": "Integration Interface Active: Baseline placeholder model loaded. Ready for user trained model.pkl drop-in.",
+      "cause_intelligence": {
+        "cause_code": "DRAINAGE_BLOCKAGE",
+        "probable_cause": "Drainage Blockage Suspected",
+        "confidence": "HIGH",
+        "badge_color": "#d97706",
+        "explanation": "Flood risk is escalating despite moderate rainfall (42.0 mm/hr). Critical drainage degradation (efficiency score 22.0/100) along with 14 localized citizen waterlogging reports confirm storm sewer choking.",
+        "trigger_metrics": {
+          "rainfall_mm_hr": 42.0,
+          "drainage_condition_score": 22.0,
+          "citizen_reports_count": 14,
+          "waterlogging_trend": "increasing"
+        },
+        "key_signals": [
+          "Rainfall rate (42.0 mm/hr) is within municipal design capacity if drains were clear",
+          "Drainage efficiency (22.0%) indicates severe siltation or debris choke points",
+          "14 verified crowd reports indicating standing backwater on roads"
+        ]
+      },
+      "shap_explanation": {
+        "available": true,
+        "engine": "shap.TreeExplainer",
+        "status_message": "Feature attribution computed via SHAP TreeExplainer",
+        "contributions": [
+          {
+            "feature_id": "rainfall",
+            "feature_name": "Rainfall Intensity",
+            "shap_value": 10.195,
+            "relative_contribution_pct": 45.4,
+            "severity_score": 90.8,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "soil_moisture",
+            "feature_name": "Soil Moisture Saturation",
+            "shap_value": 4.43,
+            "relative_contribution_pct": 19.7,
+            "severity_score": 67.7,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "impervious_surface_pct",
+            "feature_name": "Urban Surface Runoff Coefficient",
+            "shap_value": 3.348,
+            "relative_contribution_pct": 14.9,
+            "severity_score": 63.4,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "historical_events",
+            "feature_name": "Historical Flash Flood Recurrence",
+            "shap_value": 1.801,
+            "relative_contribution_pct": 8.0,
+            "severity_score": 57.2,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "sensor_water_level",
+            "feature_name": "Culvert / Gauge Water Surcharge",
+            "shap_value": 1.549,
+            "relative_contribution_pct": 6.9,
+            "severity_score": 56.2,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "drainage_condition",
+            "feature_name": "Drainage Choking / Inefficiency",
+            "shap_value": 1.154,
+            "relative_contribution_pct": 5.1,
+            "severity_score": 54.6,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "elevation",
+            "feature_name": "Topographical Lowland Factor",
+            "shap_value": -0.022,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 49.9,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "slope",
+            "feature_name": "Terrain Slope Angle",
+            "shap_value": -3.898,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 34.4,
+            "direction": "RISK_REDUCING"
+          }
+        ],
+        "top_driver": "Rainfall Intensity",
+        "base_value": 16.29346466064453
+      },
+      "impact_summary": {
+        "properties": 58,
+        "residents": 365,
+        "roads": 1,
+        "schools": 0,
+        "hospitals": 0,
+        "bridges": 0
+      },
+      "is_simulated_geodata": true
+    },
+    {
+      "id": "ward-04",
+      "name": "Ward 04 (Riverfront Embankment & Lowlands)",
+      "type": "WARD",
+      "coordinates": [
+        30.084,
+        78.261
+      ],
+      "polygon": [
+        [
+          30.081,
+          78.257
+        ],
+        [
+          30.087,
+          78.258
+        ],
+        [
+          30.086,
+          78.266
+        ],
+        [
+          30.08,
+          78.264
+        ]
+      ],
+      "elevation": 332.0,
+      "slope": 2.1,
+      "soil_moisture": 92.0,
+      "rainfall": 94.0,
+      "drainage_condition": 68.0,
+      "historical_events": 6,
+      "sensor_water_level": 4.6,
+      "impervious_surface_pct": 58.0,
+      "citizen_reports_count": 8,
+      "waterlogging_trend": "critical",
+      "expected_window": "Next 1\u20132 Hours",
+      "risk_trend": "Surging \u2191\u2191",
+      "primary_drain_id": "DRN-RIVER-04",
+      "risk_probability": 81.3,
+      "risk_level": "CRITICAL",
+      "risk_color": "#dc2626",
+      "model_status": "Integration Interface Active: Baseline placeholder model loaded. Ready for user trained model.pkl drop-in.",
+      "cause_intelligence": {
+        "cause_code": "RAINFALL_OVERLOAD",
+        "probable_cause": "Rainfall Overload (Extreme Cloudburst / Downpour)",
+        "confidence": "HIGH",
+        "badge_color": "#991b1b",
+        "explanation": "Extreme precipitation volume (94.0 mm/hr) drastically exceeds standard civil stormwater catchment thresholds, producing rapid sheet runoff and river backflow.",
+        "trigger_metrics": {
+          "rainfall_mm_hr": 94.0,
+          "drainage_condition_score": 68.0,
+          "soil_moisture_pct": 92.0
+        },
+        "key_signals": [
+          "Precipitation rate (94.0 mm/hr) exceeds 10-year return capacity",
+          "Soil saturation at 92.0%, nullifying infiltration capacity",
+          "Rapid catchment discharge approaching culvert overspill levels"
+        ]
+      },
+      "shap_explanation": {
+        "available": true,
+        "engine": "shap.TreeExplainer",
+        "status_message": "Feature attribution computed via SHAP TreeExplainer",
+        "contributions": [
+          {
+            "feature_id": "sensor_water_level",
+            "feature_name": "Culvert / Gauge Water Surcharge",
+            "shap_value": 39.846,
+            "relative_contribution_pct": 55.3,
+            "severity_score": 95.0,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "rainfall",
+            "feature_name": "Rainfall Intensity",
+            "shap_value": 20.702,
+            "relative_contribution_pct": 28.8,
+            "severity_score": 95.0,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "soil_moisture",
+            "feature_name": "Soil Moisture Saturation",
+            "shap_value": 8.343,
+            "relative_contribution_pct": 11.6,
+            "severity_score": 83.4,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "historical_events",
+            "feature_name": "Historical Flash Flood Recurrence",
+            "shap_value": 1.609,
+            "relative_contribution_pct": 2.2,
+            "severity_score": 56.4,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "impervious_surface_pct",
+            "feature_name": "Urban Surface Runoff Coefficient",
+            "shap_value": 1.327,
+            "relative_contribution_pct": 1.8,
+            "severity_score": 55.3,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "elevation",
+            "feature_name": "Topographical Lowland Factor",
+            "shap_value": 0.178,
+            "relative_contribution_pct": 0.2,
+            "severity_score": 50.7,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "drainage_condition",
+            "feature_name": "Drainage Choking / Inefficiency",
+            "shap_value": -0.918,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 46.3,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "slope",
+            "feature_name": "Terrain Slope Angle",
+            "shap_value": -6.124,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 25.5,
+            "direction": "RISK_REDUCING"
+          }
+        ],
+        "top_driver": "Culvert / Gauge Water Surcharge",
+        "base_value": 16.29346466064453
+      },
+      "impact_summary": {
+        "properties": 143,
+        "residents": 1134,
+        "roads": 5,
+        "schools": 2,
+        "hospitals": 1,
+        "bridges": 1
+      },
+      "is_simulated_geodata": true
+    },
+    {
+      "id": "village-sangam",
+      "name": "Village Sangam (Tributary Confluence)",
+      "type": "VILLAGE",
+      "coordinates": [
+        30.104,
+        78.283
+      ],
+      "polygon": [
+        [
+          30.1,
+          78.277
+        ],
+        [
+          30.109,
+          78.28
+        ],
+        [
+          30.108,
+          78.291
+        ],
+        [
+          30.098,
+          78.287
+        ]
+      ],
+      "elevation": 385.0,
+      "slope": 9.2,
+      "soil_moisture": 74.0,
+      "rainfall": 68.0,
+      "drainage_condition": 78.0,
+      "historical_events": 3,
+      "sensor_water_level": 3.2,
+      "impervious_surface_pct": 28.0,
+      "citizen_reports_count": 3,
+      "waterlogging_trend": "moderate",
+      "expected_window": "Next 3\u20136 Hours",
+      "risk_trend": "Increasing \u2191",
+      "primary_drain_id": "DRN-SANGAM-NATURAL",
+      "risk_probability": 49.5,
+      "risk_level": "MODERATE",
+      "risk_color": "#eab308",
+      "model_status": "Integration Interface Active: Baseline placeholder model loaded. Ready for user trained model.pkl drop-in.",
+      "cause_intelligence": {
+        "cause_code": "RAINFALL_OVERLOAD",
+        "probable_cause": "Rainfall Overload (Extreme Cloudburst / Downpour)",
+        "confidence": "HIGH",
+        "badge_color": "#991b1b",
+        "explanation": "Extreme precipitation volume (68.0 mm/hr) drastically exceeds standard civil stormwater catchment thresholds, producing rapid sheet runoff and river backflow.",
+        "trigger_metrics": {
+          "rainfall_mm_hr": 68.0,
+          "drainage_condition_score": 78.0,
+          "soil_moisture_pct": 74.0
+        },
+        "key_signals": [
+          "Precipitation rate (68.0 mm/hr) exceeds 10-year return capacity",
+          "Soil saturation at 74.0%, nullifying infiltration capacity",
+          "Rapid catchment discharge approaching culvert overspill levels"
+        ]
+      },
+      "shap_explanation": {
+        "available": true,
+        "engine": "shap.TreeExplainer",
+        "status_message": "Feature attribution computed via SHAP TreeExplainer",
+        "contributions": [
+          {
+            "feature_id": "sensor_water_level",
+            "feature_name": "Culvert / Gauge Water Surcharge",
+            "shap_value": 20.813,
+            "relative_contribution_pct": 49.8,
+            "severity_score": 95.0,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "rainfall",
+            "feature_name": "Rainfall Intensity",
+            "shap_value": 14.749,
+            "relative_contribution_pct": 35.3,
+            "severity_score": 95.0,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "soil_moisture",
+            "feature_name": "Soil Moisture Saturation",
+            "shap_value": 5.742,
+            "relative_contribution_pct": 13.7,
+            "severity_score": 73.0,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "historical_events",
+            "feature_name": "Historical Flash Flood Recurrence",
+            "shap_value": 0.415,
+            "relative_contribution_pct": 1.0,
+            "severity_score": 51.7,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "elevation",
+            "feature_name": "Topographical Lowland Factor",
+            "shap_value": 0.045,
+            "relative_contribution_pct": 0.1,
+            "severity_score": 50.2,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "drainage_condition",
+            "feature_name": "Drainage Choking / Inefficiency",
+            "shap_value": -0.677,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 47.3,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "slope",
+            "feature_name": "Terrain Slope Angle",
+            "shap_value": -3.852,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 34.6,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "impervious_surface_pct",
+            "feature_name": "Urban Surface Runoff Coefficient",
+            "shap_value": -4.007,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 34.0,
+            "direction": "RISK_REDUCING"
+          }
+        ],
+        "top_driver": "Culvert / Gauge Water Surcharge",
+        "base_value": 16.29346466064453
+      },
+      "impact_summary": {
+        "properties": 38,
+        "residents": 323,
+        "roads": 1,
+        "schools": 0,
+        "hospitals": 0,
+        "bridges": 0
+      },
+      "is_simulated_geodata": true
+    },
+    {
+      "id": "hill-corridor-8",
+      "name": "Hill Road Corridor 8 (Steep Escarpment)",
+      "type": "LANDSLIDE_ZONE",
+      "coordinates": [
+        30.115,
+        78.254
+      ],
+      "polygon": [
+        [
+          30.11,
+          78.248
+        ],
+        [
+          30.122,
+          78.251
+        ],
+        [
+          30.12,
+          78.261
+        ],
+        [
+          30.108,
+          78.259
+        ]
+      ],
+      "elevation": 680.0,
+      "slope": 34.5,
+      "soil_moisture": 86.0,
+      "rainfall": 52.0,
+      "drainage_condition": 65.0,
+      "historical_events": 5,
+      "sensor_water_level": 1.1,
+      "impervious_surface_pct": 14.0,
+      "citizen_reports_count": 2,
+      "waterlogging_trend": "stable",
+      "expected_window": "Next 2\u20134 Hours",
+      "risk_trend": "Increasing \u2191",
+      "primary_drain_id": "DRN-CULVERT-NH58",
+      "risk_probability": 36.5,
+      "risk_level": "MODERATE",
+      "risk_color": "#eab308",
+      "model_status": "Integration Interface Active: Baseline placeholder model loaded. Ready for user trained model.pkl drop-in.",
+      "cause_intelligence": {
+        "cause_code": "LANDSLIDE_TRIGGER",
+        "probable_cause": "Terrain Slope & Soil Saturation Failure",
+        "confidence": "HIGH",
+        "badge_color": "#b45309",
+        "explanation": "Steep hillside slope (34.5\u00b0) combined with near-saturation soil moisture (86.0%) and continuing rainfall (52.0 mm/hr) has created severe slope instability and debris flow hazard.",
+        "trigger_metrics": {
+          "rainfall_mm_hr": 52.0,
+          "soil_moisture_pct": 86.0,
+          "slope_deg": 34.5,
+          "drainage_condition_score": 65.0
+        },
+        "key_signals": [
+          "Slope gradient (34.5\u00b0) exceeds safe shear threshold",
+          "High soil pore-water pressure (86.0% saturation)",
+          "Subsurface slippage sensors detecting minor displacement"
+        ]
+      },
+      "shap_explanation": {
+        "available": true,
+        "engine": "shap.TreeExplainer",
+        "status_message": "Feature attribution computed via SHAP TreeExplainer",
+        "contributions": [
+          {
+            "feature_id": "rainfall",
+            "feature_name": "Rainfall Intensity",
+            "shap_value": 15.255,
+            "relative_contribution_pct": 53.4,
+            "severity_score": 95.0,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "soil_moisture",
+            "feature_name": "Soil Moisture Saturation",
+            "shap_value": 7.65,
+            "relative_contribution_pct": 26.8,
+            "severity_score": 80.6,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "historical_events",
+            "feature_name": "Historical Flash Flood Recurrence",
+            "shap_value": 2.817,
+            "relative_contribution_pct": 9.9,
+            "severity_score": 61.3,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "slope",
+            "feature_name": "Terrain Slope Angle",
+            "shap_value": 2.77,
+            "relative_contribution_pct": 9.7,
+            "severity_score": 61.1,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "drainage_condition",
+            "feature_name": "Drainage Choking / Inefficiency",
+            "shap_value": 0.081,
+            "relative_contribution_pct": 0.3,
+            "severity_score": 50.3,
+            "direction": "RISK_INCREASING"
+          },
+          {
+            "feature_id": "elevation",
+            "feature_name": "Topographical Lowland Factor",
+            "shap_value": -0.027,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 49.9,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "impervious_surface_pct",
+            "feature_name": "Urban Surface Runoff Coefficient",
+            "shap_value": -2.92,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 38.3,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "sensor_water_level",
+            "feature_name": "Culvert / Gauge Water Surcharge",
+            "shap_value": -5.431,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 28.3,
+            "direction": "RISK_REDUCING"
+          }
+        ],
+        "top_driver": "Rainfall Intensity",
+        "base_value": 16.29346466064453
+      },
+      "impact_summary": {
+        "properties": 13,
+        "residents": 135,
+        "roads": 1,
+        "schools": 0,
+        "hospitals": 0,
+        "bridges": 0
+      },
+      "is_simulated_geodata": true
+    },
+    {
+      "id": "ward-01",
+      "name": "Ward 01 (Upper Cantonment Ridge)",
+      "type": "WARD",
+      "coordinates": [
+        30.076,
+        78.272
+      ],
+      "polygon": [
+        [
+          30.072,
+          78.267
+        ],
+        [
+          30.08,
+          78.269
+        ],
+        [
+          30.079,
+          78.278
+        ],
+        [
+          30.071,
+          78.275
+        ]
+      ],
+      "elevation": 420.0,
+      "slope": 8.0,
+      "soil_moisture": 42.0,
+      "rainfall": 18.0,
+      "drainage_condition": 92.0,
+      "historical_events": 0,
+      "sensor_water_level": 0.4,
+      "impervious_surface_pct": 35.0,
+      "citizen_reports_count": 0,
+      "waterlogging_trend": "none",
+      "expected_window": "Safe (No threat)",
+      "risk_trend": "Stable \u2192",
+      "primary_drain_id": "DRN-CANTON-01",
+      "risk_probability": 3.7,
+      "risk_level": "LOW",
+      "risk_color": "#16a34a",
+      "model_status": "Integration Interface Active: Baseline placeholder model loaded. Ready for user trained model.pkl drop-in.",
+      "cause_intelligence": {
+        "cause_code": "UNCERTAIN",
+        "probable_cause": "Normal Runoff / Inconclusive Anomaly",
+        "confidence": "LOW",
+        "badge_color": "#64748b",
+        "explanation": "Telemetry indicates baseline conditions (18.0 mm/hr rain, drainage efficiency 92.0%). No conclusive flood hazard or drainage choking signature detected at this juncture.",
+        "trigger_metrics": {
+          "rainfall_mm_hr": 18.0,
+          "drainage_condition_score": 92.0,
+          "citizen_reports_count": 0
+        },
+        "key_signals": [
+          "Precipitation within standard seasonal tolerances",
+          "Drainage flow rates maintaining nominal gravity velocity",
+          "No anomalous crowd or sensor waterlogging spikes detected"
+        ]
+      },
+      "shap_explanation": {
+        "available": true,
+        "engine": "shap.TreeExplainer",
+        "status_message": "Feature attribution computed via SHAP TreeExplainer",
+        "contributions": [
+          {
+            "feature_id": "elevation",
+            "feature_name": "Topographical Lowland Factor",
+            "shap_value": -0.006,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 50.0,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "impervious_surface_pct",
+            "feature_name": "Urban Surface Runoff Coefficient",
+            "shap_value": -0.854,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 46.6,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "rainfall",
+            "feature_name": "Rainfall Intensity",
+            "shap_value": -0.931,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 46.3,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "drainage_condition",
+            "feature_name": "Drainage Choking / Inefficiency",
+            "shap_value": -1.355,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 44.6,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "slope",
+            "feature_name": "Terrain Slope Angle",
+            "shap_value": -1.373,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 44.5,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "historical_events",
+            "feature_name": "Historical Flash Flood Recurrence",
+            "shap_value": -1.643,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 43.4,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "soil_moisture",
+            "feature_name": "Soil Moisture Saturation",
+            "shap_value": -2.164,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 41.3,
+            "direction": "RISK_REDUCING"
+          },
+          {
+            "feature_id": "sensor_water_level",
+            "feature_name": "Culvert / Gauge Water Surcharge",
+            "shap_value": -4.225,
+            "relative_contribution_pct": 0.0,
+            "severity_score": 33.1,
+            "direction": "RISK_REDUCING"
+          }
+        ],
+        "top_driver": "Topographical Lowland Factor",
+        "base_value": 16.29346466064453
+      },
+      "impact_summary": {
+        "properties": 13,
+        "residents": 94,
+        "roads": 0,
+        "schools": 0,
+        "hospitals": 0,
+        "bridges": 0
+      },
+      "is_simulated_geodata": true
+    }
+  ],
+  "river_networks": [
+    {
+      "id": "RIV-MAIN-01",
+      "name": "Main River Trunk (Bhagirathi River)",
+      "type": "RIVER",
+      "coordinates": [
+        [
+          30.125,
+          78.242
+        ],
+        [
+          30.111,
+          78.255
+        ],
+        [
+          30.097,
+          78.261
+        ],
+        [
+          30.084,
+          78.263
+        ],
+        [
+          30.07,
+          78.266
+        ]
+      ],
+      "flow_rate_cumecs": 412.0,
+      "danger_mark_m": 4.5,
+      "current_level_m": 4.1,
+      "status": "WARNING"
+    },
+    {
+      "id": "RIV-TRIB-02",
+      "name": "Chandrabhaga Torrent Nullah",
+      "type": "TRIBUTARY",
+      "coordinates": [
+        [
+          30.108,
+          78.295
+        ],
+        [
+          30.102,
+          78.282
+        ],
+        [
+          30.093,
+          78.272
+        ],
+        [
+          30.088,
+          78.264
+        ]
+      ],
+      "flow_rate_cumecs": 88.0,
+      "danger_mark_m": 2.8,
+      "current_level_m": 2.7,
+      "status": "HIGH"
+    }
+  ],
+  "drainage_lines": [
+    {
+      "id": "DRN-01",
+      "name": "Station Road Covered Box Culvert",
+      "status": "CHOKED",
+      "efficiency_pct": 18,
+      "coordinates": [
+        [
+          30.0945,
+          78.2665
+        ],
+        [
+          30.092,
+          78.269
+        ],
+        [
+          30.0895,
+          78.2715
+        ]
+      ],
+      "cause_factor": "Silt sedimentation and plastic bag choking at inlet grating"
+    },
+    {
+      "id": "DRN-02",
+      "name": "Bazaar Stormwater Arterial Drain",
+      "status": "RESTRICTED",
+      "efficiency_pct": 45,
+      "coordinates": [
+        [
+          30.096,
+          78.271
+        ],
+        [
+          30.091,
+          78.2725
+        ],
+        [
+          30.0865,
+          78.265
+        ]
+      ],
+      "cause_factor": "Encroachment over outfall collar"
+    },
+    {
+      "id": "DRN-03",
+      "name": "Upper Ridge Open Concrete Outfall",
+      "status": "FUNCTIONAL",
+      "efficiency_pct": 94,
+      "coordinates": [
+        [
+          30.079,
+          78.272
+        ],
+        [
+          30.075,
+          78.269
+        ]
+      ],
+      "cause_factor": "Free gravitational outfall clear"
+    }
+  ],
+  "iot_sensors": [
+    {
+      "id": "SEN-RG-01",
+      "name": "Tipping Bucket Rain Gauge (Ward 12)",
+      "type": "Rain Gauge",
+      "coordinates": [
+        30.093,
+        78.2705
+      ],
+      "current_value": "42.0 mm/h",
+      "raw_value": 42.0,
+      "unit": "mm/h",
+      "normal_range": "0 - 30 mm/h",
+      "status": "MODERATE",
+      "status_color": "#eab308",
+      "trend": "STABLE",
+      "last_update": "3 mins ago",
+      "is_simulated": true
+    },
+    {
+      "id": "SEN-RG-02",
+      "name": "Riverfront Optical Rain Gauge (Ward 04)",
+      "type": "Rain Gauge",
+      "coordinates": [
+        30.0835,
+        78.2605
+      ],
+      "current_value": "94.0 mm/h",
+      "raw_value": 94.0,
+      "unit": "mm/h",
+      "normal_range": "0 - 30 mm/h",
+      "status": "CRITICAL",
+      "status_color": "#dc2626",
+      "trend": "RISING \u2191",
+      "last_update": "1 min ago",
+      "is_simulated": true
+    },
+    {
+      "id": "SEN-SM-01",
+      "name": "Soil Moisture TDR Sensor (Hill Corridor 8)",
+      "type": "Soil Moisture",
+      "coordinates": [
+        30.116,
+        78.253
+      ],
+      "current_value": "86.0%",
+      "raw_value": 86.0,
+      "unit": "%",
+      "normal_range": "20 - 65%",
+      "status": "CRITICAL",
+      "status_color": "#dc2626",
+      "trend": "RISING \u2191",
+      "last_update": "2 mins ago",
+      "is_simulated": true
+    },
+    {
+      "id": "SEN-WL-01",
+      "name": "Ultrasonic River Water Level Gauge (Ganga Bridge)",
+      "type": "Water Level",
+      "coordinates": [
+        30.085,
+        78.2635
+      ],
+      "current_value": "4.6 m",
+      "raw_value": 4.6,
+      "unit": "m",
+      "normal_range": "0.5 - 3.2 m",
+      "status": "CRITICAL",
+      "status_color": "#dc2626",
+      "trend": "SURGING \u2191\u2191",
+      "last_update": "Just now",
+      "is_simulated": true
+    },
+    {
+      "id": "SEN-DR-01",
+      "name": "Doppler Ultrasonic Drainage Flow Gauge (Station Road Nullah)",
+      "type": "Drainage Sensor",
+      "coordinates": [
+        30.0915,
+        78.2685
+      ],
+      "current_value": "0.18 m/s (Surcharged / Choked)",
+      "raw_value": 0.18,
+      "unit": "m/s",
+      "normal_range": "1.2 - 2.8 m/s",
+      "status": "CRITICAL",
+      "status_color": "#dc2626",
+      "trend": "FALLING \u2193 (BACKWATER CHOKE)",
+      "last_update": "2 mins ago",
+      "is_simulated": true
+    },
+    {
+      "id": "SEN-SL-01",
+      "name": "MEMS Inclinometer & Piezometer (Scarp Cut)",
+      "type": "Slope Sensor",
+      "coordinates": [
+        30.118,
+        78.256
+      ],
+      "current_value": "0.14\u00b0 displacement",
+      "raw_value": 0.14,
+      "unit": "deg",
+      "normal_range": "0 - 0.05\u00b0",
+      "status": "HIGH",
+      "status_color": "#f97316",
+      "trend": "DISPLACING \u2191",
+      "last_update": "4 mins ago",
+      "is_simulated": true
+    }
+  ],
+  "citizen_reports": [
+    {
+      "id": "REP-2026-104",
+      "location_id": "ward-12",
+      "location_name": "Station Road near Sharda Market",
+      "coordinates": [
+        30.0925,
+        78.2692
+      ],
+      "timestamp": "13:18 IST",
+      "severity": "CRITICAL",
+      "description": "Water entering shops on Station Road. Main culvert inlet clogged with plastic garbage and broken branches. Water at knee height.",
+      "image_url": "/assets/sample_waterlog.jpg",
+      "status": "VERIFIED_BY_VISION",
+      "yolo_detections": [
+        {
+          "label": "blocked_drain_culvert",
+          "conf": 94.2
+        },
+        {
+          "label": "waterlogged_road",
+          "conf": 98.7
+        },
+        {
+          "label": "submerged_vehicle",
+          "conf": 89.1
+        }
+      ]
+    },
+    {
+      "id": "REP-2026-098",
+      "location_id": "ward-04",
+      "location_name": "River Bund Ghat Link",
+      "coordinates": [
+        30.0845,
+        78.2618
+      ],
+      "timestamp": "13:05 IST",
+      "severity": "HIGH",
+      "description": "River backflow coming onto embankment steps. Current very rapid.",
+      "image_url": "/assets/hero.jpg",
+      "status": "DISPATCHED",
+      "yolo_detections": [
+        {
+          "label": "waterlogged_road",
+          "conf": 92.4
+        }
+      ]
+    }
+  ],
+  "critical_infrastructure": [
+    {
+      "id": "INF-HOSP-01",
+      "name": "Civil District Hospital",
+      "type": "Hospital",
+      "coordinates": [
+        30.089,
+        78.2625
+      ],
+      "status": "Operational",
+      "elevation": 352
+    },
+    {
+      "id": "INF-SCH-01",
+      "name": "Govt Higher Secondary School",
+      "type": "School / Relief Shelter",
+      "coordinates": [
+        30.0935,
+        78.271
+      ],
+      "status": "At Risk",
+      "elevation": 346
+    },
+    {
+      "id": "INF-SUB-01",
+      "name": "Station Feeder Substation 11kV",
+      "type": "Power Substation",
+      "coordinates": [
+        30.091,
+        78.2675
+      ],
+      "status": "Hazard Zone",
+      "elevation": 344
+    },
+    {
+      "id": "INF-BRG-01",
+      "name": "Station Nullah Arch Culvert Bridge",
+      "type": "Bridge",
+      "coordinates": [
+        30.0922,
+        78.2688
+      ],
+      "status": "Surcharged",
+      "elevation": 345
+    }
+  ],
+  "alerts": [
+    {
+      "alert_id": "ALT-ward-04-054415",
+      "headline": "FLASH FLOOD CRITICAL EVACUATION DIRECTIVE",
+      "severity": "CRITICAL",
+      "severity_color": "#dc2626",
+      "location_id": "ward-04",
+      "location_name": "Ward 04 (Riverfront Embankment & Lowlands)",
+      "risk_probability": 81.3,
+      "expected_window": "Next 1\u20133 Hours",
+      "probable_cause": "Rainfall Overload (Extreme Cloudburst / Downpour)",
+      "cause_code": "RAINFALL_OVERLOAD",
+      "cause_explanation": "Extreme precipitation volume (94.0 mm/hr) drastically exceeds standard civil stormwater catchment thresholds, producing rapid sheet runoff and river backflow.",
+      "potential_impact": {
+        "properties": 143,
+        "residents": 1134,
+        "roads": 5,
+        "schools": 2,
+        "hospitals": 1,
+        "bridges": 1
+      },
+      "critical_facilities": [
+        {
+          "type": "hospital",
+          "name": "District Sub-Hospital",
+          "beds": 65
+        },
+        {
+          "type": "school",
+          "name": "DAV Public School",
+          "capacity": 420
+        },
+        {
+          "type": "water_treatment",
+          "name": "WTP Intake Well No. 2",
+          "status": "Vulnerable"
+        }
+      ],
+      "recommended_actions": [
+        {
+          "action_id": "ACT-EVAC-01",
+          "title": "Initiate Staged Evacuation in Lowland Riparian Zone",
+          "department": "State Disaster Response Force (SDRF) & Revenue Dept",
+          "urgency": "CRITICAL",
+          "description": "Move vulnerable residents (1134 people) to designated Relief Shelter A.",
+          "status": "ORDERED"
+        },
+        {
+          "action_id": "ACT-ROAD-02",
+          "title": "Complete Road Closures on River Road & Causeways",
+          "department": "Traffic Enforcement & PWD",
+          "urgency": "CRITICAL",
+          "description": "Barricade submerged river bridge approaches and post warning lights.",
+          "status": "ACTIVE"
+        },
+        {
+          "action_id": "ACT-SHELTER-03",
+          "title": "Activate Relief Shelter A (Capacity: 400 persons)",
+          "department": "District Magistrate & Food & Civil Supplies",
+          "urgency": "HIGH",
+          "description": "Provision potable water tankers, medical first-aid kits, and dry rations.",
+          "status": "STANDBY"
+        },
+        {
+          "action_id": "ACT-BROADCAST-04",
+          "title": "Broadcast Multi-channel Cell Broadcast Early Warning SMS",
+          "department": "State Emergency Operations Center (SEOC)",
+          "urgency": "IMMEDIATE",
+          "description": "Geo-targeted SMS alert to mobile towers in Ward 04 (Riverfront Embankment & Lowlands) radius.",
+          "status": "TRANSMITTED"
+        }
+      ],
+      "timestamp": "2026-09-16T05:44:15.735215+00:00",
+      "status": "ACTIVE"
+    },
+    {
+      "alert_id": "ALT-ward-12-054415",
+      "headline": "HYDROLOGICAL SURCHARGE WATCH",
+      "severity": "WATCH",
+      "severity_color": "#eab308",
+      "location_id": "ward-12",
+      "location_name": "Ward 12 (Station Road & Central Bazaar)",
+      "risk_probability": 34.8,
+      "expected_window": "Next 6\u201312 Hours",
+      "probable_cause": "Drainage Blockage Suspected",
+      "cause_code": "DRAINAGE_BLOCKAGE",
+      "cause_explanation": "Flood risk is escalating despite moderate rainfall (42.0 mm/hr). Critical drainage degradation (efficiency score 22.0/100) along with 14 localized citizen waterlogging reports confirm storm sewer choking.",
+      "potential_impact": {
+        "properties": 58,
+        "residents": 365,
+        "roads": 1,
+        "schools": 0,
+        "hospitals": 0,
+        "bridges": 0
+      },
+      "critical_facilities": [
+        {
+          "type": "school",
+          "name": "Govt Girls Senior Secondary School",
+          "capacity": 350
+        },
+        {
+          "type": "substation",
+          "name": "Station Feeder 11kV Substation",
+          "status": "At Risk"
+        }
+      ],
+      "recommended_actions": [
+        {
+          "action_id": "ACT-DRAIN-01",
+          "title": "Dispatch Drainage Silt & Obstruction Clearing QRT",
+          "department": "Municipal Engineering & Stormwater Division",
+          "urgency": "HIGH",
+          "description": "Mobilize suction-cum-jetting machines and manual excavator crew to Station Nullah choke inlet.",
+          "status": "DISPATCHED"
+        },
+        {
+          "action_id": "ACT-DRAIN-02",
+          "title": "Establish Traffic Diversion around Station Road Waterlogged Chokepoint",
+          "department": "Traffic Police & Ward Marshal Team",
+          "urgency": "IMMEDIATE",
+          "description": "Deploy barricades at Station Chowk and divert heavy vehicles via Bypass Canal Link.",
+          "status": "ACTIVE"
+        },
+        {
+          "action_id": "ACT-DRAIN-03",
+          "title": "Deploy Dewatering High-Capacity Diesel Pumps (100 HP)",
+          "department": "Disaster Response Equipment Depot",
+          "urgency": "HIGH",
+          "description": "Position 2 high-head dewatering trailer pumps at Market Lowland Depression.",
+          "status": "IN_PROGRESS"
+        }
+      ],
+      "timestamp": "2026-09-16T05:44:15.732202+00:00",
+      "status": "ACTIVE"
+    },
+    {
+      "alert_id": "ALT-village-sangam-054415",
+      "headline": "HYDROLOGICAL SURCHARGE WATCH",
+      "severity": "WATCH",
+      "severity_color": "#eab308",
+      "location_id": "village-sangam",
+      "location_name": "Village Sangam (Tributary Confluence)",
+      "risk_probability": 49.5,
+      "expected_window": "Next 6\u201312 Hours",
+      "probable_cause": "Rainfall Overload (Extreme Cloudburst / Downpour)",
+      "cause_code": "RAINFALL_OVERLOAD",
+      "cause_explanation": "Extreme precipitation volume (68.0 mm/hr) drastically exceeds standard civil stormwater catchment thresholds, producing rapid sheet runoff and river backflow.",
+      "potential_impact": {
+        "properties": 38,
+        "residents": 323,
+        "roads": 1,
+        "schools": 0,
+        "hospitals": 0,
+        "bridges": 0
+      },
+      "critical_facilities": [
+        {
+          "type": "school",
+          "name": "Sangam Primary Gramin Shala",
+          "capacity": 95
+        }
+      ],
+      "recommended_actions": [
+        {
+          "action_id": "ACT-EVAC-01",
+          "title": "Initiate Staged Evacuation in Lowland Riparian Zone",
+          "department": "State Disaster Response Force (SDRF) & Revenue Dept",
+          "urgency": "CRITICAL",
+          "description": "Move vulnerable residents (323 people) to designated Relief Shelter A.",
+          "status": "ORDERED"
+        },
+        {
+          "action_id": "ACT-ROAD-02",
+          "title": "Complete Road Closures on River Road & Causeways",
+          "department": "Traffic Enforcement & PWD",
+          "urgency": "CRITICAL",
+          "description": "Barricade submerged river bridge approaches and post warning lights.",
+          "status": "ACTIVE"
+        },
+        {
+          "action_id": "ACT-SHELTER-03",
+          "title": "Activate Relief Shelter A (Capacity: 400 persons)",
+          "department": "District Magistrate & Food & Civil Supplies",
+          "urgency": "HIGH",
+          "description": "Provision potable water tankers, medical first-aid kits, and dry rations.",
+          "status": "STANDBY"
+        },
+        {
+          "action_id": "ACT-BROADCAST-04",
+          "title": "Broadcast Multi-channel Cell Broadcast Early Warning SMS",
+          "department": "State Emergency Operations Center (SEOC)",
+          "urgency": "IMMEDIATE",
+          "description": "Geo-targeted SMS alert to mobile towers in Village Sangam (Tributary Confluence) radius.",
+          "status": "TRANSMITTED"
+        }
+      ],
+      "timestamp": "2026-09-16T05:44:15.737446+00:00",
+      "status": "ACTIVE"
+    },
+    {
+      "alert_id": "ALT-hill-corridor-8-054415",
+      "headline": "HYDROLOGICAL SURCHARGE WATCH",
+      "severity": "WATCH",
+      "severity_color": "#eab308",
+      "location_id": "hill-corridor-8",
+      "location_name": "Hill Road Corridor 8 (Steep Escarpment)",
+      "risk_probability": 36.5,
+      "expected_window": "Next 6\u201312 Hours",
+      "probable_cause": "Terrain Slope & Soil Saturation Failure",
+      "cause_code": "LANDSLIDE_TRIGGER",
+      "cause_explanation": "Steep hillside slope (34.5\u00b0) combined with near-saturation soil moisture (86.0%) and continuing rainfall (52.0 mm/hr) has created severe slope instability and debris flow hazard.",
+      "potential_impact": {
+        "properties": 13,
+        "residents": 135,
+        "roads": 1,
+        "schools": 0,
+        "hospitals": 0,
+        "bridges": 0
+      },
+      "critical_facilities": [],
+      "recommended_actions": [
+        {
+          "action_id": "ACT-SLOPE-01",
+          "title": "Pre-emptive Traffic Halt on Hill Road Corridor NH-58",
+          "department": "Border Roads & Highway Patrol",
+          "urgency": "CRITICAL",
+          "description": "Halt uphill transport at Checkpost KM 38 due to slope slippage risk.",
+          "status": "ORDERED"
+        },
+        {
+          "action_id": "ACT-SLOPE-02",
+          "title": "Evacuate Hillside Settlements along Scarp Slope Zone 2",
+          "department": "Tehsildar & District Civil Defense",
+          "urgency": "CRITICAL",
+          "description": "Relocate 32 downhill dwelling units to Sector 4 Community Hall.",
+          "status": "IN_PROGRESS"
+        }
+      ],
+      "timestamp": "2026-09-16T05:44:15.740252+00:00",
+      "status": "ACTIVE"
+    },
+    {
+      "alert_id": "ALT-ward-01-054415",
+      "headline": "ROUTINE BASIN STATUS",
+      "severity": "INFORMATION",
+      "severity_color": "#16a34a",
+      "location_id": "ward-01",
+      "location_name": "Ward 01 (Upper Cantonment Ridge)",
+      "risk_probability": 3.7,
+      "expected_window": "Routine Monitoring (Next 24h)",
+      "probable_cause": "Normal Runoff / Inconclusive Anomaly",
+      "cause_code": "UNCERTAIN",
+      "cause_explanation": "Telemetry indicates baseline conditions (18.0 mm/hr rain, drainage efficiency 92.0%). No conclusive flood hazard or drainage choking signature detected at this juncture.",
+      "potential_impact": {
+        "properties": 13,
+        "residents": 94,
+        "roads": 0,
+        "schools": 0,
+        "hospitals": 0,
+        "bridges": 0
+      },
+      "critical_facilities": [
+        {
+          "type": "school",
+          "name": "Govt Girls Senior Secondary School",
+          "capacity": 350
+        },
+        {
+          "type": "substation",
+          "name": "Station Feeder 11kV Substation",
+          "status": "At Risk"
+        }
+      ],
+      "recommended_actions": [
+        {
+          "action_id": "ACT-NORM-01",
+          "title": "Maintain Continuous Real-Time Hydrometric Telemetry",
+          "department": "Irrigation & Water Resources Dept",
+          "urgency": "ROUTINE",
+          "description": "Keep automatic rain gauges and ultrasonic water level sensors on 15-minute polling cycle.",
+          "status": "ACTIVE"
+        }
+      ],
+      "timestamp": "2026-09-16T05:44:15.744172+00:00",
+      "status": "MONITORING"
+    }
+  ],
+  "historical_events": [
+    {
+      "id": "HIST-2023-01",
+      "title": "Station Road Severe Backflow & Drainage Failure",
+      "date": "2023-07-14",
+      "location": "Ward 12 (Station Road)",
+      "coordinates": [
+        30.092,
+        78.269
+      ],
+      "event_type": "Drainage Blockage Flood",
+      "severity": "HIGH",
+      "rainfall_conditions": "48 mm/hr (Moderate Rainfall Event)",
+      "affected_area": "1.2 sq km, 45 commercial establishments inundated",
+      "casualties": 0,
+      "cause_analysis": "Culvert choked with urban packaging waste; backwater flooded 37 basements despite rainfall not reaching extreme cloudburst thresholds."
+    },
+    {
+      "id": "HIST-2021-02",
+      "title": "Chamoli & Downstream Flash Surge",
+      "date": "2021-02-07",
+      "location": "River Valley Riparian Zone",
+      "coordinates": [
+        30.084,
+        78.261
+      ],
+      "event_type": "Glacial Lake Outburst / Flash Flood",
+      "severity": "CRITICAL",
+      "rainfall_conditions": "Upstream breach with 110 mm/hr antecedent rain",
+      "affected_area": "4.5 sq km along river channel",
+      "casualties": 14,
+      "cause_analysis": "Catastrophic river discharge surge exceeding bund crest by 1.8 meters."
+    },
+    {
+      "id": "HIST-2013-03",
+      "title": "Uttarakhand Cloudburst Basin Overload",
+      "date": "2013-06-16",
+      "location": "Upper Basin & Sangam Tributary",
+      "coordinates": [
+        30.104,
+        78.283
+      ],
+      "event_type": "Rainfall Overload Mega-Flood",
+      "severity": "CRITICAL",
+      "rainfall_conditions": "142 mm/hr Extreme Cloudburst",
+      "affected_area": "Regional basin devastation",
+      "casualties": 52,
+      "cause_analysis": "Antecedent continuous rain followed by multiple cloudburst cells; saturated soil failed entirely."
+    },
+    {
+      "id": "HIST-2024-04",
+      "title": "NH-58 Km 42 Slope Slide & Debris Barrier",
+      "date": "2024-08-11",
+      "location": "Hill Road Corridor 8",
+      "coordinates": [
+        30.115,
+        78.254
+      ],
+      "event_type": "Rain-Induced Landslide",
+      "severity": "HIGH",
+      "rainfall_conditions": "58 mm/hr for 4 continuous hours",
+      "affected_area": "800m highway blockage, 2 culverts crushed",
+      "casualties": 0,
+      "cause_analysis": "Slope cut oversteepened during widening, saturated pore pressure triggered rotational planar slip."
+    }
+  ],
+  "rainfall_time_series": [
+    {
+      "hour": "06:00",
+      "rainfall_mm": 5,
+      "soil_moisture_pct": 42,
+      "risk_score": 15
+    },
+    {
+      "hour": "08:00",
+      "rainfall_mm": 12,
+      "soil_moisture_pct": 48,
+      "risk_score": 22
+    },
+    {
+      "hour": "10:00",
+      "rainfall_mm": 28,
+      "soil_moisture_pct": 59,
+      "risk_score": 38
+    },
+    {
+      "hour": "12:00",
+      "rainfall_mm": 42,
+      "soil_moisture_pct": 74,
+      "risk_score": 62
+    },
+    {
+      "hour": "13:00",
+      "rainfall_mm": 44,
+      "soil_moisture_pct": 82,
+      "risk_score": 87
+    },
+    {
+      "hour": "14:00 (Forecast)",
+      "rainfall_mm": 38,
+      "soil_moisture_pct": 85,
+      "risk_score": 84
+    }
+  ],
+  "seasonal_alerts_distribution": [
+    {
+      "month": "Jun",
+      "cloudburst_overload": 2,
+      "drainage_blockage": 7,
+      "landslides": 1
+    },
+    {
+      "month": "Jul",
+      "cloudburst_overload": 6,
+      "drainage_blockage": 19,
+      "landslides": 4
+    },
+    {
+      "month": "Aug",
+      "cloudburst_overload": 9,
+      "drainage_blockage": 24,
+      "landslides": 7
+    },
+    {
+      "month": "Sep",
+      "cloudburst_overload": 3,
+      "drainage_blockage": 11,
+      "landslides": 2
+    }
+  ],
+  "risk_timeline": [
+    {
+      "time": "12:00",
+      "risk_level": "LOW",
+      "risk_score": 24,
+      "rainfall": "12 mm/h",
+      "color": "#16a34a",
+      "headline": "Routine Basin Monitoring",
+      "description": "Precipitation commences; soil moisture nominal at 44%. Stormwater flowing freely."
+    },
+    {
+      "time": "12:30",
+      "risk_level": "MODERATE",
+      "risk_score": 48,
+      "rainfall": "32 mm/h",
+      "color": "#eab308",
+      "headline": "Rainfall Steady \u2014 Inlets Accumulating Litter",
+      "description": "Rainfall rates increase to 32 mm/h. Drainage velocity reduces as debris collects on grates."
+    },
+    {
+      "time": "13:00",
+      "risk_level": "HIGH",
+      "risk_score": 74,
+      "rainfall": "42 mm/h",
+      "color": "#f97316",
+      "headline": "Station Nullah Choked \u2014 Backwater Rising",
+      "description": "Drainage efficiency plunges to 25%. First citizen photo reports submitted with water on roadway."
+    },
+    {
+      "time": "13:20",
+      "risk_level": "CRITICAL",
+      "risk_score": 87,
+      "rainfall": "44 mm/h",
+      "color": "#dc2626",
+      "headline": "Localized Inundation Imminent",
+      "description": "Drainage completely obstructed. Water enters 12 roadside shops. AI Risk Engine triggers critical threshold."
+    },
+    {
+      "time": "13:30",
+      "risk_level": "ALERT ISSUED",
+      "risk_score": 87,
+      "rainfall": "42 mm/h",
+      "color": "#991b1b",
+      "headline": "\ud83d\udea8 FLASH FLOOD & DRAINAGE ALERT DISPATCHED",
+      "description": "Automated Early Warning sent to SDRF, Municipal QRT, and traffic diversion teams."
+    }
+  ]
+}

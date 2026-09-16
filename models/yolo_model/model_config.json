@@ -1,0 +1,25 @@
+{
+  "model_type": "yolov8",
+  "model_version": "1.0.0-flood-vision",
+  "weights_file": "best.pt",
+  "confidence_threshold": 0.25,
+  "iou_threshold": 0.45,
+  "classes": [
+    "waterlogged_road",
+    "blocked_drain_culvert",
+    "submerged_vehicle",
+    "flood_debris",
+    "damaged_embankment"
+  ],
+  "class_severity_mapping": {
+    "waterlogged_road": "MODERATE",
+    "blocked_drain_culvert": "HIGH",
+    "submerged_vehicle": "CRITICAL",
+    "flood_debris": "MODERATE",
+    "damaged_embankment": "CRITICAL"
+  },
+  "expected_input": {
+    "image_size": [640, 640],
+    "formats": ["jpeg", "jpg", "png", "webp"]
+  }
+}

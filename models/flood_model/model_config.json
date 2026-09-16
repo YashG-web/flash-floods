@@ -1,0 +1,49 @@
+{
+  "model_type": "xgboost",
+  "model_version": "1.0.0-hydrology",
+  "description": "Hyperlocal Flash Flood & Landslide Susceptibility Inference Model",
+  "feature_order": [
+    "rainfall",
+    "soil_moisture",
+    "slope",
+    "elevation",
+    "drainage_condition",
+    "historical_events",
+    "sensor_water_level",
+    "impervious_surface_pct"
+  ],
+  "feature_descriptions": {
+    "rainfall": "Current hourly rainfall rate in mm/h",
+    "soil_moisture": "Volumetric soil moisture saturation percentage (0-100%)",
+    "slope": "Terrain slope gradient in degrees (0-90°)",
+    "elevation": "Topographical elevation above sea level in meters",
+    "drainage_condition": "Stormwater drainage hydraulic efficiency score (0=completely choked, 100=optimal flow)",
+    "historical_events": "Number of documented flood/landslide events in last 10 years",
+    "sensor_water_level": "River or stormwater culvert gauge water level in meters",
+    "impervious_surface_pct": "Percentage of paved/concrete urban surface (runoff coefficient factor)"
+  },
+  "preprocessing": {
+    "imputation": {
+      "rainfall": 0.0,
+      "soil_moisture": 45.0,
+      "slope": 12.0,
+      "elevation": 350.0,
+      "drainage_condition": 75.0,
+      "historical_events": 1.0,
+      "sensor_water_level": 0.8,
+      "impervious_surface_pct": 50.0
+    },
+    "scaling": "none"
+  },
+  "risk_thresholds": {
+    "low": { "min": 0, "max": 30, "label": "LOW", "color": "#16a34a" },
+    "moderate": { "min": 31, "max": 60, "label": "MODERATE", "color": "#eab308" },
+    "high": { "min": 61, "max": 80, "label": "HIGH", "color": "#f97316" },
+    "critical": { "min": 81, "max": 100, "label": "CRITICAL", "color": "#dc2626" }
+  },
+  "output_interpretation": {
+    "target_name": "flood_risk_probability",
+    "units": "percentage",
+    "explainability_engine": "shap.TreeExplainer"
+  }
+}
