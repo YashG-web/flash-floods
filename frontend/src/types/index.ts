@@ -201,3 +201,28 @@ export interface ImageAnalysisResponse {
   overall_severity: string;
   image_dimensions?: { width: number; height: number };
 }
+
+export type WarningStatus = 'NONE' | 'WATCH' | 'WARNING' | 'CRITICAL';
+
+export interface WarningTimelineStep {
+  label: string;
+  subtext: string;
+  isTriggered: boolean;
+}
+
+export interface FlashFloodWarning {
+  id: string;
+  status: WarningStatus;
+  statusLabel: string; // e.g. "FLASH FLOOD WARNING"
+  locationId: string;
+  locationName: string;
+  roadName: string;
+  riskLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  estimatedWindow: string; // e.g. "NEXT 1–3 HOURS"
+  reason: string;
+  affectedAreas: string[];
+  actions: string[];
+  timeline: WarningTimelineStep[];
+  timestamp: string;
+}
+

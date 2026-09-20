@@ -1,16 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ShieldAlert,
-  Activity,
-  Layers,
-  BrainCircuit,
-  Bell,
+  Home,
+  Map,
   Camera,
-  Flame,
-  FileSpreadsheet,
-  Cpu,
+  Bell,
+  Radio,
   RefreshCw,
-  UserCheck
+  Menu,
+  X
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -23,6 +21,7 @@ interface NavbarProps {
   activeAlertsCount: number;
   lastUpdated: string;
   onRefresh: () => void;
+  onOpenReportModal: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -34,133 +33,137 @@ export const Navbar: React.FC<NavbarProps> = ({
   onScenarioChange,
   activeAlertsCount,
   lastUpdated,
-  onRefresh
+  onRefresh,
+  onOpenReportModal
 }) => {
-  const navItems = [
-    { id: 'command-center', label: 'Command Center', icon: Activity },
-    { id: 'risk-map', label: 'Risk Map', icon: Layers },
-    { id: 'predictions', label: 'Predictions & SHAP', icon: BrainCircuit },
-    { id: 'alerts', label: 'Early Warnings', icon: Bell, badge: activeAlertsCount },
-    { id: 'citizen-reports', label: 'Citizen Reports', icon: Camera },
-    { id: 'impact', label: 'Impact', icon: Flame },
-    { id: 'response', label: 'Response & SOPs', icon: ShieldAlert },
-    { id: 'analytics', label: 'Analytics & Timeline', icon: FileSpreadsheet },
-    { id: 'sensors', label: 'IoT Sensors', icon: Cpu }
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navTabs = [
+    { id: 'home', label: 'HOME', icon: Home },
+    { id: 'risk-map', label: 'RISK MAP', icon: Map },
+    { id: 'report', label: 'REPORT FLOODING', icon: Camera, isAction: true },
+    { id: 'alerts', label: 'ALERTS', icon: Bell, badge: activeAlertsCount }
   ];
+
+  const handleTabClick = (tabId: string, isAction?: boolean) => {
+    if (isAction) {
+      onOpenReportModal();
+    } else {
+      setCurrentTab(tabId);
+    }
+    setMobileMenuOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-xs">
-      {/* Top utility bar */}
-      <div className="bg-slate-900 text-slate-200 px-4 py-1.5 flex flex-wrap items-center justify-between text-xs font-medium">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-emerald-400 font-semibold tracking-wide uppercase">System Status: OPERATIONAL</span>
+      {/* Top Utility Status Bar */}
+      <div className="bg-slate-900 text-slate-300 px-4 py-1.5 flex flex-wrap items-center justify-between text-xs font-medium">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-emerald-400 font-semibold uppercase tracking-wider text-[11px]">SYSTEM ACTIVE</span>
           </div>
-          <span className="text-slate-500">|</span>
-          <div className="flex items-center gap-1.5 text-slate-300">
-            <span>Hydrological Basin:</span>
-            <span className="text-sky-300 font-semibold">Upper Ganga / Bhagirathi Valley Sector 4</span>
-          </div>
-          <span className="text-slate-500">|</span>
-          <div className="text-slate-400">
-            Telemetry Synced: <span className="text-slate-200 font-mono">{lastUpdated}</span>
+          <span className="text-slate-600 hidden sm:inline">|</span>
+          <div className="hidden sm:flex items-center gap-1 text-slate-400 text-[11px]">
+            <span>Synced:</span>
+            <span className="text-slate-200 font-mono">{lastUpdated}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 mt-1 sm:mt-0">
-          {/* Demo Mode Toggle */}
+        <div className="flex items-center gap-2.5">
+          {/* Real vs Demo Mode Indicator */}
           <div className="flex items-center bg-slate-800 rounded-md p-0.5 border border-slate-700">
             <button
               onClick={() => setIsDemoMode(false)}
-              className={`px-2 py-0.5 rounded text-[11px] font-semibold transition ${
+              className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide transition cursor-pointer ${
                 !isDemoMode ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
               }`}
+              title="Switch to Live Telemetry"
             >
-              ● LIVE DATA
+              LIVE DATA
             </button>
             <button
               onClick={() => setIsDemoMode(true)}
-              className={`px-2 py-0.5 rounded text-[11px] font-semibold transition ${
+              className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide transition cursor-pointer ${
                 isDemoMode ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
               }`}
+              title="Demonstration Testing Mode"
             >
-              ● DEMO DATA
+              DEMO DATA
             </button>
           </div>
 
           {/* Quick Scenario Selector */}
-          <div className="flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-            <span className="text-[11px] text-slate-400">Scenario:</span>
+          <div className="hidden md:flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 text-[11px]">
+            <span className="text-slate-400 font-medium">Demo:</span>
             <select
               value={activeScenario}
               onChange={(e) => onScenarioChange(e.target.value)}
-              className="bg-transparent text-amber-300 text-[11px] font-semibold focus:outline-hidden cursor-pointer"
+              className="bg-transparent text-amber-300 font-semibold focus:outline-hidden cursor-pointer"
             >
               <option value="scenario_2_drainage_blockage" className="bg-slate-900 text-amber-300">
-                ⚠️ Scenario 2: Blocked Drain (Moderate Rain)
+                ⚠️ Blocked Drain + Rain (Ward 12)
               </option>
               <option value="scenario_1_heavy_rainfall" className="bg-slate-900 text-red-300">
-                🌧️ Scenario 1: Rainfall Overload (Cloudburst)
+                🌧️ Heavy Rain / Cloudburst (Ward 04)
               </option>
               <option value="baseline" className="bg-slate-900 text-slate-200">
-                ☀️ Baseline: Routine Flow
+                ☀️ Clear Weather Baseline
               </option>
             </select>
           </div>
 
           <button
             onClick={onRefresh}
-            title="Force Telemetry Sync"
-            className="p-1 hover:bg-slate-800 rounded text-slate-300 hover:text-white transition"
+            title="Refresh telemetric data"
+            className="p-1 hover:bg-slate-800 rounded text-slate-300 hover:text-white transition cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* Main navigation */}
-      <div className="px-4 lg:px-6 py-2.5 flex items-center justify-between gap-4">
-        {/* Brand identity */}
+      {/* Main Navigation Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+        {/* Brand Logo & Tagline */}
         <div
-          onClick={() => setCurrentTab('landing')}
-          className="flex items-center gap-3 cursor-pointer group"
+          onClick={() => setCurrentTab('home')}
+          className="flex items-center gap-3 cursor-pointer group select-none"
         >
-          <div className="w-10 h-10 rounded-lg bg-linear-to-br from-sky-600 to-indigo-900 flex items-center justify-center text-white shadow-md group-hover:shadow-lg transition">
-            <ShieldAlert className="w-6 h-6 text-sky-200" />
+          <div className="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-700 to-sky-600 flex items-center justify-center text-white shadow-md group-hover:shadow-indigo-500/25 transition">
+            <ShieldAlert className="w-6 h-6 text-white" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black tracking-tight text-slate-900 font-mono">JALRAKSHAK</h1>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-sky-100 text-sky-800 rounded border border-sky-200">
-                v1.0 EOC
-              </span>
-            </div>
-            <p className="text-[11px] font-medium text-slate-500 tracking-tight">
-              Hyperlocal Flood & Landslide Intelligence and Early Warning System
+            <h1 className="text-xl font-black tracking-tight text-slate-900 leading-none font-mono">
+              JALRAKSHAK
+            </h1>
+            <p className="text-xs font-bold text-sky-700 tracking-normal mt-0.5">
+              “Know the risk. Act early.”
             </p>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <nav className="hidden xl:flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-          {navItems.map((item) => {
+        {/* Desktop Navigation Tabs: 4 Core Citizen Tabs */}
+        <nav className="hidden lg:flex items-center gap-1.5 bg-slate-100/90 p-1 rounded-xl border border-slate-200/80">
+          {navTabs.map((item) => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setCurrentTab(item.id)}
-                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  isActive
-                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
+                onClick={() => handleTabClick(item.id, item.isAction)}
+                className={`relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  item.isAction
+                    ? 'bg-red-600 text-white hover:bg-red-700 shadow-xs'
+                    : isActive
+                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-sky-600' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${item.isAction ? 'text-white' : isActive ? 'text-sky-600' : 'text-slate-500'}`} />
                 <span>{item.label}</span>
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className="ml-1 px-1.5 py-0.2 bg-red-500 text-white rounded-full text-[10px] font-bold animate-pulse">
+                  <span className="ml-0.5 px-1.5 py-0.2 bg-red-600 text-white rounded-full text-[10px] font-black animate-pulse">
                     {item.badge}
                   </span>
                 )}
@@ -169,55 +172,98 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* User / Officer Profile */}
-        <div className="flex items-center gap-3">
+        {/* Dedicated Authority Tab */}
+        <div className="hidden sm:flex items-center gap-3">
           <button
-            onClick={() => setCurrentTab('alerts')}
-            className="relative p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition"
-            title="Active Warning Notifications"
+            onClick={() => setCurrentTab('response-center')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition border cursor-pointer ${
+              currentTab === 'response-center'
+                ? 'bg-slate-900 text-sky-300 border-slate-900 shadow-xs'
+                : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 hover:text-slate-900'
+            }`}
+            title="Municipal Workers & Emergency Responders Command Center"
           >
-            <Bell className="w-5 h-5" />
-            {activeAlertsCount > 0 && (
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-600 ring-2 ring-white animate-ping" />
-            )}
+            <Radio className={`w-4 h-4 ${currentTab === 'response-center' ? 'text-sky-400' : 'text-slate-500'}`} />
+            <span>RESPONSE CENTER</span>
+            <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 bg-slate-800 text-amber-300 rounded font-bold">
+              Authority
+            </span>
           </button>
+        </div>
 
-          <div className="hidden sm:flex items-center gap-2.5 pl-3 border-l border-slate-200">
-            <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs font-bold">
-              <UserCheck className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div className="text-left text-xs">
-              <div className="font-bold text-slate-900">EOC Duty Officer</div>
-              <div className="text-[10px] text-slate-500">SDMA Control Room #04</div>
-            </div>
-          </div>
+        {/* Mobile Hamburger Toggle */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <button
+            onClick={onOpenReportModal}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-red-600 text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            <span>REPORT</span>
+          </button>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded-lg text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer"
+            aria-label="Toggle Menu"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
       </div>
 
-      {/* Sub-tab scroll bar for smaller screens */}
-      <div className="xl:hidden flex overflow-x-auto border-t border-slate-200 px-3 py-1.5 gap-1.5 bg-slate-50">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentTab === item.id;
-          return (
+      {/* Mobile Navigation Dropdown */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-2 shadow-lg">
+          {navTabs.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleTabClick(item.id, item.isAction)}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
+                  item.isAction
+                    ? 'bg-red-600 text-white'
+                    : isActive
+                    ? 'bg-slate-100 text-sky-700'
+                    : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </div>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="px-2 py-0.5 bg-red-600 text-white rounded-full text-xs font-black">
+                    {item.badge} ACTIVE
+                  </span>
+                )}
+              </button>
+            );
+          })}
+
+          <div className="pt-2 border-t border-slate-100">
             <button
-              key={item.id}
-              onClick={() => setCurrentTab(item.id)}
-              className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap ${
-                isActive ? 'bg-sky-600 text-white' : 'text-slate-600 bg-white border border-slate-200'
+              onClick={() => {
+                setCurrentTab('response-center');
+                setMobileMenuOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold cursor-pointer ${
+                currentTab === 'response-center'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-100 text-slate-800'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
-              <span>{item.label}</span>
-              {item.badge !== undefined && item.badge > 0 && (
-                <span className="ml-1 px-1 bg-red-500 text-white rounded-full text-[9px] font-bold">
-                  {item.badge}
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                <Radio className="w-4 h-4 text-sky-400" />
+                <span>RESPONSE CENTER (AUTHORITY)</span>
+              </div>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-800 text-amber-300 rounded font-bold">
+                EOC
+              </span>
             </button>
-          );
-        })}
-      </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

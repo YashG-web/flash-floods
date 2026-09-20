@@ -1,294 +1,350 @@
 import React from 'react';
+import type { LocationData, EarlyWarningAlert, FlashFloodWarning } from '../types';
+import { FlashFloodWarningCard } from './FlashFloodWarningCard';
 import {
   ShieldAlert,
   ArrowRight,
-  Database,
-  Brain,
-  BellRing,
-  CheckCircle2,
+  Camera,
+  MapPin,
+  Clock,
+  Droplets,
   CloudRain,
-  AlertTriangle,
-  Compass,
-  FileCheck2,
-  Users,
-  Eye
+  Construction,
+  ShieldCheck,
+  CheckCircle2
 } from 'lucide-react';
 
 interface LandingPageProps {
-  onOpenCommandCenter: () => void;
-  onExploreHowItWorks: () => void;
+  locations: LocationData[];
+  selectedLocation: LocationData | null;
+  onSelectLocation: (loc: LocationData) => void;
+  alerts: EarlyWarningAlert[];
+  activeFlashWarning: FlashFloodWarning | null;
+  lastUpdated: string;
+  onNavigateToMap: () => void;
+  onOpenReportModal: () => void;
+  onNavigateToAlerts: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
-  onOpenCommandCenter,
-  onExploreHowItWorks
+  locations,
+  selectedLocation,
+  onSelectLocation,
+  alerts,
+  activeFlashWarning,
+  lastUpdated,
+  onNavigateToMap,
+  onOpenReportModal,
+  onNavigateToAlerts
 }) => {
+  // Default to first location if none selected
+  const activeLoc = selectedLocation || locations[0] || {
+    id: 'ward-12',
+    name: 'Ward 12 (Station Road / Market)',
+    risk_level: 'HIGH',
+    risk_probability: 78,
+    rainfall: 42,
+    drainage_condition: 18,
+    soil_moisture: 82,
+    cause_intelligence: {
+      probable_cause: 'Drainage Culvert Choke + Moderate Rainfall',
+      explanation: 'Moderate rainfall combined with severe drain blockage is causing water to accumulate on Main Market Road.'
+    }
+  } as LocationData;
+
+  const riskLevel = activeLoc.risk_level || 'LOW';
+
+  const getRiskVisuals = (level: string) => {
+    switch (level) {
+      case 'CRITICAL':
+        return {
+          badgeBg: 'bg-red-600',
+          textColor: 'text-red-700',
+          borderColor: 'border-red-500',
+          symbol: '🔴',
+          label: 'CRITICAL RISK',
+          subtext: 'Severe flood danger. Immediate caution required.'
+        };
+      case 'HIGH':
+        return {
+          badgeBg: 'bg-orange-600',
+          textColor: 'text-orange-700',
+          borderColor: 'border-orange-500',
+          symbol: '🟠',
+          label: 'HIGH RISK',
+          subtext: 'Waterlogging developing on roads. Avoid affected streets.'
+        };
+      case 'MODERATE':
+        return {
+          badgeBg: 'bg-amber-600',
+          textColor: 'text-amber-700',
+          borderColor: 'border-amber-500',
+          symbol: '🟡',
+          label: 'MODERATE RISK',
+          subtext: 'Rising water levels observed in low-lying spots.'
+        };
+      default:
+        return {
+          badgeBg: 'bg-emerald-600',
+          textColor: 'text-emerald-700',
+          borderColor: 'border-emerald-500',
+          symbol: '🟢',
+          label: 'LOW RISK',
+          subtext: 'Normal water flow. No immediate flood threat.'
+        };
+    }
+  };
+
+  const riskVisual = getRiskVisuals(riskLevel);
+
+  // Simplified Plain-Language Explanation
+  const getPlainExplanation = () => {
+    if (activeLoc.cause_intelligence?.explanation) {
+      return activeLoc.cause_intelligence.explanation;
+    }
+    if (riskLevel === 'CRITICAL' || riskLevel === 'HIGH') {
+      if (activeLoc.rainfall > 60) {
+        return 'Heavy rainfall is increasing water levels in low-lying areas and overflowing local channels.';
+      }
+      return 'Moderate rainfall combined with suspected drainage blockage is increasing local waterlogging risk.';
+    }
+    return 'Rainfall and drainage conditions are currently normal across this sector.';
+  };
+
+  // Plain-Language Condition Indicators
+  const rainfallStatus = activeLoc.rainfall > 60 ? 'Heavy' : activeLoc.rainfall > 25 ? 'Moderate' : 'Normal';
+  const drainageStatus = activeLoc.drainage_condition < 35 ? 'Severely Choked' : activeLoc.drainage_condition < 65 ? 'Slow / Sluggish' : 'Clear & Flowing';
+  const soilStatus = activeLoc.soil_moisture > 75 ? 'Saturated (Cannot absorb rain)' : activeLoc.soil_moisture > 50 ? 'Partially Damp' : 'Dry';
+
   return (
-    <div className="bg-slate-50 text-slate-900">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-slate-950 text-white py-16 lg:py-24 border-b border-slate-800">
-        {/* Background Image with dark tactical gradient overlay */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src="/assets/hero.jpg"
-            alt="Bhagirathi Himalayan River Basin Disaster Telemetry Overlay"
-            className="w-full h-full object-cover object-center opacity-40 mix-blend-luminosity filter contrast-125"
-          />
-          <div className="absolute inset-0 bg-linear-to-r from-slate-950 via-slate-950/85 to-slate-950/60" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(14,165,233,0.15),transparent_50%)]" />
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-950/80 border border-sky-600/40 text-sky-400 text-xs font-semibold uppercase tracking-wider mb-6">
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>National Disaster Management Decision-Support Standard</span>
-            </div>
-
-            <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight text-white mb-4">
-              JALRAKSHAK
-            </h1>
-
-            <p className="text-xl sm:text-2xl font-semibold text-sky-300 mb-4 tracking-tight">
-              Hyperlocal Flood & Landslide Intelligence and Early Warning System
-            </p>
-
-            <blockquote className="text-base sm:text-lg text-slate-300 font-light border-l-2 border-sky-500 pl-4 py-1 mb-8 italic">
-              “Predict the risk. Understand the cause. Protect communities.”
-            </blockquote>
-
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed mb-8">
-              A mission-critical disaster management platform fusing environmental precipitation radar, 
-              soil pore pressure, terrain topography, drainage hydraulic status, IoT culvert gauges, and 
-              YOLO-verified crowd imagery to distinguish between <strong>Rainfall Overload</strong> and 
-              <strong> Drainage Blockages</strong> with explainable SHAP intelligence.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-4">
-              <button
-                id="cta-open-command-center"
-                onClick={onOpenCommandCenter}
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm shadow-lg shadow-sky-600/30 transition transform hover:-translate-y-0.5 cursor-pointer"
-              >
-                <span>Open Command Center</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-
-              <button
-                id="cta-explore-how-it-works"
-                onClick={onExploreHowItWorks}
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold text-sm transition cursor-pointer"
-              >
-                <Compass className="w-4 h-4 text-sky-400" />
-                <span>Explore How It Works</span>
-              </button>
-            </div>
+    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+      {/* Real-World Context Banner */}
+      <div className="relative rounded-3xl overflow-hidden shadow-sm border border-slate-200">
+        <img
+          src="/assets/hero.jpg"
+          alt="Monsoon Valley Flood Context"
+          className="w-full h-36 sm:h-44 object-cover filter contrast-110 brightness-90"
+        />
+        <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-900/60 to-transparent flex flex-col justify-end p-5 sm:p-6 text-white">
+          <div className="flex items-center gap-2 text-sky-400 text-xs font-bold uppercase tracking-wider mb-1">
+            <ShieldAlert className="w-4 h-4" />
+            <span>Community Flood Safety Portal</span>
           </div>
-
-          {/* Core Pipeline Bar */}
-          <div className="mt-14 pt-8 border-t border-slate-800/80 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-slate-900/70 backdrop-blur-xs p-4 rounded-xl border border-slate-800">
-              <div className="text-[11px] font-bold text-sky-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                <Database className="w-3.5 h-3.5" /> Step 1
-              </div>
-              <div className="text-base font-bold text-white">MULTI-SOURCE DATA</div>
-              <div className="text-xs text-slate-400 mt-1">Radar, Soil, IoT Gauges, Vision Reports</div>
-            </div>
-
-            <div className="bg-slate-900/70 backdrop-blur-xs p-4 rounded-xl border border-slate-800">
-              <div className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                <Brain className="w-3.5 h-3.5" /> Step 2
-              </div>
-              <div className="text-base font-bold text-white">AI RISK ENGINE</div>
-              <div className="text-xs text-slate-400 mt-1">XGBoost & SHAP Explainability</div>
-            </div>
-
-            <div className="bg-slate-900/70 backdrop-blur-xs p-4 rounded-xl border border-slate-800">
-              <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                <BellRing className="w-3.5 h-3.5" /> Step 3
-              </div>
-              <div className="text-base font-bold text-white">HYPERLOCAL WARNING</div>
-              <div className="text-xs text-slate-400 mt-1">Ward-level 1–3h Lead Time & Cause</div>
-            </div>
-
-            <div className="bg-slate-900/70 backdrop-blur-xs p-4 rounded-xl border border-slate-800">
-              <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Step 4
-              </div>
-              <div className="text-base font-bold text-white">PRESCRIBED ACTION</div>
-              <div className="text-xs text-slate-400 mt-1">SOP Evacuation & Drain De-silting</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* The Core Problem Highlight: Rainfall Overload vs Drainage Blockage */}
-      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <span className="text-xs font-bold text-sky-700 tracking-wider uppercase bg-sky-100 px-3 py-1 rounded-full">
-            Core Scientific Breakthrough
-          </span>
-          <h2 className="text-3xl font-extrabold text-slate-900 mt-3 mb-3">
-            Why Rainfall Alone Cannot Explain Every Flood Event
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+            Local Flood Risk & Early Warning
           </h2>
-          <p className="text-slate-600 text-sm leading-relaxed">
-            During the Indian monsoon, two identical rainfall readings produce completely different disaster outcomes. 
-            JALRAKSHAK decouples the physics to give emergency authorities the exact intervention required.
+          <p className="text-xs sm:text-sm text-slate-200">
+            Real-time hazard warnings for residents, drivers, shopkeepers, and municipal workers.
           </p>
         </div>
+      </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Card A: Rainfall Overload */}
-          <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold">
-                <CloudRain className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-red-700 uppercase tracking-wider">Classification A</span>
-                <h3 className="text-xl font-bold text-slate-900">Rainfall Overload</h3>
-              </div>
-            </div>
-
-            <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-              Torrential downpour (&gt; 60 mm/hr) saturates the watershed catchment, completely overpowering natural river beds and standard municipal stormwater culvert design capacity.
-            </p>
-
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
-              <div className="flex justify-between text-slate-700">
-                <span className="font-medium">Precipitation Rate:</span>
-                <span className="font-bold text-red-700">80 – 140 mm/h (Extreme)</span>
-              </div>
-              <div className="flex justify-between text-slate-700">
-                <span className="font-medium">Drain Condition:</span>
-                <span className="font-semibold text-slate-900">Operating Normally</span>
-              </div>
-              <div className="flex justify-between text-slate-700">
-                <span className="font-medium">Direct Action Needed:</span>
-                <span className="font-bold text-red-700">Relief Shelters, Downriver Evacuation, Road Closure</span>
-              </div>
+      {/* 1. HERO AREA: WHAT IS THE CURRENT RISK? */}
+      <section className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm p-6 sm:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+          <div>
+            <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400 block mb-1">
+              CURRENT FLOOD RISK
+            </span>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-sky-600 shrink-0" />
+              <select
+                value={activeLoc.id}
+                onChange={(e) => {
+                  const found = locations.find(l => l.id === e.target.value);
+                  if (found) onSelectLocation(found);
+                }}
+                className="text-lg sm:text-xl font-black text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-xl px-3 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-sky-500 cursor-pointer"
+              >
+                {locations.map(loc => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          {/* Card B: Drainage Blockage */}
-          <div className="bg-white rounded-2xl p-6 sm:p-8 border-2 border-amber-400/80 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
-                <AlertTriangle className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Classification B (Unique Insight)</span>
-                <h3 className="text-xl font-bold text-slate-900">Drainage Blockage</h3>
-              </div>
-            </div>
-
-            <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-              Moderate precipitation (30–45 mm/hr) that the ward should easily handle causes severe knee-deep inundation due to silt, plastic waste choking inlet gratings, or structural collapse.
-            </p>
-
-            <div className="bg-amber-50/70 p-4 rounded-xl border border-amber-200 space-y-2 text-xs">
-              <div className="flex justify-between text-slate-700">
-                <span className="font-medium">Precipitation Rate:</span>
-                <span className="font-bold text-amber-800">30 – 45 mm/h (Moderate)</span>
-              </div>
-              <div className="flex justify-between text-slate-700">
-                <span className="font-medium">Drain Condition:</span>
-                <span className="font-bold text-red-700">&lt; 30% Efficiency (Choked)</span>
-              </div>
-              <div className="flex justify-between text-slate-700">
-                <span className="font-medium">Direct Action Needed:</span>
-                <span className="font-bold text-amber-900">Immediate Jetting Machine QRT, Silt Excavator, Traffic Divert</span>
-              </div>
-            </div>
+          <div className="text-left sm:text-right text-xs text-slate-500 flex items-center sm:justify-end gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            <span>Last updated: <strong className="text-slate-800 font-mono">{lastUpdated || '2 minutes ago'}</strong></span>
           </div>
         </div>
-      </section>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="py-16 bg-slate-100 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-xs font-bold text-indigo-700 tracking-wider uppercase bg-indigo-100 px-3 py-1 rounded-full">
-              System Architecture
+        {/* The Most Prominent Element: Risk Level Display */}
+        <div className="py-6 sm:py-8 flex flex-col items-center text-center">
+          <div className={`inline-flex items-center gap-3 px-6 sm:px-10 py-4 sm:py-5 rounded-2xl text-white shadow-md ${riskVisual.badgeBg}`}>
+            <span className="text-3xl sm:text-4xl">{riskVisual.symbol}</span>
+            <span className="text-2xl sm:text-4xl font-black tracking-wide uppercase font-mono">
+              {riskVisual.label}
             </span>
-            <h2 className="text-3xl font-extrabold text-slate-900 mt-3 mb-3">
-              How JALRAKSHAK Operates
-            </h2>
-            <p className="text-slate-600 text-sm">
-              End-to-end telemetry pipeline from sensor ingestion to citizen safety.
-            </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Stage 1 */}
-            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-xs flex flex-col">
-              <div className="w-10 h-10 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold mb-4">
-                <Database className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-2">1. DATA INGESTION</h3>
-              <ul className="text-xs text-slate-600 space-y-1.5 flex-1">
-                <li>• Automatic Rain Gauges (ARG)</li>
-                <li>• Soil Moisture TDR probes</li>
-                <li>• Topographic DEM Slope & Elevation</li>
-                <li>• Drainage Culvert Flow Velocity</li>
-                <li>• Crowd Waterlogging Images</li>
-                <li>• Historical Multi-year Disasters</li>
-              </ul>
-            </div>
+          <p className="mt-3 text-sm sm:text-base font-semibold text-slate-700 max-w-lg">
+            {riskVisual.subtext}
+          </p>
 
-            {/* Stage 2 */}
-            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-xs flex flex-col">
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold mb-4">
-                <Brain className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-2">2. AI INFERENCE</h3>
-              <ul className="text-xs text-slate-600 space-y-1.5 flex-1">
-                <li>• <strong>XGBoost Model:</strong> Hyperlocal flood & landslide risk probability (0-100%)</li>
-                <li>• <strong>YOLO Vision:</strong> Auto-detects blocked grates, water depth, submerged vehicles</li>
-                <li>• <strong>SHAP TreeExplainer:</strong> Mathematical feature attribution per location</li>
-              </ul>
-            </div>
-
-            {/* Stage 3 */}
-            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-xs flex flex-col">
-              <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold mb-4">
-                <Eye className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-2">3. INTELLIGENCE</h3>
-              <ul className="text-xs text-slate-600 space-y-1.5 flex-1">
-                <li>• <strong>Root Cause Analysis:</strong> Overload vs Drainage Choke</li>
-                <li>• <strong>Lead Time:</strong> Expected risk window (1–3h advance)</li>
-                <li>• <strong>Impact Overlays:</strong> Affected houses, shops, schools, hospitals, population</li>
-                <li>• <strong>Dynamic Thresholds:</strong> Low, Moderate, High, Critical</li>
-              </ul>
-            </div>
-
-            {/* Stage 4 */}
-            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-xs flex flex-col">
-              <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold mb-4">
-                <FileCheck2 className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-2">4. SOP RESPONSE</h3>
-              <ul className="text-xs text-slate-600 space-y-1.5 flex-1">
-                <li>• Automated Multi-Tier Early Warnings</li>
-                <li>• Causeway & Road Closures</li>
-                <li>• Drainage Jetting Crew Dispatches</li>
-                <li>• Relief Shelter Activation</li>
-                <li>• Cell Broadcast SMS Notifications</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-12 text-center">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <button
-              onClick={onOpenCommandCenter}
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition cursor-pointer"
+              onClick={onNavigateToMap}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition cursor-pointer"
             >
-              <span>Launch Live Disaster Command Center</span>
+              <span>VIEW RISK MAP</span>
               <ArrowRight className="w-4 h-4 text-sky-400" />
+            </button>
+            <button
+              onClick={onOpenReportModal}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm shadow-md transition cursor-pointer"
+            >
+              <Camera className="w-4 h-4" />
+              <span>REPORT WATERLOGGING</span>
             </button>
           </div>
         </div>
+
+        {/* 2. WHAT IS HAPPENING? */}
+        <div className="mt-4 pt-6 border-t border-slate-100 bg-slate-50/70 rounded-2xl p-5 border border-slate-200/80">
+          <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <span>WHAT IS HAPPENING?</span>
+          </h3>
+
+          <p className="text-sm sm:text-base text-slate-800 font-medium leading-relaxed mb-4">
+            {getPlainExplanation()}
+          </p>
+
+          {/* Plain Condition Factors */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-white p-3 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-1">
+                <CloudRain className="w-4 h-4 text-sky-600" />
+                <span>Rainfall</span>
+              </div>
+              <div className="text-sm font-extrabold text-slate-900">
+                {rainfallStatus} ({activeLoc.rainfall} mm/h)
+              </div>
+            </div>
+
+            <div className="bg-white p-3 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-1">
+                <Construction className="w-4 h-4 text-amber-600" />
+                <span>Drain Condition</span>
+              </div>
+              <div className={`text-sm font-extrabold ${activeLoc.drainage_condition < 40 ? 'text-red-600' : 'text-slate-900'}`}>
+                {drainageStatus}
+              </div>
+            </div>
+
+            <div className="bg-white p-3 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-1">
+                <Droplets className="w-4 h-4 text-blue-600" />
+                <span>Soil Moisture</span>
+              </div>
+              <div className="text-sm font-extrabold text-slate-900">
+                {soilStatus}
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-3 text-xs text-slate-500 italic">
+            These conditions determine local flood risk across your streets.
+          </p>
+        </div>
+      </section>
+
+      {/* 3. PROMINENT FLASH FLOOD WARNING SYSTEM (Component 1 & 2 Requirement) */}
+      <section className="space-y-2">
+        <div className="flex items-center justify-between px-2">
+          <span className="text-xs font-black uppercase tracking-widest text-slate-400">
+            ACTIVE HAZARD FORECAST
+          </span>
+          <button
+            onClick={onNavigateToAlerts}
+            className="text-xs font-bold text-sky-700 hover:text-sky-900 underline flex items-center gap-1 cursor-pointer"
+          >
+            <span>All Warnings & Statuses</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+
+        <FlashFloodWarningCard
+          warning={activeFlashWarning}
+          onViewOnMap={onNavigateToMap}
+        />
+      </section>
+
+      {/* 4. WHAT SHOULD I DO? (ACTION CARD) */}
+      <section className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm p-6 sm:p-8">
+        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
+          <ShieldCheck className="w-6 h-6 text-sky-600" />
+          <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">
+            WHAT SHOULD YOU DO?
+          </h3>
+        </div>
+
+        {riskLevel === 'CRITICAL' || riskLevel === 'HIGH' ? (
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-3 bg-red-50 rounded-xl border border-red-200 text-red-900 text-sm font-semibold">
+              <span className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 text-xs font-bold">1</span>
+              <span>Avoid Main Market Road and Station Road — water levels are hazardous.</span>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-xl border border-orange-200 text-orange-900 text-sm font-semibold">
+              <span className="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center shrink-0 text-xs font-bold">2</span>
+              <span>Move away from low-lying areas and ground-level shop floors.</span>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-sm font-semibold">
+              <span className="w-6 h-6 rounded-full bg-amber-600 text-white flex items-center justify-center shrink-0 text-xs font-bold">3</span>
+              <span>Do not walk or drive through flowing water — depth can be deceptive.</span>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-800 text-sm font-semibold">
+              <span className="w-6 h-6 rounded-full bg-slate-700 text-white flex items-center justify-center shrink-0 text-xs font-bold">4</span>
+              <span>Follow instructions from local police and municipal teams. Call <strong>112</strong> for immediate help.</span>
+            </div>
+            {activeLoc.drainage_condition < 40 && (
+              <div className="p-3 bg-sky-50 rounded-xl border border-sky-200 text-sky-950 text-xs font-medium">
+                <strong>Drainage Blockage Action:</strong> Avoid the blocked drain channel. Municipal cleaning teams are responding.
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900 text-sm font-semibold">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <span>Current conditions are safe in this area. No active flood risk.</span>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 text-sm">
+              <span className="w-6 h-6 rounded-full bg-slate-400 text-white flex items-center justify-center shrink-0 text-xs font-bold">•</span>
+              <span>Keep roadside storm gutters free from garbage and plastic bags to maintain drainage.</span>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 text-sm">
+              <span className="w-6 h-6 rounded-full bg-slate-400 text-white flex items-center justify-center shrink-0 text-xs font-bold">•</span>
+              <span>Stay alert if continuous rainfall begins over the next 2–3 hours.</span>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* 5. REPORT FLOODING PROMINENT ACTION */}
+      <section className="bg-linear-to-br from-red-600 to-rose-700 rounded-3xl p-6 sm:p-8 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="space-y-2 text-center sm:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider">
+            <Camera className="w-4 h-4" />
+            <span>Citizen Action</span>
+          </div>
+          <h3 className="text-xl sm:text-2xl font-black tracking-tight">
+            See Flooding or a Blocked Drain?
+          </h3>
+          <p className="text-sm text-rose-100 max-w-xl">
+            Take a quick photo and report waterlogging on your street. Your report directly alerts authorities and updates the live risk map for your neighbors.
+          </p>
+        </div>
+
+        <button
+          onClick={onOpenReportModal}
+          className="shrink-0 px-6 py-3.5 rounded-2xl bg-white text-red-700 hover:bg-rose-50 font-black text-sm sm:text-base shadow-lg transition cursor-pointer flex items-center gap-2"
+        >
+          <Camera className="w-5 h-5 text-red-600" />
+          <span>📸 REPORT FLOODING</span>
+        </button>
       </section>
     </div>
   );

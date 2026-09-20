@@ -1,21 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from './api/client';
-import type { LocationData, IoTSensor, CitizenReport, EarlyWarningAlert, HistoricalEvent } from './types';
+import type { LocationData, IoTSensor, CitizenReport, EarlyWarningAlert, HistoricalEvent, FlashFloodWarning } from './types';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { CommandCenter } from './components/CommandCenter';
 import { DisasterMap } from './components/Map/DisasterMap';
-import { PredictionEngineWorkbench } from './components/PredictionEngine';
 import { AlertsAndResponse } from './components/AlertsAndResponse';
 import { CitizenReportModal } from './components/CitizenReportModal';
-import { CitizenReportFeed } from './components/CitizenReportFeed';
-import { ImpactAssessmentView } from './components/ImpactAssessment';
-import { LiveSensorDashboard } from './components/LiveSensorDashboard';
-import { HistoricalAnalyticsView } from './components/HistoricalAnalytics';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw, Camera } from 'lucide-react';
 
 export function App() {
-  const [currentTab, setCurrentTab] = useState<string>('landing');
+  const [currentTab, setCurrentTab] = useState<string>('home');
   const [isDemoMode, setIsDemoMode] = useState<boolean>(true);
   const [activeScenario, setActiveScenario] = useState<string>('scenario_2_drainage_blockage');
   const [lastUpdated, setLastUpdated] = useState<string>('13:30:15 IST');
@@ -29,22 +24,51 @@ export function App() {
   const [citizenReports, setCitizenReports] = useState<CitizenReport[]>([]);
   const [infrastructure, setInfrastructure] = useState<any[]>([]);
   const [historicalEvents, setHistoricalEvents] = useState<HistoricalEvent[]>([]);
-  const [timeSeriesData, setTimeSeriesData] = useState<any[]>([]);
-  const [seasonalData, setSeasonalData] = useState<any[]>([]);
-  const [timelineStages, setTimelineStages] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<EarlyWarningAlert[]>([]);
 
-  // Layer Toggles
+  // Flash Flood Warning State (Component 1 & 2)
+  const [activeFlashWarning, setActiveFlashWarning] = useState<FlashFloodWarning | null>({
+    id: 'warn-ward-12-initial',
+    status: 'CRITICAL',
+    statusLabel: 'FLASH FLOOD WARNING',
+    locationId: 'ward-12',
+    locationName: 'Ward 12 (Station Road / Market)',
+    roadName: 'Main Market Road',
+    riskLevel: 'HIGH',
+    estimatedWindow: 'NEXT 1–3 HOURS',
+    reason: 'Heavy rainfall + saturated soil + drainage stress',
+    affectedAreas: [
+      'Main Market Road',
+      'Low-Lying Market Zone',
+      'Station Road Culvert Ingress'
+    ],
+    actions: [
+      'Avoid Main Market Road',
+      'Move away from low-lying areas',
+      'Do not drive through flowing water',
+      'Follow local authority instructions'
+    ],
+    timeline: [
+      { label: 'NOW', subtext: 'Surface runoff rate escalating', isTriggered: true },
+      { label: 'Rainfall increasing', subtext: '42.0 mm/h inflow recorded', isTriggered: true },
+      { label: 'Soil moisture rising', subtext: 'Ground saturation at 82%', isTriggered: true },
+      { label: 'Drainage stress detected', subtext: 'Culvert efficiency down to 18% (Choked)', isTriggered: true },
+      { label: '⚠️ HIGH FLOOD RISK', subtext: 'NEXT 1–3 HOURS', isTriggered: true }
+    ],
+    timestamp: '13:30:15 IST'
+  });
+
+  // Layer Toggles (Default view ONLY shows Flood Risk per requirements)
   const [activeLayers, setActiveLayers] = useState({
     floodRisk: true,
-    landslideRisk: true,
-    rainfall: true,
-    soilMoisture: true,
-    drainage: true,
-    iotSensors: true,
+    landslideRisk: false,
+    rainfall: false,
+    soilMoisture: false,
+    drainage: false,
+    iotSensors: false,
     citizenReports: true,
-    infrastructure: true,
-    historicalEvents: true
+    infrastructure: false,
+    historicalEvents: false
   });
 
   // Modal
@@ -53,19 +77,17 @@ export function App() {
 
   const fetchAllData = async () => {
     try {
-      const [mapRes, alertsRes, sensorsRes, histRes, analyticsRes, timelineRes] = await Promise.all([
+      const [mapRes, alertsRes, sensorsRes, histRes] = await Promise.all([
         apiClient.getRiskMap(),
         apiClient.getAlerts(),
         apiClient.getSensors(),
-        apiClient.getHistoricalEvents(),
-        apiClient.getHistoricalAnalytics(),
-        apiClient.getRiskTimeline()
+        apiClient.getHistoricalEvents()
       ]);
 
       if (mapRes && mapRes.locations) {
         setLocations(mapRes.locations);
         if (!selectedLocation) {
-          // Default selection to Ward 12 (Station Road) to demonstrate the unique drainage choke problem
+          // Default selection to Ward 12 (Station Road / Market)
           const ward12 = mapRes.locations.find(l => l.id === 'ward-12') || mapRes.locations[0];
           setSelectedLocation(ward12);
         } else {
@@ -89,15 +111,6 @@ export function App() {
         setHistoricalEvents(histRes.events);
       }
 
-      if (analyticsRes) {
-        setTimeSeriesData(analyticsRes.rainfall_time_series || []);
-        setSeasonalData(analyticsRes.seasonal_alerts_distribution || []);
-      }
-
-      if (timelineRes && timelineRes.stages) {
-        setTimelineStages(timelineRes.stages);
-      }
-
       if (mapRes && mapRes.citizen_reports) {
         setCitizenReports(mapRes.citizen_reports);
       }
@@ -119,10 +132,88 @@ export function App() {
     setActiveScenario(scenario);
     try {
       await apiClient.switchScenario(scenario);
+
+      if (scenario === 'baseline') {
+        setActiveFlashWarning(null);
+      } else if (scenario === 'scenario_1_heavy_rainfall') {
+        setActiveFlashWarning({
+          id: 'warn-ward-04-heavy-rain',
+          status: 'CRITICAL',
+          statusLabel: 'FLASH FLOOD WARNING',
+          locationId: 'ward-04',
+          locationName: 'Ward 04 (Upper Valley / Riverside)',
+          roadName: 'Valley Riverside Road',
+          riskLevel: 'CRITICAL',
+          estimatedWindow: 'NEXT 1–3 HOURS',
+          reason: 'Heavy rainfall overload exceeding local drainage capacity',
+          affectedAreas: [
+            'Valley Riverside Road',
+            'Lower Ghat Terraces',
+            'Bridge Ingress Approach'
+          ],
+          actions: [
+            'Avoid Valley Riverside Road and low-lying river ghats',
+            'Move to designated highland emergency shelters',
+            'Do not walk or drive through flowing water',
+            'Follow instructions from municipal emergency personnel (Call 112)'
+          ],
+          timeline: [
+            { label: 'NOW', subtext: 'Cloudburst precipitation at 110 mm/h', isTriggered: true },
+            { label: 'Rainfall increasing', subtext: 'Runoff velocity surging', isTriggered: true },
+            { label: 'Soil moisture rising', subtext: 'Pore pressure saturation at 96%', isTriggered: true },
+            { label: 'Drainage stress detected', subtext: 'Channel capacity overwhelmed', isTriggered: true },
+            { label: '⚠️ CRITICAL FLOOD RISK', subtext: 'NEXT 1–3 HOURS', isTriggered: true }
+          ],
+          timestamp: new Date().toLocaleTimeString('en-IN') + ' IST'
+        });
+      } else if (scenario === 'scenario_2_drainage_blockage') {
+        setActiveFlashWarning({
+          id: 'warn-ward-12-blocked',
+          status: 'CRITICAL',
+          statusLabel: 'FLASH FLOOD WARNING',
+          locationId: 'ward-12',
+          locationName: 'Ward 12 (Station Road / Market)',
+          roadName: 'Main Market Road',
+          riskLevel: 'HIGH',
+          estimatedWindow: 'NEXT 1–3 HOURS',
+          reason: 'Moderate rainfall combined with blocked drainage is creating localized waterlogging',
+          affectedAreas: [
+            'Main Market Road',
+            'Low-Lying Market Zone',
+            'Station Road Culvert Ingress'
+          ],
+          actions: [
+            'Avoid Main Market Road',
+            'Move away from low-lying areas and ground level shops',
+            'Allow municipal suction crews to inspect and clear culvert',
+            'Follow local authority instructions (Call 112)'
+          ],
+          timeline: [
+            { label: 'NOW', subtext: 'Moderate rainfall at 42.0 mm/h', isTriggered: true },
+            { label: 'Rainfall increasing', subtext: 'Surface water accumulating', isTriggered: true },
+            { label: 'Soil moisture rising', subtext: 'Saturation at 81.5%', isTriggered: true },
+            { label: 'Drainage stress detected', subtext: 'Station culvert choked (18% throughput)', isTriggered: true },
+            { label: '⚠️ HIGH FLOOD RISK', subtext: 'NEXT 1–3 HOURS', isTriggered: true }
+          ],
+          timestamp: new Date().toLocaleTimeString('en-IN') + ' IST'
+        });
+      }
+
       fetchAllData();
     } catch (err) {
       console.error('Failed to switch scenario:', err);
     }
+  };
+
+  // Simulator Generated Warning handler (Section 10 & 12)
+  const handleApplySimulatorWarning = (warning: FlashFloodWarning, updatedLoc: LocationData) => {
+    setActiveFlashWarning(warning);
+    setSelectedLocation(updatedLoc);
+    setLocations(prev => prev.map(l => l.id === updatedLoc.id ? updatedLoc : l));
+  };
+
+  const handleResetSimulation = () => {
+    handleScenarioChange('baseline');
   };
 
   const handleToggleLayer = (layerKey: string) => {
@@ -132,9 +223,13 @@ export function App() {
     }));
   };
 
+  // Calculate active alerts count including flash warning
+  const activeAlertsCount = (activeFlashWarning && activeFlashWarning.status !== 'NONE' ? 1 : 0) +
+    alerts.filter(a => a.severity === 'CRITICAL' || a.severity === 'WARNING').length;
+
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
-      {/* Top Navigation */}
+    <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
+      {/* Top Streamlined Navigation */}
       <Navbar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
@@ -142,9 +237,10 @@ export function App() {
         setIsDemoMode={setIsDemoMode}
         activeScenario={activeScenario}
         onScenarioChange={handleScenarioChange}
-        activeAlertsCount={alerts.filter(a => a.severity === 'CRITICAL' || a.severity === 'WARNING').length}
+        activeAlertsCount={activeAlertsCount}
         lastUpdated={lastUpdated}
         onRefresh={fetchAllData}
+        onOpenReportModal={() => setIsReportModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -152,53 +248,44 @@ export function App() {
         {loading ? (
           <div className="h-96 flex flex-col items-center justify-center text-slate-500 gap-3">
             <RefreshCw className="w-8 h-8 animate-spin text-sky-600" />
-            <div className="font-bold text-sm">Ingesting Multi-Source Hydrological Telemetry...</div>
+            <div className="font-bold text-sm">Syncing Local Flood Risk & Sensor Network...</div>
           </div>
         ) : (
           <>
-            {currentTab === 'landing' && (
+            {/* 1. HOME TAB */}
+            {currentTab === 'home' && (
               <LandingPage
-                onOpenCommandCenter={() => setCurrentTab('command-center')}
-                onExploreHowItWorks={() => {
-                  const el = document.getElementById('how-it-works');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-              />
-            )}
-
-            {currentTab === 'command-center' && selectedLocation && (
-              <CommandCenter
                 locations={locations}
                 selectedLocation={selectedLocation}
                 onSelectLocation={setSelectedLocation}
-                riverNetworks={riverNetworks}
-                drainageLines={drainageLines}
-                sensors={sensors}
-                citizenReports={citizenReports}
-                infrastructure={infrastructure}
-                historicalEvents={historicalEvents}
                 alerts={alerts}
-                activeLayers={activeLayers}
-                onToggleLayer={handleToggleLayer}
-                onNavigateTab={setCurrentTab}
+                activeFlashWarning={activeFlashWarning}
+                lastUpdated={lastUpdated}
+                onNavigateToMap={() => setCurrentTab('risk-map')}
                 onOpenReportModal={() => setIsReportModalOpen(true)}
+                onNavigateToAlerts={() => setCurrentTab('alerts')}
               />
             )}
 
-            {currentTab === 'risk-map' && selectedLocation && (
+            {/* 2. RISK MAP TAB */}
+            {currentTab === 'risk-map' && (
               <div className="space-y-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">
-                      Interactive Disaster GIS Overview
+                    <h2 className="text-lg font-black text-slate-900 tracking-tight font-mono">
+                      LOCAL FLOOD RISK MAP
                     </h2>
                     <p className="text-xs text-slate-500">
-                      Full multi-layer GIS view including Wards, Rivers, Drainage lines, IoT Telemetry, and Citizen Alerts.
+                      Click any ward polygon or active warning zone to view concise risk, cause, and safety instructions
                     </p>
                   </div>
-                  <div className="text-xs font-bold text-sky-700 bg-sky-50 px-3 py-1 rounded-lg border border-sky-200">
-                    Active Target: {selectedLocation.name}
-                  </div>
+                  <button
+                    onClick={() => setIsReportModalOpen(true)}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center gap-2 cursor-pointer self-start sm:self-auto"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>REPORT WATERLOGGING</span>
+                  </button>
                 </div>
 
                 <DisasterMap
@@ -211,56 +298,55 @@ export function App() {
                   citizenReports={citizenReports}
                   infrastructure={infrastructure}
                   historicalEvents={historicalEvents}
+                  activeFlashWarning={activeFlashWarning}
                   activeLayers={activeLayers}
                   onToggleLayer={handleToggleLayer}
                 />
               </div>
             )}
 
-            {currentTab === 'predictions' && (
-              <PredictionEngineWorkbench />
-            )}
-
+            {/* 4. ALERTS TAB */}
             {currentTab === 'alerts' && (
-              <AlertsAndResponse alerts={alerts} />
-            )}
-
-            {currentTab === 'citizen-reports' && (
-              <CitizenReportFeed
-                reports={citizenReports}
-                onOpenReportModal={() => setIsReportModalOpen(true)}
+              <AlertsAndResponse
+                alerts={alerts}
+                activeFlashWarning={activeFlashWarning}
+                onViewOnMap={(locId) => {
+                  if (locId) {
+                    const found = locations.find(l => l.id === locId);
+                    if (found) setSelectedLocation(found);
+                  }
+                  setCurrentTab('risk-map');
+                }}
               />
             )}
 
-            {currentTab === 'impact' && selectedLocation && (
-              <ImpactAssessmentView location={selectedLocation} />
-            )}
-
-            {currentTab === 'response' && (
-              <AlertsAndResponse alerts={alerts} />
-            )}
-
-            {currentTab === 'analytics' && (
-              <HistoricalAnalyticsView
-                events={historicalEvents}
-                timeSeriesData={timeSeriesData}
-                seasonalData={seasonalData}
-                timelineStages={timelineStages}
-              />
-            )}
-
-            {currentTab === 'sensors' && (
-              <LiveSensorDashboard
+            {/* 5. RESPONSE CENTER (AUTHORITY TAB: Operations Center + Scenario Simulator) */}
+            {currentTab === 'response-center' && (
+              <CommandCenter
+                locations={locations}
+                selectedLocation={selectedLocation || locations[0]}
+                onSelectLocation={setSelectedLocation}
+                riverNetworks={riverNetworks}
+                drainageLines={drainageLines}
                 sensors={sensors}
-                dataOrigin={isDemoMode ? 'DEMO / SIMULATED SENSOR TELEMETRY' : 'LIVE IOT GATEWAY'}
-                onRefresh={fetchAllData}
+                citizenReports={citizenReports}
+                infrastructure={infrastructure}
+                historicalEvents={historicalEvents}
+                alerts={alerts}
+                activeFlashWarning={activeFlashWarning}
+                onApplyWarning={handleApplySimulatorWarning}
+                onResetSimulation={handleResetSimulation}
+                activeLayers={activeLayers}
+                onToggleLayer={handleToggleLayer}
+                onNavigateTab={setCurrentTab}
+                onOpenReportModal={() => setIsReportModalOpen(true)}
               />
             )}
           </>
         )}
       </main>
 
-      {/* Citizen Report Modal */}
+      {/* Citizen Waterlogging Report Modal */}
       <CitizenReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
@@ -268,19 +354,26 @@ export function App() {
         onReportSubmitted={fetchAllData}
       />
 
-      {/* Government Standard Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-6 px-4 border-t border-slate-800 text-xs text-center">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-white font-mono">JALRAKSHAK</span>
+      {/* Professional Disaster Management Footer */}
+      <footer className="bg-slate-900 text-slate-400 py-6 px-4 border-t border-slate-800 text-xs">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <span className="font-black text-white font-mono text-sm tracking-wide">JALRAKSHAK</span>
             <span>—</span>
-            <span>Emergency Operations Center Decision Support Platform</span>
+            <span>Know the risk. Act early.</span>
           </div>
 
-          <div className="flex items-center gap-4 text-[11px]">
-            <span>Model Integration: <b className="text-slate-200">Placeholder Interface Active</b></span>
+          <div className="flex flex-wrap items-center gap-4 text-xs">
+            <span>Emergency Helpline: <b className="text-white font-mono">112</b></span>
             <span>•</span>
-            <span>Plug-and-play: <b className="text-sky-400">models/flood_model</b> & <b className="text-sky-400">models/yolo_model</b></span>
+            <span>Municipal Disaster Management Cell</span>
+            <span>•</span>
+            <button
+              onClick={() => setCurrentTab('response-center')}
+              className="text-sky-400 hover:underline font-semibold cursor-pointer"
+            >
+              Authority Center (EOC / Simulator)
+            </button>
           </div>
         </div>
       </footer>
