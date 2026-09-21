@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import type { LocationData, IoTSensor, CitizenReport, HistoricalEvent, FlashFloodWarning } from '../../types';
-import { Layers, X, Clock, AlertTriangle } from 'lucide-react';
+import { Layers, X, Clock, AlertTriangle, Plus, Minus, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Compass } from 'lucide-react';
 
 interface DisasterMapProps {
   locations: LocationData[];
@@ -28,6 +28,57 @@ interface DisasterMapProps {
   onToggleLayer: (layerKey: string) => void;
 }
 
+// 100% Free, High-Speed Map Tile Providers (Zero Watermarks, No API Key, No Billing, No Sign-up Required)
+export const BASE_MAP_PROVIDERS = {
+  osm: {
+    id: 'osm',
+    name: 'Real Map of India (OpenStreetMap)',
+    shortName: 'India Streets',
+    icon: '🇮🇳',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    options: {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors | JALRAKSHAK INDIA'
+    }
+  },
+  satellite: {
+    id: 'satellite',
+    name: 'Satellite View (ESRI World Imagery)',
+    shortName: 'Satellite',
+    icon: '🛰️',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    options: {
+      maxZoom: 19,
+      attribution: 'Tiles &copy; Esri &mdash; Earthstar Geographics'
+    }
+  },
+  topo: {
+    id: 'topo',
+    name: 'Topographic & Contours (OpenTopoMap)',
+    shortName: 'Terrain',
+    icon: '⛰️',
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    options: {
+      maxZoom: 17,
+      subdomains: 'abc',
+      attribution: 'Map data: &copy; OpenStreetMap, SRTM | Style: OpenTopoMap'
+    }
+  },
+  esriStreet: {
+    id: 'esriStreet',
+    name: 'ESRI World Street Map',
+    shortName: 'Clean Street',
+    icon: '🗺️',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    options: {
+      maxZoom: 19,
+      attribution: 'Tiles &copy; Esri'
+    }
+  }
+} as const;
+
+export type BaseMapKey = keyof typeof BASE_MAP_PROVIDERS;
+
 export const DisasterMap: React.FC<DisasterMapProps> = ({
   locations,
   selectedLocation,
@@ -43,31 +94,78 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const baseTileLayerRef = useRef<L.TileLayer | null>(null);
   const layerGroupsRef = useRef<{ [key: string]: L.LayerGroup }>({});
   const [layersMenuOpen, setLayersMenuOpen] = useState(false);
   const [showLocationPanel, setShowLocationPanel] = useState(true);
+  const [selectedBaseMap, setSelectedBaseMap] = useState<BaseMapKey>('osm');
+
+  // Handle Base Map tile layer switching
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const config = BASE_MAP_PROVIDERS[selectedBaseMap];
+
+    if (baseTileLayerRef.current) {
+      map.removeLayer(baseTileLayerRef.current);
+    }
+
+    const newBaseLayer = L.tileLayer(config.url, config.options);
+    newBaseLayer.addTo(map);
+    newBaseLayer.bringToBack();
+    baseTileLayerRef.current = newBaseLayer;
+  }, [selectedBaseMap]);
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
-      // Center on the valley basin
+      // Center on the valley basin in Uttarakhand, India
       const map = L.map(mapContainerRef.current, {
         center: [30.0920, 78.2676],
         zoom: 13,
-        zoomControl: true,
-        attributionControl: false
+        minZoom: 3,
+        maxZoom: 19,
+        zoomControl: false, // Replaced with dedicated unobstructed custom floating navigation controls
+        attributionControl: false,
+        scrollWheelZoom: false, // Default off to prevent scrolling page from zooming map
+        doubleClickZoom: true,
+        touchZoom: true,
+        dragging: true, // Smooth drag to pan enabled
+        inertia: true,
+        inertiaDeceleration: 2500,
+        inertiaMaxSpeed: 1500,
+        easeLinearity: 0.2,
+        keyboard: true,
+        keyboardPanDelta: 80
       });
 
-      // High quality CartoDB Positron clean map tiles for emergency operations
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        subdomains: 'abcd'
-      }).addTo(map);
+      // Explicitly ensure panning/dragging handlers are active
+      map.dragging.enable();
+      if (map.touchZoom) map.touchZoom.enable();
+
+      // Smart zoom: user clicking or focusing on the map activates scroll zoom; leaving map disables it
+      map.on('click', () => {
+        map.scrollWheelZoom.enable();
+      });
+      map.on('focus', () => {
+        map.scrollWheelZoom.enable();
+      });
+      mapContainerRef.current.addEventListener('mouseleave', () => {
+        map.scrollWheelZoom.disable();
+      });
+
+      // Free, high-speed, zero-watermark base tiles (Default: Real OpenStreetMap of India)
+      const config = BASE_MAP_PROVIDERS[selectedBaseMap];
+      const initialBase = L.tileLayer(config.url, config.options);
+      initialBase.addTo(map);
+      initialBase.bringToBack();
+      baseTileLayerRef.current = initialBase;
 
       // Attribution
       L.control.attribution({ position: 'bottomright' })
-        .addAttribution('&copy; OpenStreetMap &copy; CARTO | JALRAKSHAK')
+        .addAttribution('&copy; OpenStreetMap contributors | JALRAKSHAK INDIA')
         .addTo(map);
 
       mapInstanceRef.current = map;
@@ -367,18 +465,73 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
         </div>
       )}
 
-      {/* Simple LAYERS Button & Popover */}
-      <div className="absolute top-4 right-4 z-40">
+      {/* Top Controls: Quick Navigation & LAYERS */}
+      <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
         <button
-          onClick={() => setLayersMenuOpen(!layersMenuOpen)}
-          className="flex items-center gap-2 px-3.5 py-2 bg-white/95 backdrop-blur-md rounded-xl border border-slate-300 shadow-md text-xs font-bold text-slate-800 hover:bg-white hover:text-slate-900 transition cursor-pointer"
+          type="button"
+          onClick={() => mapInstanceRef.current?.setView([30.0920, 78.2676], 13)}
+          className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-white/95 backdrop-blur-md rounded-xl border border-slate-300 shadow-md text-xs font-bold text-slate-800 hover:bg-white hover:text-sky-600 transition cursor-pointer"
+          title="Reset View to Rishikesh Basin"
         >
-          <Layers className="w-4 h-4 text-sky-600" />
-          <span>LAYERS</span>
+          <span>🎯</span>
+          <span>Basin</span>
         </button>
 
+        <button
+          type="button"
+          onClick={() => mapInstanceRef.current?.setView([22.5937, 78.9629], 5)}
+          className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-white/95 backdrop-blur-md rounded-xl border border-slate-300 shadow-md text-xs font-bold text-slate-800 hover:bg-white hover:text-sky-600 transition cursor-pointer"
+          title="View Entire Map of India"
+        >
+          <span>🇮🇳</span>
+          <span>India View</span>
+        </button>
+
+        <div className="relative">
+          <button
+            onClick={() => setLayersMenuOpen(!layersMenuOpen)}
+            className="flex items-center gap-2 px-3.5 py-2 bg-white/95 backdrop-blur-md rounded-xl border border-slate-300 shadow-md text-xs font-bold text-slate-800 hover:bg-white hover:text-slate-900 transition cursor-pointer"
+          >
+            <Layers className="w-4 h-4 text-sky-600" />
+            <span>LAYERS</span>
+          </button>
+
         {layersMenuOpen && (
-          <div className="mt-2 bg-white rounded-2xl p-3 border border-slate-200 shadow-xl text-xs w-52 space-y-2">
+          <div className="mt-2 bg-white rounded-2xl p-3.5 border border-slate-200 shadow-xl text-xs w-60 space-y-3">
+            {/* Free Base Map Selector (No API / No Sign-up) */}
+            <div>
+              <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                <span className="font-extrabold text-slate-900 uppercase tracking-wider text-[10px]">
+                  Base Map
+                </span>
+                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">
+                  FREE / NO KEY
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 mt-2">
+                {(Object.keys(BASE_MAP_PROVIDERS) as BaseMapKey[]).map((key) => {
+                  const provider = BASE_MAP_PROVIDERS[key];
+                  const isActive = selectedBaseMap === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setSelectedBaseMap(key)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-left transition cursor-pointer ${
+                        isActive
+                          ? 'bg-sky-600 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200/80 border border-slate-200/60'
+                      }`}
+                      title={provider.name}
+                    >
+                      <span className="text-xs">{provider.icon}</span>
+                      <span className="truncate">{provider.shortName}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="font-extrabold text-slate-900 pb-1 border-b border-slate-100 uppercase tracking-wider text-[10px]">
               Display Layers
             </div>
@@ -449,6 +602,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
             </label>
           </div>
         )}
+        </div>
       </div>
 
       {/* Selected Location / Warning Zone Concise Panel (Section 4 & 6 Requirement) */}
@@ -525,6 +679,83 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
         <span className="flex items-center gap-1 text-slate-700 font-medium">
           <span className="w-2.5 h-2.5 rounded-full bg-red-600" /> Critical
         </span>
+      </div>
+
+      {/* Dedicated Floating Map Navigation Toolbar (Pan & Zoom) */}
+      <div className="absolute bottom-5 right-4 z-40 flex flex-col items-center gap-2">
+        {/* Directional Pan Controls */}
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-slate-300 shadow-lg p-1 flex flex-col items-center">
+          <button
+            type="button"
+            onClick={() => mapInstanceRef.current?.panBy([0, -120], { animate: true, duration: 0.3 })}
+            className="p-1 text-slate-700 hover:bg-sky-50 hover:text-sky-600 rounded-lg transition cursor-pointer"
+            title="Pan North (Up)"
+            aria-label="Pan North"
+          >
+            <ChevronUp className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => mapInstanceRef.current?.panBy([-120, 0], { animate: true, duration: 0.3 })}
+              className="p-1 text-slate-700 hover:bg-sky-50 hover:text-sky-600 rounded-lg transition cursor-pointer"
+              title="Pan West (Left)"
+              aria-label="Pan West"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => mapInstanceRef.current?.setView([30.0920, 78.2676], 13)}
+              className="p-1 text-slate-400 hover:text-sky-600 rounded-lg transition cursor-pointer"
+              title="Center Basin"
+              aria-label="Center Basin"
+            >
+              <Compass className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => mapInstanceRef.current?.panBy([120, 0], { animate: true, duration: 0.3 })}
+              className="p-1 text-slate-700 hover:bg-sky-50 hover:text-sky-600 rounded-lg transition cursor-pointer"
+              title="Pan East (Right)"
+              aria-label="Pan East"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => mapInstanceRef.current?.panBy([0, 120], { animate: true, duration: 0.3 })}
+            className="p-1 text-slate-700 hover:bg-sky-50 hover:text-sky-600 rounded-lg transition cursor-pointer"
+            title="Pan South (Down)"
+            aria-label="Pan South"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Zoom In & Out (+ / -) */}
+        <div className="flex flex-col bg-white/95 backdrop-blur-md rounded-2xl border border-slate-300 shadow-lg overflow-hidden w-full">
+          <button
+            type="button"
+            onClick={() => mapInstanceRef.current?.zoomIn()}
+            className="p-2 text-slate-800 hover:bg-sky-50 hover:text-sky-600 transition cursor-pointer flex items-center justify-center"
+            title="Zoom In (+)"
+            aria-label="Zoom In"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+          <div className="h-[1px] bg-slate-200" />
+          <button
+            type="button"
+            onClick={() => mapInstanceRef.current?.zoomOut()}
+            className="p-2 text-slate-800 hover:bg-sky-50 hover:text-sky-600 transition cursor-pointer flex items-center justify-center"
+            title="Zoom Out (-)"
+            aria-label="Zoom Out"
+          >
+            <Minus className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

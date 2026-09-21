@@ -50,6 +50,13 @@ body {
   border-radius: 0.75rem;
   z-index: 1;
   font-family: var(--font-sans);
+  cursor: grab !important;
+}
+
+.leaflet-container:active,
+.leaflet-container.leaflet-grab:active,
+.leaflet-dragging .leaflet-container {
+  cursor: grabbing !important;
 }
 
 .custom-div-icon {
