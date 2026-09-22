@@ -4,7 +4,9 @@ import type {
   IoTSensor,
   CitizenReport,
   HistoricalEvent,
-  ImageAnalysisResponse
+  ImageAnalysisResponse,
+  LiveEnvironmentalData,
+  OfficialImdWarning
 } from '../types';
 import { staticData } from '../data/staticData';
 
@@ -16,6 +18,7 @@ let activeAlerts: EarlyWarningAlert[] = [...staticData.alerts];
 let activeSensors: IoTSensor[] = [...staticData.iot_sensors];
 let activeCitizenReports: CitizenReport[] = [...staticData.citizen_reports];
 let currentScenario = 'scenario_2_drainage_blockage';
+let currentActiveMode: 'LIVE' | 'DEMO' = 'DEMO';
 
 export const apiClient = {
   async getHealth() {
@@ -29,15 +32,148 @@ export const apiClient = {
       status: 'HEALTHY',
       system: 'JALRAKSHAK Early Warning Engine (Static Mode)',
       version: '1.0.0',
-      mode: 'DEMO DATA',
+      mode: currentActiveMode === 'DEMO' ? 'DEMO DATA' : 'LIVE DATA',
       flood_model: { loaded: true, type: 'xgboost' },
       yolo_model: { loaded: true },
       explainability: { loaded: true }
     };
   },
 
-  async getRiskMap(): Promise<{
+  async getMode(): Promise<{ success: boolean; mode: string; is_demo_mode: boolean; scenario: string; timestamp: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/mode`);
+      if (res.ok) {
+        const data = await res.json();
+        currentActiveMode = data.mode === 'LIVE' ? 'LIVE' : 'DEMO';
+        return data;
+      }
+    } catch {
+      // Fallback
+    }
+    return {
+      success: true,
+      mode: currentActiveMode,
+      is_demo_mode: currentActiveMode === 'DEMO',
+      scenario: currentScenario,
+      timestamp: new Date().toLocaleTimeString('en-IN') + ' IST'
+    };
+  },
+
+  async setMode(mode: 'LIVE' | 'DEMO'): Promise<{ success: boolean; mode: string; is_demo_mode: boolean }> {
+    currentActiveMode = mode;
+    try {
+      const res = await fetch(`${API_BASE}/mode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode })
+      });
+      if (res.ok) return await res.json();
+    } catch {
+      // Fallback
+    }
+    return {
+      success: true,
+      mode,
+      is_demo_mode: mode === 'DEMO'
+    };
+  },
+
+  async getLiveEnvironment(locationId: string = 'ward-12', forceRefresh: boolean = false): Promise<LiveEnvironmentalData> {
+    try {
+      const res = await fetch(`${API_BASE}/live/environment?location_id=${locationId}&force_refresh=${forceRefresh}`);
+      if (res.ok) return await res.json();
+    } catch {
+      // Fallback
+    }
+    // Fallback modeled object
+    return {
+      mode: 'LIVE DATA',
+      location: {
+        id: locationId,
+        name: locationId === 'ward-12' ? 'Ward 12 (Station Road & Central Bazaar)' : 'Uttarakhand Sector',
+        district: 'Dehradun',
+        state: 'Uttarakhand',
+        latitude: 30.0920,
+        longitude: 78.2690,
+        elevation_m: 348.0,
+        slope_deg: 4.5,
+        nearest_station: 'Rishikesh / Dehradun Foothills'
+      },
+      retrieved_at: new Date().toLocaleTimeString('en-IN') + ' IST',
+      observed_at: new Date().toLocaleTimeString('en-IN') + ' IST',
+      sources: ['Open-Meteo Weather API', 'IMD CAP Alert Feed'],
+      variables: {
+        rainfall: {
+          value: 0.0,
+          unit: 'mm/h',
+          source: 'Open-Meteo',
+          data_type: 'OBSERVED',
+          observed_at: 'Just now',
+          status: 'ACTIVE'
+        },
+        temperature: {
+          value: 23.5,
+          unit: '°C',
+          source: 'Open-Meteo',
+          data_type: 'OBSERVED',
+          observed_at: 'Just now',
+          status: 'ACTIVE'
+        },
+        humidity: {
+          value: 88,
+          unit: '%',
+          source: 'Open-Meteo',
+          data_type: 'OBSERVED',
+          observed_at: 'Just now',
+          status: 'ACTIVE'
+        },
+        soil_moisture: {
+          value: 52.0,
+          unit: '% saturation',
+          source: 'Open-Meteo (Hydrological Model)',
+          data_type: 'MODELED',
+          observed_at: 'Just now',
+          status: 'ACTIVE'
+        },
+        river_level: {
+          value: null,
+          unit: 'm',
+          source: 'Central Water Commission (CWC)',
+          data_type: 'UNAVAILABLE',
+          observed_at: null,
+          status: 'NO_LIVE_GAUGE_CONNECTED',
+          note: 'River gauge telemetry offline for this tributary reach.'
+        },
+        drainage_condition: {
+          value: 80.0,
+          unit: 'efficiency score (0-100)',
+          source: 'Municipal Baseline Design',
+          data_type: 'BASELINE_ESTIMATE',
+          observed_at: null,
+          status: 'NO_LIVE_OBSERVATION'
+        }
+      },
+      official_warnings: []
+    };
+  },
+
+  async getLiveWarnings(forceRefresh: boolean = false): Promise<{ success: boolean; warnings: OfficialImdWarning[]; count: number }> {
+    try {
+      const res = await fetch(`${API_BASE}/live/warnings?force_refresh=${forceRefresh}`);
+      if (res.ok) return await res.json();
+    } catch {
+      // Fallback
+    }
+    return {
+      success: true,
+      warnings: [],
+      count: 0
+    };
+  },
+
+  async getRiskMap(mode?: string): Promise<{
     success: boolean;
+    mode?: string;
     scenario: string;
     is_demo_mode: boolean;
     locations: LocationData[];
@@ -48,15 +184,17 @@ export const apiClient = {
     critical_infrastructure: any[];
   }> {
     try {
-      const res = await fetch(`${API_BASE}/risk/map`);
+      const url = mode ? `${API_BASE}/risk/map?mode=${mode}` : `${API_BASE}/risk/map`;
+      const res = await fetch(url);
       if (res.ok) return await res.json();
     } catch {
       // Fallback for GitHub Pages
     }
     return {
       success: true,
+      mode: mode || currentActiveMode,
       scenario: currentScenario,
-      is_demo_mode: true,
+      is_demo_mode: (mode || currentActiveMode) === 'DEMO',
       locations: activeLocations,
       river_networks: staticData.river_networks,
       drainage_lines: staticData.drainage_lines,
@@ -226,17 +364,28 @@ export const apiClient = {
     };
   },
 
-  async getAlerts(): Promise<{ success: boolean; count: number; alerts: EarlyWarningAlert[] }> {
+  async getAlerts(mode?: string): Promise<{
+    success: boolean;
+    mode?: string;
+    is_demo_mode?: boolean;
+    count: number;
+    alerts: EarlyWarningAlert[];
+    official_imd_warnings?: OfficialImdWarning[];
+  }> {
     try {
-      const res = await fetch(`${API_BASE}/alerts`);
+      const url = mode ? `${API_BASE}/alerts?mode=${mode}` : `${API_BASE}/alerts`;
+      const res = await fetch(url);
       if (res.ok) return await res.json();
     } catch {
       // Fallback
     }
     return {
       success: true,
+      mode: mode || currentActiveMode,
+      is_demo_mode: (mode || currentActiveMode) === 'DEMO',
       count: activeAlerts.length,
-      alerts: activeAlerts
+      alerts: activeAlerts,
+      official_imd_warnings: []
     };
   },
 

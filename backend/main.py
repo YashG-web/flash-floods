@@ -12,6 +12,7 @@ from services.risk_engine import cause_intelligence_engine
 from services.image_analysis import image_analysis_service
 from services.impact_engine import impact_assessment_engine
 from services.alert_engine import alert_engine
+from services.live_data_service import live_data_service, LOCATION_COORDINATES
 from data.geodata import (
     WARDS_AND_VILLAGES,
     RIVER_NETWORKS,
@@ -38,9 +39,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Current active scenario state (default to Scenario 2: Drainage Blockage to showcase the core problem)
-CURRENT_SCENARIO = "scenario_2_drainage_blockage"
-IS_DEMO_MODE = True
+# Global Mode & Scenario Architecture
+CURRENT_MODE: str = "DEMO"  # "LIVE" or "DEMO"
+CURRENT_SCENARIO: str = "scenario_2_drainage_blockage"
+
+class ModeRequest(BaseModel):
+    mode: str = Field(..., description="Operating mode: 'LIVE' or 'DEMO'")
 
 class FloodPredictionRequest(BaseModel):
     rainfall: float = Field(..., description="Hourly rainfall in mm/h")
@@ -71,7 +75,9 @@ def health_check():
         "status": "HEALTHY",
         "system": "JALRAKSHAK Early Warning Engine",
         "version": settings.VERSION,
-        "mode": "DEMO DATA" if IS_DEMO_MODE else "LIVE DATA",
+        "mode": "DEMO DATA" if CURRENT_MODE == "DEMO" else "LIVE DATA",
+        "active_mode": CURRENT_MODE,
+        "active_scenario": CURRENT_SCENARIO if CURRENT_MODE == "DEMO" else "LIVE_OBSERVATIONS",
         "flood_model": {
             "loaded": flood_prediction_service.is_loaded,
             "path": settings.FLOOD_MODEL_PATH,
@@ -86,17 +92,95 @@ def health_check():
         }
     }
 
+@app.get("/api/mode")
+def get_mode():
+    return {
+        "success": True,
+        "mode": CURRENT_MODE,
+        "is_demo_mode": CURRENT_MODE == "DEMO",
+        "scenario": CURRENT_SCENARIO,
+        "timestamp": live_data_service.get_ist_now_str()
+    }
+
+@app.post("/api/mode")
+def set_mode(payload: ModeRequest):
+    global CURRENT_MODE
+    mode_upper = payload.mode.strip().upper()
+    if mode_upper in ["LIVE", "LIVE DATA"]:
+        CURRENT_MODE = "LIVE"
+    elif mode_upper in ["DEMO", "DEMO DATA"]:
+        CURRENT_MODE = "DEMO"
+    else:
+        raise HTTPException(status_code=400, detail="Mode must be 'LIVE' or 'DEMO'")
+    return {
+        "success": True,
+        "mode": CURRENT_MODE,
+        "is_demo_mode": CURRENT_MODE == "DEMO",
+        "scenario": CURRENT_SCENARIO,
+        "timestamp": live_data_service.get_ist_now_str()
+    }
+
+@app.get("/api/live/environment")
+def get_live_environment(
+    location_id: Optional[str] = Query("ward-12", description="Location ID to query live data for"),
+    force_refresh: bool = Query(False, description="Bypass cache and force refresh external APIs")
+):
+    """
+    Returns normalized live environmental data for Uttarakhand location from Open-Meteo & IMD.
+    """
+    loc_id = location_id if location_id in LOCATION_COORDINATES else "ward-12"
+    return live_data_service.get_live_environment_for_location(loc_id, force_refresh=force_refresh)
+
+@app.get("/api/live/warnings")
+def get_live_warnings(
+    force_refresh: bool = Query(False, description="Bypass cache and force refresh IMD CAP feed")
+):
+    """
+    Returns official India Meteorological Department (IMD) Common Alerting Protocol (CAP) bulletins.
+    """
+    warnings = live_data_service.fetch_imd_cap_warnings(force_refresh=force_refresh)
+    return {
+        "success": True,
+        "source": "India Meteorological Department (IMD)",
+        "feed_type": "Official Common Alerting Protocol (CAP)",
+        "count": len(warnings),
+        "warnings": warnings,
+        "retrieved_at": live_data_service.get_ist_now_str()
+    }
+
 @app.get("/api/risk/map")
-def get_risk_map():
+def get_risk_map(mode: Optional[str] = Query(None)):
     """
     Returns spatial GeoJSON/features of all wards and villages with live model inference,
-    cause classification, and SHAP explainability.
+    cause classification, and SHAP explainability. Supports mode='live' or mode='demo'.
     """
+    effective_mode = (mode or CURRENT_MODE).upper()
+    is_live = (effective_mode == "LIVE")
+    
     locations_output = []
     
     for loc in WARDS_AND_VILLAGES:
-        # Perform real prediction using active XGBoost model
-        pred_res = flood_prediction_service.predict(loc)
+        loc_id = loc["id"]
+        if is_live:
+            # Fetch real normalized live environmental inputs for this Uttarakhand location
+            live_env = live_data_service.get_live_environment_for_location(loc_id)
+            vars_data = live_env.get("variables", {})
+            
+            # Map normalized live observations into model feature schema
+            loc_input = {
+                **loc,
+                "rainfall": float(vars_data.get("rainfall", {}).get("value", 0.0)),
+                "soil_moisture": float(vars_data.get("soil_moisture", {}).get("value", 50.0)),
+                "drainage_condition": float(vars_data.get("drainage_condition", {}).get("value", 80.0)),
+                "citizen_reports_count": 0,
+                "waterlogging_trend": "stable"
+            }
+        else:
+            loc_input = loc
+            live_env = None
+
+        # Perform real prediction using active XGBoost / hydrological model
+        pred_res = flood_prediction_service.predict(loc_input)
         prob = pred_res.get("probability", 50.0) if pred_res.get("success") else 50.0
         
         # Calculate SHAP explainability
@@ -105,7 +189,7 @@ def get_risk_map():
         shap_res = explainability_service.explain(feat_vec, feat_order)
         
         # Determine cause intelligence
-        cause_res = cause_intelligence_engine.analyze_cause(loc)
+        cause_res = cause_intelligence_engine.analyze_cause(loc_input)
         
         # Impact assessment
         impact_res = impact_assessment_engine.assess_impact(
@@ -115,7 +199,7 @@ def get_risk_map():
         )
 
         locations_output.append({
-            **loc,
+            **loc_input,
             "risk_probability": prob,
             "risk_level": pred_res.get("risk_level", "MODERATE"),
             "risk_color": pred_res.get("risk_color", "#eab308"),
@@ -123,13 +207,20 @@ def get_risk_map():
             "cause_intelligence": cause_res,
             "shap_explanation": shap_res,
             "impact_summary": impact_res.get("metrics"),
-            "is_simulated_geodata": True
+            "is_simulated_geodata": not is_live,
+            "is_live_data": is_live,
+            "live_env_metadata": {
+                "source": "Open-Meteo + IMD" if is_live else "Demonstration Fixture",
+                "retrieved_at": live_env.get("retrieved_at") if live_env else None,
+                "observed_at": live_env.get("observed_at") if live_env else None
+            } if is_live else None
         })
 
     return {
         "success": True,
-        "scenario": CURRENT_SCENARIO,
-        "is_demo_mode": IS_DEMO_MODE,
+        "mode": effective_mode,
+        "scenario": CURRENT_SCENARIO if not is_live else "LIVE_OBSERVATIONS",
+        "is_demo_mode": not is_live,
         "locations": locations_output,
         "river_networks": RIVER_NETWORKS,
         "drainage_lines": DRAINAGE_LINES,
@@ -217,27 +308,57 @@ async def analyze_image(
     return res
 
 @app.get("/api/alerts")
-def get_alerts():
-    """Generates and returns all active early warning alerts across zones."""
+def get_alerts(mode: Optional[str] = Query(None)):
+    """
+    Generates and returns early warning alerts across zones and official IMD warnings.
+    Supports mode='live' or mode='demo' (defaults to CURRENT_MODE).
+    """
+    effective_mode = (mode or CURRENT_MODE).upper()
+    is_live = (effective_mode == "LIVE")
+
     alerts = []
     for loc in WARDS_AND_VILLAGES:
-        pred_res = flood_prediction_service.predict(loc)
+        loc_id = loc["id"]
+        if is_live:
+            live_env = live_data_service.get_live_environment_for_location(loc_id)
+            vars_data = live_env.get("variables", {})
+            loc_input = {
+                **loc,
+                "rainfall": float(vars_data.get("rainfall", {}).get("value", 0.0)),
+                "soil_moisture": float(vars_data.get("soil_moisture", {}).get("value", 50.0)),
+                "drainage_condition": float(vars_data.get("drainage_condition", {}).get("value", 80.0)),
+                "citizen_reports_count": 0,
+                "waterlogging_trend": "stable"
+            }
+        else:
+            loc_input = loc
+
+        pred_res = flood_prediction_service.predict(loc_input)
         prob = pred_res.get("probability", 50.0) if pred_res.get("success") else 50.0
-        cause_res = cause_intelligence_engine.analyze_cause(loc)
+        cause_res = cause_intelligence_engine.analyze_cause(loc_input)
         impact_res = impact_assessment_engine.assess_impact(loc["id"], prob, cause_res.get("cause_code", "UNCERTAIN"))
         
-        # Only issue alerts for high/critical or when risk is >= 30%
         alert = alert_engine.generate_alert(loc["id"], loc["name"], prob, cause_res, impact_res)
+        alert["origin_type"] = "JALRAKSHAK RISK ASSESSMENT" if is_live else "SIMULATED ALERT"
+        alert["is_official_government_warning"] = False
         alerts.append(alert)
 
     # Sort critical first, then warning
     severity_order = {"CRITICAL": 0, "WARNING": 1, "WATCH": 2, "INFORMATION": 3}
     alerts.sort(key=lambda a: severity_order.get(a["severity"], 9))
 
+    # In LIVE mode, fetch official IMD CAP bulletins
+    official_warnings = []
+    if is_live:
+        official_warnings = live_data_service.fetch_imd_cap_warnings()
+
     return {
         "success": True,
+        "mode": effective_mode,
+        "is_demo_mode": not is_live,
         "count": len(alerts),
-        "alerts": alerts
+        "alerts": alerts,
+        "official_imd_warnings": official_warnings
     }
 
 @app.post("/api/reports")
@@ -278,7 +399,7 @@ def get_sensors():
         "success": True,
         "count": len(IOT_SENSORS),
         "sensors": IOT_SENSORS,
-        "data_origin": "DEMO / SIMULATED SENSOR TELEMETRY" if IS_DEMO_MODE else "LIVE IOT GATEWAY"
+        "data_origin": "DEMO / SIMULATED SENSOR TELEMETRY" if CURRENT_MODE == "DEMO" else "LIVE IOT GATEWAY"
     }
 
 @app.get("/api/historical-events")
@@ -333,8 +454,9 @@ def switch_scenario(scenario_id: str):
     - scenario_2_drainage_blockage: Blocked drain with moderate rain
     - baseline: Nominal clear weather
     """
-    global CURRENT_SCENARIO
+    global CURRENT_SCENARIO, CURRENT_MODE
     CURRENT_SCENARIO = scenario_id
+    CURRENT_MODE = "DEMO"
 
     if scenario_id == "scenario_1_heavy_rainfall":
         for loc in WARDS_AND_VILLAGES:

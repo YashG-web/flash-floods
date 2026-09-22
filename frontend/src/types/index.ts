@@ -226,3 +226,57 @@ export interface FlashFloodWarning {
   timestamp: string;
 }
 
+export interface LiveVariable {
+  value: number | null;
+  unit: string;
+  source: string;
+  data_type: 'OBSERVED' | 'MODELED' | 'UNAVAILABLE' | 'BASELINE_ESTIMATE';
+  observed_at: string | null;
+  status: string;
+  note?: string;
+}
+
+export interface OfficialImdWarning {
+  title: string;
+  description: string;
+  source: string;
+  feed_type: string;
+  link?: string;
+  published_at: string;
+  is_local_relevant?: boolean;
+  retrieved_at?: string;
+}
+
+export interface LiveEnvironmentalData {
+  mode: 'LIVE DATA' | 'DEMO DATA';
+  location: {
+    id: string;
+    name: string;
+    district: string;
+    state: string;
+    latitude: number;
+    longitude: number;
+    elevation_m: number;
+    slope_deg: number;
+    nearest_station: string;
+  };
+  retrieved_at: string;
+  observed_at: string;
+  sources: string[];
+  variables: {
+    rainfall: LiveVariable;
+    temperature: LiveVariable;
+    humidity: LiveVariable;
+    soil_moisture: LiveVariable;
+    river_level: LiveVariable;
+    drainage_condition: LiveVariable;
+  };
+  official_warnings: OfficialImdWarning[];
+  national_warnings_count?: number;
+  data_freshness?: {
+    is_stale: boolean;
+    cache_ttl_seconds: number;
+    retrieved_at: string;
+  };
+}
+

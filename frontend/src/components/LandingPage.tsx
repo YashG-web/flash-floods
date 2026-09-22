@@ -1,6 +1,4 @@
-import React from 'react';
-import type { LocationData, EarlyWarningAlert, FlashFloodWarning } from '../types';
-import { FlashFloodWarningCard } from './FlashFloodWarningCard';
+import type { LocationData, EarlyWarningAlert, FlashFloodWarning, LiveEnvironmentalData } from '../types';
 import {
   ShieldAlert,
   ArrowRight,
@@ -10,7 +8,7 @@ import {
   Droplets,
   CloudRain,
   Construction,
-  ShieldCheck,
+  Bell,
   CheckCircle2
 } from 'lucide-react';
 
@@ -21,9 +19,13 @@ interface LandingPageProps {
   alerts: EarlyWarningAlert[];
   activeFlashWarning: FlashFloodWarning | null;
   lastUpdated: string;
+  isDemoMode?: boolean;
+  activeScenario?: string;
+  liveEnvironment?: LiveEnvironmentalData | null;
   onNavigateToMap: () => void;
   onOpenReportModal: () => void;
   onNavigateToAlerts: () => void;
+  onNavigateToReport: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
@@ -33,9 +35,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   alerts,
   activeFlashWarning,
   lastUpdated,
+  isDemoMode = true,
+  activeScenario,
+  liveEnvironment,
   onNavigateToMap,
   onOpenReportModal,
-  onNavigateToAlerts
+  onNavigateToAlerts,
+  onNavigateToReport
 }) => {
   // Default to first location if none selected
   const activeLoc = selectedLocation || locations[0] || {
@@ -53,6 +59,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   } as LocationData;
 
   const riskLevel = activeLoc.risk_level || 'LOW';
+  const hasActiveWarning = activeFlashWarning && activeFlashWarning.status !== 'NONE';
 
   const getRiskVisuals = (level: string) => {
     switch (level) {
@@ -60,7 +67,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         return {
           badgeBg: 'bg-red-600',
           textColor: 'text-red-700',
-          borderColor: 'border-red-500',
+          borderColor: 'border-red-400',
           symbol: '🔴',
           label: 'CRITICAL RISK',
           subtext: 'Severe flood danger. Immediate caution required.'
@@ -69,7 +76,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         return {
           badgeBg: 'bg-orange-600',
           textColor: 'text-orange-700',
-          borderColor: 'border-orange-500',
+          borderColor: 'border-orange-400',
           symbol: '🟠',
           label: 'HIGH RISK',
           subtext: 'Waterlogging developing on roads. Avoid affected streets.'
@@ -78,7 +85,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         return {
           badgeBg: 'bg-amber-600',
           textColor: 'text-amber-700',
-          borderColor: 'border-amber-500',
+          borderColor: 'border-amber-400',
           symbol: '🟡',
           label: 'MODERATE RISK',
           subtext: 'Rising water levels observed in low-lying spots.'
@@ -87,7 +94,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         return {
           badgeBg: 'bg-emerald-600',
           textColor: 'text-emerald-700',
-          borderColor: 'border-emerald-500',
+          borderColor: 'border-emerald-400',
           symbol: '🟢',
           label: 'LOW RISK',
           subtext: 'Normal water flow. No immediate flood threat.'
@@ -97,7 +104,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   const riskVisual = getRiskVisuals(riskLevel);
 
-  // Simplified Plain-Language Explanation
   const getPlainExplanation = () => {
     if (activeLoc.cause_intelligence?.explanation) {
       return activeLoc.cause_intelligence.explanation;
@@ -111,14 +117,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     return 'Rainfall and drainage conditions are currently normal across this sector.';
   };
 
-  // Plain-Language Condition Indicators
   const rainfallStatus = activeLoc.rainfall > 60 ? 'Heavy' : activeLoc.rainfall > 25 ? 'Moderate' : 'Normal';
   const drainageStatus = activeLoc.drainage_condition < 35 ? 'Severely Choked' : activeLoc.drainage_condition < 65 ? 'Slow / Sluggish' : 'Clear & Flowing';
-  const soilStatus = activeLoc.soil_moisture > 75 ? 'Saturated (Cannot absorb rain)' : activeLoc.soil_moisture > 50 ? 'Partially Damp' : 'Dry';
+  const soilStatus = activeLoc.soil_moisture > 75 ? 'Saturated' : activeLoc.soil_moisture > 50 ? 'Partially Damp' : 'Dry';
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Real-World Context Banner */}
+    <div className="space-y-5 max-w-5xl mx-auto pb-12">
+
+      {/* Hero Banner */}
       <div className="relative rounded-3xl overflow-hidden shadow-sm border border-slate-200">
         <img
           src="/assets/hero.jpg"
@@ -139,13 +145,96 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </div>
 
-      {/* 1. HERO AREA: WHAT IS THE CURRENT RISK? */}
+      {/* Active Warning Banner (compact, links to Alerts page) */}
+      {hasActiveWarning && (
+        <button
+          onClick={onNavigateToAlerts}
+          className="w-full bg-red-600 hover:bg-red-700 text-white rounded-2xl px-5 py-3.5 flex items-center justify-between gap-3 shadow-sm transition cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xl animate-pulse">🚨</span>
+            <div className="text-left">
+              <div className="text-xs font-black uppercase tracking-wider opacity-90">Active Warning</div>
+              <div className="text-sm font-black">
+                {activeFlashWarning?.statusLabel} — {activeFlashWarning?.locationName}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs font-bold shrink-0">
+            <span>VIEW DETAILS</span>
+            <ArrowRight className="w-4 h-4" />
+          </div>
+        </button>
+      )}
+
+      {/* Mode Status Banner */}
+      {!isDemoMode ? (
+        <div className="bg-slate-900 text-white rounded-3xl p-4 sm:p-5 border border-emerald-500/40 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+              <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-black text-emerald-400 tracking-wide text-xs uppercase">
+                  ● LIVE ENVIRONMENTAL TELEMETRY ACTIVE
+                </span>
+                <span className="bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-700/50">
+                  REAL-TIME ADAPTED
+                </span>
+              </div>
+              <p className="text-slate-300 text-[11px] mt-0.5">
+                Observed Weather: <strong className="text-white">Open-Meteo</strong> • Government Alerts: <strong className="text-white">IMD CAP Feed</strong>
+              </p>
+            </div>
+          </div>
+          <div className="text-left sm:text-right font-mono text-[11px] text-slate-300 shrink-0">
+            <div>Last Observed: <span className="text-emerald-300 font-bold">{liveEnvironment?.observed_at || lastUpdated}</span></div>
+            <div className="text-slate-400 text-[10px]">Synced: {liveEnvironment?.retrieved_at || lastUpdated}</div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-amber-950/90 text-white rounded-3xl p-4 sm:p-5 border border-amber-600/50 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0 text-base">
+              ⚙
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-black text-amber-400 tracking-wide text-xs uppercase">
+                  DEMO / SCENARIO TESTING MODE
+                </span>
+                <span className="bg-amber-900 text-amber-200 px-2 py-0.5 rounded text-[10px] font-bold border border-amber-600/50">
+                  CONTROLLED SIMULATION
+                </span>
+              </div>
+              <p className="text-amber-100 text-[11px] mt-0.5">
+                Active Scenario: <strong className="text-white">{activeScenario?.replace(/_/g, ' ').toUpperCase() || 'DEMO SCENARIO'}</strong> • Inputs do not affect live system
+              </p>
+            </div>
+          </div>
+          <div className="text-left sm:text-right text-[11px] text-amber-200/90 shrink-0">
+            <div>Mode: <span className="text-white font-bold">Offline Simulation</span></div>
+            <div className="text-amber-300/70 text-[10px]">Adjust in Authority Center</div>
+          </div>
+        </div>
+      )}
+
+      {/* CURRENT FLOOD RISK — Primary Section */}
       <section className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm p-6 sm:p-8">
+        {/* Header row: label + ward selector + last updated */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
           <div>
-            <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400 block mb-1">
-              CURRENT FLOOD RISK
-            </span>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400">
+                {!isDemoMode ? 'CURRENT HYPERLOCAL RISK' : 'SIMULATED HYPERLOCAL RISK'}
+              </span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                !isDemoMode ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+              }`}>
+                {!isDemoMode ? 'LIVE INFERENCE' : 'SIMULATED'}
+              </span>
+            </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-5 h-5 text-sky-600 shrink-0" />
               <select
@@ -154,25 +243,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   const found = locations.find(l => l.id === e.target.value);
                   if (found) onSelectLocation(found);
                 }}
-                className="text-lg sm:text-xl font-black text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-xl px-3 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-sky-500 cursor-pointer"
+                className="text-lg sm:text-xl font-black text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer"
               >
                 {locations.map(loc => (
-                  <option key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </option>
+                  <option key={loc.id} value={loc.id}>{loc.name}</option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div className="text-left sm:text-right text-xs text-slate-500 flex items-center sm:justify-end gap-1.5">
+          <div className="text-left sm:text-right text-xs text-slate-500 flex items-center sm:justify-end gap-1.5 font-mono">
             <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span>Last updated: <strong className="text-slate-800 font-mono">{lastUpdated || '2 minutes ago'}</strong></span>
+            <span>Telemetry freshness: <strong className="text-slate-800">{lastUpdated || 'Recent'}</strong></span>
           </div>
         </div>
 
-        {/* The Most Prominent Element: Risk Level Display */}
-        <div className="py-6 sm:py-8 flex flex-col items-center text-center">
+        {/* Risk Level Badge */}
+        <div className="py-7 sm:py-9 flex flex-col items-center text-center">
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono mb-2">
+            {!isDemoMode ? 'JALRAKSHAK RISK ASSESSMENT (AI Model)' : 'JALRAKSHAK SIMULATED RISK ASSESSMENT'}
+          </span>
           <div className={`inline-flex items-center gap-3 px-6 sm:px-10 py-4 sm:py-5 rounded-2xl text-white shadow-md ${riskVisual.badgeBg}`}>
             <span className="text-3xl sm:text-4xl">{riskVisual.symbol}</span>
             <span className="text-2xl sm:text-4xl font-black tracking-wide uppercase font-mono">
@@ -184,6 +274,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {riskVisual.subtext}
           </p>
 
+          {/* Primary CTAs */}
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={onNavigateToMap}
@@ -193,157 +284,144 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <ArrowRight className="w-4 h-4 text-sky-400" />
             </button>
             <button
-              onClick={onOpenReportModal}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm shadow-md transition cursor-pointer"
+              onClick={onNavigateToAlerts}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-sm shadow-sm border-2 border-slate-200 transition cursor-pointer"
             >
-              <Camera className="w-4 h-4" />
-              <span>REPORT WATERLOGGING</span>
+              <Bell className="w-4 h-4 text-red-500" />
+              <span>VIEW ALERTS</span>
+              {hasActiveWarning && (
+                <span className="px-1.5 py-0.5 bg-red-600 text-white rounded-full text-[10px] font-black">1</span>
+              )}
             </button>
           </div>
         </div>
 
-        {/* 2. WHAT IS HAPPENING? */}
-        <div className="mt-4 pt-6 border-t border-slate-100 bg-slate-50/70 rounded-2xl p-5 border border-slate-200/80">
-          <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 flex items-center gap-2">
-            <span>WHAT IS HAPPENING?</span>
-          </h3>
+        {/* WHAT IS HAPPENING? — Current Conditions */}
+        <div className="mt-2 pt-6 border-t border-slate-100 bg-slate-50/70 rounded-2xl p-5 border border-slate-200/80">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+              WHAT IS HAPPENING?
+            </h3>
+            <span className="text-[10px] font-mono text-slate-500">
+              {!isDemoMode ? 'Source-by-variable verified' : 'Controlled simulation inputs'}
+            </span>
+          </div>
 
           <p className="text-sm sm:text-base text-slate-800 font-medium leading-relaxed mb-4">
             {getPlainExplanation()}
           </p>
 
-          {/* Plain Condition Factors */}
+          {/* Condition Indicators with Transparent Provenance */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-white p-3 rounded-xl border border-slate-200">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-1">
-                <CloudRain className="w-4 h-4 text-sky-600" />
-                <span>Rainfall</span>
+            {/* Rainfall */}
+            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+              <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-500 mb-1">
+                <div className="flex items-center gap-1.5">
+                  <CloudRain className="w-4 h-4 text-sky-600" />
+                  <span>Rainfall</span>
+                </div>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                  !isDemoMode ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {!isDemoMode ? 'OBSERVED' : 'SIMULATED'}
+                </span>
               </div>
               <div className="text-sm font-extrabold text-slate-900">
                 {rainfallStatus} ({activeLoc.rainfall} mm/h)
               </div>
+              <div className="text-[10px] text-slate-400 mt-1">
+                {!isDemoMode ? 'Source: Open-Meteo' : 'Scenario slider preset'}
+              </div>
             </div>
 
-            <div className="bg-white p-3 rounded-xl border border-slate-200">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-1">
-                <Construction className="w-4 h-4 text-amber-600" />
-                <span>Drain Condition</span>
+            {/* Drainage Condition */}
+            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+              <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-500 mb-1">
+                <div className="flex items-center gap-1.5">
+                  <Construction className="w-4 h-4 text-amber-600" />
+                  <span>Drain Condition</span>
+                </div>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                  !isDemoMode ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {!isDemoMode ? 'BASELINE' : 'SIMULATED'}
+                </span>
               </div>
               <div className={`text-sm font-extrabold ${activeLoc.drainage_condition < 40 ? 'text-red-600' : 'text-slate-900'}`}>
                 {drainageStatus}
               </div>
+              <div className="text-[10px] text-slate-400 mt-1">
+                {!isDemoMode ? 'Civil standard (No live sensor stream)' : `Efficiency: ${activeLoc.drainage_condition}%`}
+              </div>
             </div>
 
-            <div className="bg-white p-3 rounded-xl border border-slate-200">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-1">
-                <Droplets className="w-4 h-4 text-blue-600" />
-                <span>Soil Moisture</span>
+            {/* Soil Moisture */}
+            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+              <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-500 mb-1">
+                <div className="flex items-center gap-1.5">
+                  <Droplets className="w-4 h-4 text-blue-600" />
+                  <span>Soil Moisture</span>
+                </div>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                  !isDemoMode ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {!isDemoMode ? 'MODELED' : 'SIMULATED'}
+                </span>
               </div>
               <div className="text-sm font-extrabold text-slate-900">
-                {soilStatus}
+                {soilStatus} ({activeLoc.soil_moisture}%)
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">
+                {!isDemoMode ? 'Source: Open-Meteo Hydrological' : 'Scenario soil saturation'}
               </div>
             </div>
           </div>
 
           <p className="mt-3 text-xs text-slate-500 italic">
-            These conditions determine local flood risk across your streets.
+            {!isDemoMode
+              ? 'External weather & hydrological observations are fed directly into the existing JalRakshak risk engine.'
+              : 'Demonstration parameters allow manual risk evaluation across extreme cloudburst & choke point scenarios.'}
           </p>
         </div>
       </section>
 
-      {/* 3. PROMINENT FLASH FLOOD WARNING SYSTEM (Component 1 & 2 Requirement) */}
-      <section className="space-y-2">
-        <div className="flex items-center justify-between px-2">
-          <span className="text-xs font-black uppercase tracking-widest text-slate-400">
-            ACTIVE HAZARD FORECAST
-          </span>
-          <button
-            onClick={onNavigateToAlerts}
-            className="text-xs font-bold text-sky-700 hover:text-sky-900 underline flex items-center gap-1 cursor-pointer"
-          >
-            <span>All Warnings & Statuses</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
-        </div>
-
-        <FlashFloodWarningCard
-          warning={activeFlashWarning}
-          onViewOnMap={onNavigateToMap}
-        />
-      </section>
-
-      {/* 4. WHAT SHOULD I DO? (ACTION CARD) */}
-      <section className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm p-6 sm:p-8">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
-          <ShieldCheck className="w-6 h-6 text-sky-600" />
-          <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">
-            WHAT SHOULD YOU DO?
-          </h3>
-        </div>
-
-        {riskLevel === 'CRITICAL' || riskLevel === 'HIGH' ? (
-          <div className="space-y-3">
-            <div className="flex items-start gap-3 p-3 bg-red-50 rounded-xl border border-red-200 text-red-900 text-sm font-semibold">
-              <span className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 text-xs font-bold">1</span>
-              <span>Avoid Main Market Road and Station Road — water levels are hazardous.</span>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-xl border border-orange-200 text-orange-900 text-sm font-semibold">
-              <span className="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center shrink-0 text-xs font-bold">2</span>
-              <span>Move away from low-lying areas and ground-level shop floors.</span>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-sm font-semibold">
-              <span className="w-6 h-6 rounded-full bg-amber-600 text-white flex items-center justify-center shrink-0 text-xs font-bold">3</span>
-              <span>Do not walk or drive through flowing water — depth can be deceptive.</span>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-800 text-sm font-semibold">
-              <span className="w-6 h-6 rounded-full bg-slate-700 text-white flex items-center justify-center shrink-0 text-xs font-bold">4</span>
-              <span>Follow instructions from local police and municipal teams. Call <strong>112</strong> for immediate help.</span>
-            </div>
-            {activeLoc.drainage_condition < 40 && (
-              <div className="p-3 bg-sky-50 rounded-xl border border-sky-200 text-sky-950 text-xs font-medium">
-                <strong>Drainage Blockage Action:</strong> Avoid the blocked drain channel. Municipal cleaning teams are responding.
-              </div>
-            )}
+      {/* No active warning: general safety reminder */}
+      {!hasActiveWarning && (
+        <section className="bg-emerald-50 rounded-3xl border-2 border-emerald-200 p-5 sm:p-6 flex items-start gap-4">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-5 h-5" />
           </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-start gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900 text-sm font-semibold">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-              <span>Current conditions are safe in this area. No active flood risk.</span>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 text-sm">
-              <span className="w-6 h-6 rounded-full bg-slate-400 text-white flex items-center justify-center shrink-0 text-xs font-bold">•</span>
-              <span>Keep roadside storm gutters free from garbage and plastic bags to maintain drainage.</span>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 text-sm">
-              <span className="w-6 h-6 rounded-full bg-slate-400 text-white flex items-center justify-center shrink-0 text-xs font-bold">•</span>
-              <span>Stay alert if continuous rainfall begins over the next 2–3 hours.</span>
-            </div>
+          <div>
+            <div className="text-sm font-black text-emerald-900 mb-1">No Active Warnings</div>
+            <p className="text-xs text-emerald-800">
+              Current conditions are within normal limits for this area. Stay alert if continuous rainfall begins. Keep roadside storm gutters free from debris.
+            </p>
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* 5. REPORT FLOODING PROMINENT ACTION */}
-      <section className="bg-linear-to-br from-red-600 to-rose-700 rounded-3xl p-6 sm:p-8 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div className="space-y-2 text-center sm:text-left">
+      {/* Report Flooding CTA */}
+      <section className="bg-linear-to-br from-red-600 to-rose-700 rounded-3xl p-5 sm:p-6 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="space-y-1 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider">
-            <Camera className="w-4 h-4" />
+            <Camera className="w-3.5 h-3.5" />
             <span>Citizen Action</span>
           </div>
-          <h3 className="text-xl sm:text-2xl font-black tracking-tight">
+          <h3 className="text-lg sm:text-xl font-black tracking-tight">
             See Flooding or a Blocked Drain?
           </h3>
-          <p className="text-sm text-rose-100 max-w-xl">
-            Take a quick photo and report waterlogging on your street. Your report directly alerts authorities and updates the live risk map for your neighbors.
+          <p className="text-xs text-rose-100">
+            Take a photo and report waterlogging on your street — your report alerts authorities and updates the live risk map.
           </p>
         </div>
 
         <button
-          onClick={onOpenReportModal}
-          className="shrink-0 px-6 py-3.5 rounded-2xl bg-white text-red-700 hover:bg-rose-50 font-black text-sm sm:text-base shadow-lg transition cursor-pointer flex items-center gap-2"
+          onClick={onNavigateToReport}
+          className="shrink-0 px-5 py-3 rounded-2xl bg-white text-red-700 hover:bg-rose-50 font-black text-sm shadow-lg transition cursor-pointer flex items-center gap-2"
         >
-          <Camera className="w-5 h-5 text-red-600" />
-          <span>📸 REPORT FLOODING</span>
+          <Camera className="w-4 h-4 text-red-600" />
+          <span>REPORT FLOODING</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
       </section>
     </div>

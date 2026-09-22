@@ -1,19 +1,96 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from './api/client';
-import type { LocationData, IoTSensor, CitizenReport, EarlyWarningAlert, HistoricalEvent, FlashFloodWarning } from './types';
+import type {
+  LocationData,
+  IoTSensor,
+  CitizenReport,
+  EarlyWarningAlert,
+  HistoricalEvent,
+  FlashFloodWarning,
+  LiveEnvironmentalData,
+  OfficialImdWarning
+} from './types';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { CommandCenter } from './components/CommandCenter';
 import { DisasterMap } from './components/Map/DisasterMap';
 import { AlertsAndResponse } from './components/AlertsAndResponse';
 import { CitizenReportModal } from './components/CitizenReportModal';
+import { ReportPage } from './components/ReportPage';
 import { RefreshCw, Camera } from 'lucide-react';
+
+const INITIAL_DEMO_WARNING_SCENARIO_2: FlashFloodWarning = {
+  id: 'warn-ward-12-initial',
+  status: 'CRITICAL',
+  statusLabel: 'FLASH FLOOD WARNING',
+  locationId: 'ward-12',
+  locationName: 'Ward 12 (Station Road / Market)',
+  roadName: 'Main Market Road',
+  riskLevel: 'HIGH',
+  estimatedWindow: 'NEXT 1–3 HOURS',
+  reason: 'Moderate rainfall combined with blocked drainage is creating localized waterlogging',
+  affectedAreas: [
+    'Main Market Road',
+    'Low-Lying Market Zone',
+    'Station Road Culvert Ingress'
+  ],
+  actions: [
+    'Avoid Main Market Road',
+    'Move away from low-lying areas and ground level shops',
+    'Allow municipal suction crews to inspect and clear culvert',
+    'Follow local authority instructions (Call 112)'
+  ],
+  timeline: [
+    { label: 'NOW', subtext: 'Surface runoff rate escalating', isTriggered: true },
+    { label: 'Rainfall increasing', subtext: '42.0 mm/h inflow recorded', isTriggered: true },
+    { label: 'Soil moisture rising', subtext: 'Ground saturation at 82%', isTriggered: true },
+    { label: 'Drainage stress detected', subtext: 'Culvert efficiency down to 18% (Choked)', isTriggered: true },
+    { label: '⚠️ HIGH FLOOD RISK', subtext: 'NEXT 1–3 HOURS', isTriggered: true }
+  ],
+  timestamp: '13:30:15 IST'
+};
+
+const INITIAL_DEMO_WARNING_SCENARIO_1: FlashFloodWarning = {
+  id: 'warn-ward-04-heavy-rain',
+  status: 'CRITICAL',
+  statusLabel: 'FLASH FLOOD WARNING',
+  locationId: 'ward-04',
+  locationName: 'Ward 04 (Upper Valley / Riverside)',
+  roadName: 'Valley Riverside Road',
+  riskLevel: 'CRITICAL',
+  estimatedWindow: 'NEXT 1–3 HOURS',
+  reason: 'Heavy rainfall overload exceeding local drainage capacity',
+  affectedAreas: [
+    'Valley Riverside Road',
+    'Lower Ghat Terraces',
+    'Bridge Ingress Approach'
+  ],
+  actions: [
+    'Avoid Valley Riverside Road and low-lying river ghats',
+    'Move to designated highland emergency shelters',
+    'Do not walk or drive through flowing water',
+    'Follow instructions from municipal emergency personnel (Call 112)'
+  ],
+  timeline: [
+    { label: 'NOW', subtext: 'Cloudburst precipitation at 110 mm/h', isTriggered: true },
+    { label: 'Rainfall increasing', subtext: 'Runoff velocity surging', isTriggered: true },
+    { label: 'Soil moisture rising', subtext: 'Pore pressure saturation at 96%', isTriggered: true },
+    { label: 'Drainage stress detected', subtext: 'Channel capacity overwhelmed', isTriggered: true },
+    { label: '⚠️ CRITICAL FLOOD RISK', subtext: 'NEXT 1–3 HOURS', isTriggered: true }
+  ],
+  timestamp: '13:30:15 IST'
+};
 
 export function App() {
   const [currentTab, setCurrentTab] = useState<string>('home');
   const [isDemoMode, setIsDemoMode] = useState<boolean>(true);
   const [activeScenario, setActiveScenario] = useState<string>('scenario_2_drainage_blockage');
   const [lastUpdated, setLastUpdated] = useState<string>('13:30:15 IST');
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
+  // Live Environmental Data State
+  const [liveEnvironment, setLiveEnvironment] = useState<LiveEnvironmentalData | null>(null);
+  const [officialImdWarnings, setOfficialImdWarnings] = useState<OfficialImdWarning[]>([]);
 
   // Core Data States
   const [locations, setLocations] = useState<LocationData[]>([]);
@@ -27,38 +104,9 @@ export function App() {
   const [alerts, setAlerts] = useState<EarlyWarningAlert[]>([]);
 
   // Flash Flood Warning State (Component 1 & 2)
-  const [activeFlashWarning, setActiveFlashWarning] = useState<FlashFloodWarning | null>({
-    id: 'warn-ward-12-initial',
-    status: 'CRITICAL',
-    statusLabel: 'FLASH FLOOD WARNING',
-    locationId: 'ward-12',
-    locationName: 'Ward 12 (Station Road / Market)',
-    roadName: 'Main Market Road',
-    riskLevel: 'HIGH',
-    estimatedWindow: 'NEXT 1–3 HOURS',
-    reason: 'Heavy rainfall + saturated soil + drainage stress',
-    affectedAreas: [
-      'Main Market Road',
-      'Low-Lying Market Zone',
-      'Station Road Culvert Ingress'
-    ],
-    actions: [
-      'Avoid Main Market Road',
-      'Move away from low-lying areas',
-      'Do not drive through flowing water',
-      'Follow local authority instructions'
-    ],
-    timeline: [
-      { label: 'NOW', subtext: 'Surface runoff rate escalating', isTriggered: true },
-      { label: 'Rainfall increasing', subtext: '42.0 mm/h inflow recorded', isTriggered: true },
-      { label: 'Soil moisture rising', subtext: 'Ground saturation at 82%', isTriggered: true },
-      { label: 'Drainage stress detected', subtext: 'Culvert efficiency down to 18% (Choked)', isTriggered: true },
-      { label: '⚠️ HIGH FLOOD RISK', subtext: 'NEXT 1–3 HOURS', isTriggered: true }
-    ],
-    timestamp: '13:30:15 IST'
-  });
+  const [activeFlashWarning, setActiveFlashWarning] = useState<FlashFloodWarning | null>(INITIAL_DEMO_WARNING_SCENARIO_2);
 
-  // Layer Toggles (Default view ONLY shows Flood Risk per requirements)
+  // Layer Toggles
   const [activeLayers, setActiveLayers] = useState({
     floodRisk: true,
     landslideRisk: false,
@@ -75,19 +123,21 @@ export function App() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const fetchAllData = async () => {
+  const fetchAllData = async (targetMode?: 'LIVE' | 'DEMO', forceRefresh: boolean = false) => {
+    const effectiveMode = targetMode !== undefined ? targetMode : (isDemoMode ? 'DEMO' : 'LIVE');
+    setIsRefreshing(true);
     try {
-      const [mapRes, alertsRes, sensorsRes, histRes] = await Promise.all([
-        apiClient.getRiskMap(),
-        apiClient.getAlerts(),
+      const [mapRes, alertsRes, sensorsRes, histRes, liveEnvRes] = await Promise.all([
+        apiClient.getRiskMap(effectiveMode.toLowerCase()),
+        apiClient.getAlerts(effectiveMode.toLowerCase()),
         apiClient.getSensors(),
-        apiClient.getHistoricalEvents()
+        apiClient.getHistoricalEvents(),
+        effectiveMode === 'LIVE' ? apiClient.getLiveEnvironment(selectedLocation?.id || 'ward-12', forceRefresh) : Promise.resolve(null)
       ]);
 
       if (mapRes && mapRes.locations) {
         setLocations(mapRes.locations);
         if (!selectedLocation) {
-          // Default selection to Ward 12 (Station Road / Market)
           const ward12 = mapRes.locations.find(l => l.id === 'ward-12') || mapRes.locations[0];
           setSelectedLocation(ward12);
         } else {
@@ -101,6 +151,48 @@ export function App() {
 
       if (alertsRes && alertsRes.alerts) {
         setAlerts(alertsRes.alerts);
+        if (alertsRes.official_imd_warnings) {
+          setOfficialImdWarnings(alertsRes.official_imd_warnings);
+        }
+      }
+
+      if (effectiveMode === 'LIVE') {
+        if (liveEnvRes) {
+          setLiveEnvironment(liveEnvRes);
+        }
+        // In LIVE mode: inspect if actual severe alerts are issued
+        const criticalAlert = alertsRes?.alerts?.find(a => a.severity === 'CRITICAL' || a.severity === 'WARNING');
+        if (criticalAlert) {
+          setActiveFlashWarning({
+            id: criticalAlert.alert_id,
+            status: criticalAlert.severity as any,
+            statusLabel: 'FLASH FLOOD WARNING',
+            locationId: criticalAlert.location_id,
+            locationName: criticalAlert.location_name,
+            roadName: 'Main Valley Corridor',
+            riskLevel: criticalAlert.severity as any,
+            estimatedWindow: criticalAlert.expected_window,
+            reason: criticalAlert.cause_explanation,
+            affectedAreas: [criticalAlert.location_name, 'Low-lying riparian roads'],
+            actions: criticalAlert.recommended_actions?.map(a => a.title) || ['Avoid low-lying roadways', 'Follow safety guidelines'],
+            timeline: [
+              { label: 'NOW', subtext: 'External telemetry active', isTriggered: true },
+              { label: 'Inflow rate monitored', subtext: 'Real-time observation', isTriggered: true }
+            ],
+            timestamp: new Date().toLocaleTimeString('en-IN') + ' IST'
+          });
+        } else {
+          setActiveFlashWarning(null);
+        }
+      } else {
+        // DEMO mode: restore scenario warning
+        if (activeScenario === 'scenario_2_drainage_blockage') {
+          setActiveFlashWarning(INITIAL_DEMO_WARNING_SCENARIO_2);
+        } else if (activeScenario === 'scenario_1_heavy_rainfall') {
+          setActiveFlashWarning(INITIAL_DEMO_WARNING_SCENARIO_1);
+        } else {
+          setActiveFlashWarning(null);
+        }
       }
 
       if (sensorsRes && sensorsRes.sensors) {
@@ -121,12 +213,24 @@ export function App() {
       console.error('Error fetching disaster intelligence data:', err);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  const handleModeChange = async (newModeIsDemo: boolean) => {
+    setIsDemoMode(newModeIsDemo);
+    setIsRefreshing(true);
+    try {
+      await apiClient.setMode(newModeIsDemo ? 'DEMO' : 'LIVE');
+      await fetchAllData(newModeIsDemo ? 'DEMO' : 'LIVE', true);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleScenarioChange = async (scenario: string) => {
     setActiveScenario(scenario);
@@ -234,12 +338,14 @@ export function App() {
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
         isDemoMode={isDemoMode}
-        setIsDemoMode={setIsDemoMode}
+        setIsDemoMode={handleModeChange}
         activeScenario={activeScenario}
         onScenarioChange={handleScenarioChange}
         activeAlertsCount={activeAlertsCount}
         lastUpdated={lastUpdated}
-        onRefresh={fetchAllData}
+        lastObservedTime={liveEnvironment?.observed_at}
+        isRefreshing={isRefreshing}
+        onRefresh={() => fetchAllData(undefined, true)}
         onOpenReportModal={() => setIsReportModalOpen(true)}
       />
 
@@ -261,9 +367,13 @@ export function App() {
                 alerts={alerts}
                 activeFlashWarning={activeFlashWarning}
                 lastUpdated={lastUpdated}
+                isDemoMode={isDemoMode}
+                activeScenario={activeScenario}
+                liveEnvironment={liveEnvironment}
                 onNavigateToMap={() => setCurrentTab('risk-map')}
                 onOpenReportModal={() => setIsReportModalOpen(true)}
                 onNavigateToAlerts={() => setCurrentTab('alerts')}
+                onNavigateToReport={() => setCurrentTab('report')}
               />
             )}
 
@@ -305,11 +415,25 @@ export function App() {
               </div>
             )}
 
+            {/* 3. REPORT FLOODING TAB */}
+            {currentTab === 'report' && (
+              <ReportPage
+                locations={locations}
+                selectedLocation={selectedLocation}
+                onReportSubmitted={fetchAllData}
+                onNavigateToMap={() => setCurrentTab('risk-map')}
+                onNavigateHome={() => setCurrentTab('home')}
+              />
+            )}
+
             {/* 4. ALERTS TAB */}
             {currentTab === 'alerts' && (
               <AlertsAndResponse
                 alerts={alerts}
                 activeFlashWarning={activeFlashWarning}
+                isDemoMode={isDemoMode}
+                activeScenario={activeScenario}
+                officialImdWarnings={officialImdWarnings}
                 onViewOnMap={(locId) => {
                   if (locId) {
                     const found = locations.find(l => l.id === locId);
