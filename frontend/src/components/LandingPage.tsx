@@ -9,7 +9,8 @@ import {
   CloudRain,
   Construction,
   Bell,
-  CheckCircle2
+  CheckCircle2,
+  Building2
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -26,6 +27,7 @@ interface LandingPageProps {
   onOpenReportModal: () => void;
   onNavigateToAlerts: () => void;
   onNavigateToReport: () => void;
+  onNavigateToResponseCenter?: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
@@ -41,7 +43,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onNavigateToMap,
   onOpenReportModal,
   onNavigateToAlerts,
-  onNavigateToReport
+  onNavigateToReport,
+  onNavigateToResponseCenter
 }) => {
   // Default to first location if none selected
   const activeLoc = selectedLocation || locations[0] || {
@@ -293,6 +296,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span className="px-1.5 py-0.5 bg-red-600 text-white rounded-full text-[10px] font-black">1</span>
               )}
             </button>
+            {onNavigateToResponseCenter && (
+              <button
+                onClick={onNavigateToResponseCenter}
+                className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 transition cursor-pointer"
+                title="View nearby hospitals and emergency capacity in Response Center"
+              >
+                <Building2 className="w-4 h-4 text-indigo-600" />
+                <span>Emergency Facilities →</span>
+              </button>
+            )}
           </div>
         </div>
 

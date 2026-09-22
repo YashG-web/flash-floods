@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import type { LocationData, IoTSensor, CitizenReport, EarlyWarningAlert, FlashFloodWarning } from '../types';
+import type { LocationData, IoTSensor, CitizenReport, EarlyWarningAlert, FlashFloodWarning, Hospital } from '../types';
 import { DisasterMap } from './Map/DisasterMap';
 import { ScenarioSimulator } from './ScenarioSimulator';
+import { HospitalCapacityPanel } from './HospitalCapacityPanel';
 import {
   Radio,
   Sliders,
@@ -34,6 +35,9 @@ interface CommandCenterProps {
   onToggleLayer: (layerKey: string) => void;
   onNavigateTab: (tab: string) => void;
   onOpenReportModal: () => void;
+  hospitals?: Hospital[];
+  isDemoMode?: boolean;
+  activeScenario?: string;
 }
 
 export const CommandCenter: React.FC<CommandCenterProps> = ({
@@ -53,7 +57,10 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
   activeLayers,
   onToggleLayer,
   onNavigateTab,
-  onOpenReportModal
+  onOpenReportModal,
+  hospitals = [],
+  isDemoMode = true,
+  activeScenario = 'scenario_2_drainage_blockage'
 }) => {
   const [authoritySubTab, setAuthoritySubTab] = useState<'operations' | 'simulator'>('operations');
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
@@ -206,6 +213,8 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                   infrastructure={infrastructure}
                   historicalEvents={historicalEvents}
                   activeFlashWarning={activeFlashWarning}
+                  hospitals={hospitals}
+                  isDemoMode={isDemoMode}
                   activeLayers={activeLayers}
                   onToggleLayer={onToggleLayer}
                 />
@@ -493,6 +502,22 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Section: EMERGENCY HEALTHCARE CAPACITY AWARENESS (Primary New Capability) */}
+          <div className="pt-2">
+            <HospitalCapacityPanel
+              hospitals={hospitals}
+              isDemoMode={isDemoMode}
+              activeScenario={activeScenario}
+              selectedLocationName={selectedLocation.name}
+              onViewOnMap={(hosp) => {
+                // Toggle hospitals layer on if disabled
+                if (!activeLayers.hospitals) {
+                  onToggleLayer('hospitals');
+                }
+              }}
+            />
           </div>
         </div>
       )}

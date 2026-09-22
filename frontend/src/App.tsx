@@ -8,9 +8,11 @@ import type {
   HistoricalEvent,
   FlashFloodWarning,
   LiveEnvironmentalData,
-  OfficialImdWarning
+  OfficialImdWarning,
+  Hospital
 } from './types';
 import { Navbar } from './components/Navbar';
+import { getHospitalsForState } from './data/demoHospitals';
 import { LandingPage } from './components/LandingPage';
 import { CommandCenter } from './components/CommandCenter';
 import { DisasterMap } from './components/Map/DisasterMap';
@@ -102,6 +104,9 @@ export function App() {
   const [infrastructure, setInfrastructure] = useState<any[]>([]);
   const [historicalEvents, setHistoricalEvents] = useState<HistoricalEvent[]>([]);
   const [alerts, setAlerts] = useState<EarlyWarningAlert[]>([]);
+  const [hospitals, setHospitals] = useState<Hospital[]>(() =>
+    getHospitalsForState(true, 'scenario_2_drainage_blockage', [30.092, 78.269])
+  );
 
   // Flash Flood Warning State (Component 1 & 2)
   const [activeFlashWarning, setActiveFlashWarning] = useState<FlashFloodWarning | null>(INITIAL_DEMO_WARNING_SCENARIO_2);
@@ -116,7 +121,8 @@ export function App() {
     iotSensors: false,
     citizenReports: true,
     infrastructure: false,
-    historicalEvents: false
+    historicalEvents: false,
+    hospitals: false
   });
 
   // Modal
@@ -127,13 +133,22 @@ export function App() {
     const effectiveMode = targetMode !== undefined ? targetMode : (isDemoMode ? 'DEMO' : 'LIVE');
     setIsRefreshing(true);
     try {
-      const [mapRes, alertsRes, sensorsRes, histRes, liveEnvRes] = await Promise.all([
+      const [mapRes, alertsRes, sensorsRes, histRes, liveEnvRes, hospRes] = await Promise.all([
         apiClient.getRiskMap(effectiveMode.toLowerCase()),
         apiClient.getAlerts(effectiveMode.toLowerCase()),
         apiClient.getSensors(),
         apiClient.getHistoricalEvents(),
-        effectiveMode === 'LIVE' ? apiClient.getLiveEnvironment(selectedLocation?.id || 'ward-12', forceRefresh) : Promise.resolve(null)
+        effectiveMode === 'LIVE' ? apiClient.getLiveEnvironment(selectedLocation?.id || 'ward-12', forceRefresh) : Promise.resolve(null),
+        apiClient.getHospitals(
+          effectiveMode,
+          activeScenario,
+          selectedLocation ? [selectedLocation.coordinates[0], selectedLocation.coordinates[1]] : [30.092, 78.269]
+        )
       ]);
+
+      if (hospRes && hospRes.hospitals) {
+        setHospitals(hospRes.hospitals);
+      }
 
       if (mapRes && mapRes.locations) {
         setLocations(mapRes.locations);
@@ -327,6 +342,18 @@ export function App() {
     }));
   };
 
+  // Keep hospital distances and scenario states strictly synchronized with selected ward location
+  useEffect(() => {
+    const coords: [number, number] = selectedLocation
+      ? [selectedLocation.coordinates[0], selectedLocation.coordinates[1]]
+      : [30.092, 78.269];
+    apiClient.getHospitals(isDemoMode ? 'DEMO' : 'LIVE', activeScenario, coords).then(res => {
+      if (res && res.hospitals) {
+        setHospitals(res.hospitals);
+      }
+    });
+  }, [selectedLocation?.id, isDemoMode, activeScenario]);
+
   // Calculate active alerts count including flash warning
   const activeAlertsCount = (activeFlashWarning && activeFlashWarning.status !== 'NONE' ? 1 : 0) +
     alerts.filter(a => a.severity === 'CRITICAL' || a.severity === 'WARNING').length;
@@ -374,6 +401,7 @@ export function App() {
                 onOpenReportModal={() => setIsReportModalOpen(true)}
                 onNavigateToAlerts={() => setCurrentTab('alerts')}
                 onNavigateToReport={() => setCurrentTab('report')}
+                onNavigateToResponseCenter={() => setCurrentTab('response-center')}
               />
             )}
 
@@ -409,6 +437,8 @@ export function App() {
                   infrastructure={infrastructure}
                   historicalEvents={historicalEvents}
                   activeFlashWarning={activeFlashWarning}
+                  hospitals={hospitals}
+                  isDemoMode={isDemoMode}
                   activeLayers={activeLayers}
                   onToggleLayer={handleToggleLayer}
                 />
@@ -434,6 +464,7 @@ export function App() {
                 isDemoMode={isDemoMode}
                 activeScenario={activeScenario}
                 officialImdWarnings={officialImdWarnings}
+                hospitals={hospitals}
                 onViewOnMap={(locId) => {
                   if (locId) {
                     const found = locations.find(l => l.id === locId);
@@ -464,6 +495,9 @@ export function App() {
                 onToggleLayer={handleToggleLayer}
                 onNavigateTab={setCurrentTab}
                 onOpenReportModal={() => setIsReportModalOpen(true)}
+                hospitals={hospitals}
+                isDemoMode={isDemoMode}
+                activeScenario={activeScenario}
               />
             )}
           </>

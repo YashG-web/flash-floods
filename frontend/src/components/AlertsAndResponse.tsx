@@ -1,5 +1,6 @@
-import type { EarlyWarningAlert, FlashFloodWarning, OfficialImdWarning } from '../types';
+import type { EarlyWarningAlert, FlashFloodWarning, OfficialImdWarning, Hospital } from '../types';
 import { FlashFloodWarningCard } from './FlashFloodWarningCard';
+import { HospitalCapacityPanel } from './HospitalCapacityPanel';
 import {
   Bell,
   CheckCircle2,
@@ -18,6 +19,7 @@ interface AlertsAndResponseProps {
   isDemoMode?: boolean;
   activeScenario?: string;
   officialImdWarnings?: OfficialImdWarning[];
+  hospitals?: Hospital[];
   onViewOnMap?: (locationId?: string) => void;
 }
 
@@ -27,6 +29,7 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
   isDemoMode = true,
   activeScenario,
   officialImdWarnings = [],
+  hospitals = [],
   onViewOnMap
 }) => {
   const hasActiveWarning = activeFlashWarning && activeFlashWarning.status !== 'NONE';
@@ -313,6 +316,20 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
           ))}
         </div>
       )}
+
+      {/* Relevant Emergency Healthcare Facilities (Section 25 Requirement) */}
+      <div className="pt-2">
+        <HospitalCapacityPanel
+          hospitals={hospitals}
+          isDemoMode={isDemoMode}
+          activeScenario={activeScenario}
+          selectedLocationName={activeFlashWarning?.locationName}
+          compact={false}
+          onViewOnMap={() => {
+            if (onViewOnMap) onViewOnMap();
+          }}
+        />
+      </div>
     </div>
   );
 };

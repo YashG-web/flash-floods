@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import type { LocationData, IoTSensor, CitizenReport, HistoricalEvent, FlashFloodWarning } from '../../types';
+import type { LocationData, IoTSensor, CitizenReport, HistoricalEvent, FlashFloodWarning, Hospital } from '../../types';
 import { Layers, X, Clock, AlertTriangle, Plus, Minus, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Compass } from 'lucide-react';
 
 interface DisasterMapProps {
@@ -14,6 +14,8 @@ interface DisasterMapProps {
   infrastructure?: any[];
   historicalEvents?: HistoricalEvent[];
   activeFlashWarning?: FlashFloodWarning | null;
+  hospitals?: Hospital[];
+  isDemoMode?: boolean;
   activeLayers: {
     floodRisk: boolean;
     landslideRisk?: boolean;
@@ -24,6 +26,7 @@ interface DisasterMapProps {
     citizenReports?: boolean;
     infrastructure?: boolean;
     historicalEvents: boolean;
+    hospitals?: boolean;
   };
   onToggleLayer: (layerKey: string) => void;
 }
@@ -89,6 +92,8 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
   citizenReports,
   historicalEvents = [],
   activeFlashWarning,
+  hospitals = [],
+  isDemoMode = true,
   activeLayers,
   onToggleLayer
 }) => {
@@ -177,7 +182,8 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
         drainage: L.layerGroup().addTo(map),
         sensors: L.layerGroup().addTo(map),
         reports: L.layerGroup().addTo(map),
-        historical: L.layerGroup().addTo(map)
+        historical: L.layerGroup().addTo(map),
+        hospitals: L.layerGroup().addTo(map)
       };
     }
 
@@ -413,7 +419,73 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
       });
     }
 
-  }, [locations, selectedLocation, activeLayers, riverNetworks, drainageLines, sensors, citizenReports, historicalEvents, activeFlashWarning]);
+    // 7. HOSPITALS LAYER (Nearby Emergency Healthcare Facilities)
+    if (activeLayers.hospitals && hospitals.length > 0) {
+      hospitals.forEach(hosp => {
+        const isGood = hosp.accessibilityStatus === 'GOOD';
+        const isLimited = hosp.accessibilityStatus === 'LIMITED';
+        const statusBorderColor = isLimited ? '#dc2626' : isGood ? '#16a34a' : '#d97706';
+
+        const hospIcon = L.divIcon({
+          className: 'custom-div-icon',
+          html: `
+            <div style="
+              width: 28px;
+              height: 28px;
+              background: #ffffff;
+              border: 2.5px solid ${statusBorderColor};
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+              font-size: 14px;
+              transform: translate(-50%, -50%);
+              cursor: pointer;
+            ">
+              🏥
+            </div>
+          `
+        });
+
+        const marker = L.marker(hosp.coordinates, { icon: hospIcon });
+
+        const capacityHtml = hosp.dataMode === 'DEMO' && hosp.availableEmergencyBeds !== null
+          ? `<div style="margin-top: 4px; font-weight: 700; color: #0f172a;">
+               Capacity: <span style="color: #0284c7;">${hosp.availableEmergencyBeds} / ${hosp.totalEmergencyBeds} available</span>
+               <span style="background: #fbbf24; color: #0f172a; padding: 1px 4px; border-radius: 3px; font-size: 9px; margin-left: 4px;">DEMO</span>
+             </div>`
+          : `<div style="margin-top: 4px; font-weight: 700; color: #64748b; font-size: 11px;">
+               Capacity: <i>Capacity not reported</i>
+             </div>`;
+
+        marker.bindPopup(`
+          <div style="font-family: system-ui, sans-serif; min-width: 210px; padding: 4px;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+              <span style="font-size: 16px;">🏥</span>
+              <strong style="font-size: 13px; color: #0f172a;">${hosp.name}</strong>
+            </div>
+            <div style="font-size: 11px; color: #475569; margin-bottom: 4px;">${hosp.emergencyCapability}</div>
+            <div style="font-size: 11px; font-family: monospace; background: #f1f5f9; padding: 4px 6px; border-radius: 6px; margin-bottom: 6px;">
+              <div>📍 <strong>${hosp.distanceKm} km</strong> from selected area</div>
+              <div>⏱️ ~${hosp.estimatedTravelMinutes} min travel time</div>
+            </div>
+            ${capacityHtml}
+            <div style="margin-top: 4px; font-size: 11px; font-weight: 700; color: ${statusBorderColor};">
+              Route Access: ${hosp.accessibilityStatus} (${hosp.floodAccessibilityStatus || 'Normal'})
+            </div>
+            <div style="margin-top: 6px; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 4px;">
+              ${hosp.dataMode === 'DEMO' ? '⚠️ Simulated demonstration data' : 'Verified statutory health metadata'}
+            </div>
+          </div>
+        `);
+
+        marker.bindTooltip(`<b>🏥 ${hosp.name}</b><br/>${hosp.distanceKm} km away • ${hosp.accessibilityStatus} access`, { sticky: true });
+        layerGroupsRef.current.hospitals.addLayer(marker);
+      });
+    }
+
+  }, [locations, selectedLocation, activeLayers, riverNetworks, drainageLines, sensors, citizenReports, historicalEvents, activeFlashWarning, hospitals, isDemoMode]);
 
   // Selected Location Quick Stats
   const activeLoc = selectedLocation || locations[0];
@@ -598,6 +670,19 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
                 checked={activeLayers.historicalEvents}
                 onChange={() => onToggleLayer('historicalEvents')}
                 className="rounded text-sky-600 focus:ring-0 cursor-pointer"
+              />
+            </label>
+
+            <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
+              <span className="flex items-center gap-2 text-slate-800 font-semibold">
+                <span className="text-xs">🏥</span>
+                <span>Hospitals & Trauma</span>
+              </span>
+              <input
+                type="checkbox"
+                checked={!!activeLayers.hospitals}
+                onChange={() => onToggleLayer('hospitals')}
+                className="rounded text-indigo-600 focus:ring-0 cursor-pointer"
               />
             </label>
           </div>

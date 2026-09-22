@@ -13,6 +13,7 @@ from services.image_analysis import image_analysis_service
 from services.impact_engine import impact_assessment_engine
 from services.alert_engine import alert_engine
 from services.live_data_service import live_data_service, LOCATION_COORDINATES
+from services.hospital_service import hospital_service
 from data.geodata import (
     WARDS_AND_VILLAGES,
     RIVER_NETWORKS,
@@ -227,6 +228,36 @@ def get_risk_map(mode: Optional[str] = Query(None)):
         "iot_sensors": IOT_SENSORS,
         "citizen_reports": CITIZEN_REPORTS,
         "critical_infrastructure": CRITICAL_INFRASTRUCTURE
+    }
+
+@app.get("/api/hospitals")
+def get_hospitals(
+    mode: Optional[str] = Query(None, description="Data mode: 'live' or 'demo'"),
+    scenario: Optional[str] = Query(None, description="Demo scenario identifier"),
+    lat: Optional[float] = Query(30.0920, description="Reference incident/ward latitude"),
+    lon: Optional[float] = Query(78.2690, description="Reference incident/ward longitude")
+):
+    """
+    Returns nearby emergency medical facilities, accessibility statuses, and distance.
+    In LIVE mode, capacity is strictly marked unavailable if no verified live feed is connected.
+    In DEMO mode, deterministic scenario simulations are applied with clear demo provenance labels.
+    """
+    effective_mode = (mode or CURRENT_MODE).upper()
+    effective_scenario = scenario or CURRENT_SCENARIO
+    hospitals = hospital_service.get_hospitals(
+        mode=effective_mode,
+        scenario=effective_scenario,
+        ref_lat=lat,
+        ref_lon=lon
+    )
+    return {
+        "success": True,
+        "mode": effective_mode,
+        "scenario": effective_scenario if effective_mode == "DEMO" else "LIVE_REGISTRY",
+        "is_demo_mode": effective_mode == "DEMO",
+        "reference_coordinates": [lat, lon],
+        "count": len(hospitals),
+        "hospitals": hospitals
     }
 
 @app.get("/api/risk/{location_id}")

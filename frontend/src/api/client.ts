@@ -6,9 +6,11 @@ import type {
   HistoricalEvent,
   ImageAnalysisResponse,
   LiveEnvironmentalData,
-  OfficialImdWarning
+  OfficialImdWarning,
+  Hospital
 } from '../types';
 import { staticData } from '../data/staticData';
+import { getHospitalsForState } from '../data/demoHospitals';
 
 const API_BASE = '/api';
 
@@ -483,6 +485,80 @@ export const apiClient = {
     return {
       success: true,
       stages: staticData.risk_timeline
+    };
+  },
+
+  async getHospitals(
+    mode?: 'LIVE' | 'DEMO',
+    scenario?: string,
+    coordinates?: [number, number] | null
+  ): Promise<{
+    success: boolean;
+    mode: string;
+    scenario: string;
+    is_demo_mode: boolean;
+    reference_coordinates: [number, number];
+    count: number;
+    hospitals: Hospital[];
+  }> {
+    const effectiveMode = mode || currentActiveMode;
+    const effectiveScenario = scenario || currentScenario;
+    const refCoords = coordinates || [30.092, 78.269];
+
+    try {
+      const url = `${API_BASE}/hospitals?mode=${effectiveMode.toLowerCase()}&scenario=${encodeURIComponent(
+        effectiveScenario
+      )}&lat=${refCoords[0]}&lon=${refCoords[1]}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hospitals && Array.isArray(data.hospitals)) {
+          // Normalize snake_case backend keys to frontend camelCase model
+          const normalizedHospitals: Hospital[] = data.hospitals.map((h: any) => ({
+            id: h.id,
+            name: h.name,
+            location: h.location,
+            latitude: h.latitude,
+            longitude: h.longitude,
+            coordinates: h.coordinates || [h.latitude, h.longitude],
+            distanceKm: h.distanceKm !== undefined ? h.distanceKm : (h.distance_km ?? 0),
+            estimatedTravelMinutes: h.estimatedTravelMinutes !== undefined ? h.estimatedTravelMinutes : (h.estimated_travel_minutes ?? 15),
+            emergencyAvailable: h.emergencyAvailable !== undefined ? h.emergencyAvailable : !!h.emergency_available,
+            emergencyCapability: h.emergencyCapability || h.emergency_capability || 'Emergency Care',
+            totalEmergencyBeds: h.totalEmergencyBeds !== undefined ? h.totalEmergencyBeds : (h.total_emergency_beds ?? null),
+            availableEmergencyBeds: h.availableEmergencyBeds !== undefined ? h.availableEmergencyBeds : (h.available_emergency_beds ?? null),
+            occupiedEmergencyBeds: h.occupiedEmergencyBeds !== undefined ? h.occupiedEmergencyBeds : (h.occupied_emergency_beds ?? null),
+            ambulanceAccess: h.ambulanceAccess || h.ambulance_access || 'AVAILABLE',
+            accessibilityStatus: h.accessibilityStatus || h.accessibility_status || 'GOOD',
+            floodAccessibilityStatus: h.floodAccessibilityStatus || h.flood_accessibility_status || 'Normal',
+            status: h.status || 'AVAILABLE',
+            dataMode: (h.dataMode || h.data_mode || effectiveMode).toUpperCase() as 'LIVE' | 'DEMO',
+            dataSource: h.dataSource || h.data_source || (effectiveMode === 'DEMO' ? 'JalRakshak simulation' : 'Verified institutional registry'),
+            sourceNote: h.sourceNote || h.source_note,
+            observedAt: h.observedAt || h.observed_at,
+            updatedAt: h.updatedAt || h.updated_at,
+            verifiedMetadata: h.verifiedMetadata || h.verified_metadata
+          }));
+          return {
+            ...data,
+            hospitals: normalizedHospitals
+          };
+        }
+        return data;
+      }
+    } catch {
+      // Fallback for offline / static hosting
+    }
+
+    const hospitals = getHospitalsForState(effectiveMode === 'DEMO', effectiveScenario, refCoords);
+    return {
+      success: true,
+      mode: effectiveMode,
+      scenario: effectiveScenario,
+      is_demo_mode: effectiveMode === 'DEMO',
+      reference_coordinates: refCoords,
+      count: hospitals.length,
+      hospitals
     };
   },
 

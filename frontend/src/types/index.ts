@@ -1,4 +1,5 @@
 export type RiskLevel = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+export * from './hospital';
 
 export interface LocationData {
   id: string;
