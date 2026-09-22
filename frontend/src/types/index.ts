@@ -281,3 +281,37 @@ export interface LiveEnvironmentalData {
   };
 }
 
+export interface LocationSafetyResult {
+  success: boolean;
+  location: {
+    name: string;
+    latitude: number;
+    longitude: number;
+  };
+  mode: string;
+  is_demo_mode: boolean;
+  assessment: {
+    risk_level: RiskLevel;
+    risk_color: string;
+    risk_probability: number;
+    status_wording: string;
+    probable_cause: string;
+    explanation: string;
+    advice: string[];
+  };
+  weather_telemetry: {
+    temperature_c: number;
+    humidity_pct: number;
+    wind_kmh: number;
+    current_rainfall_mm_hr: number;
+    soil_moisture_pct: number;
+    forecast_peak_24h_mm_hr: number;
+    forecast_total_24h_mm: number;
+    source: string;
+    observed_at: string;
+  };
+  official_warnings: OfficialImdWarning[];
+  disclaimer: string;
+}
+
+

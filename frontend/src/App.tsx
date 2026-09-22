@@ -14,6 +14,10 @@ import type {
 import { Navbar } from './components/Navbar';
 import { getHospitalsForState } from './data/demoHospitals';
 import { LandingPage } from './components/LandingPage';
+import { FlashFloodPage } from './components/FlashFloodPage';
+import { StreetWaterloggingPage } from './components/StreetWaterloggingPage';
+import { ScenarioSimulator } from './components/ScenarioSimulator';
+import { AboutHelpPage } from './components/AboutHelpPage';
 import { CommandCenter } from './components/CommandCenter';
 import { DisasterMap } from './components/Map/DisasterMap';
 import { AlertsAndResponse } from './components/AlertsAndResponse';
@@ -390,92 +394,83 @@ export function App() {
               <LandingPage
                 locations={locations}
                 selectedLocation={selectedLocation}
-                onSelectLocation={setSelectedLocation}
-                alerts={alerts}
                 activeFlashWarning={activeFlashWarning}
                 lastUpdated={lastUpdated}
                 isDemoMode={isDemoMode}
-                activeScenario={activeScenario}
                 liveEnvironment={liveEnvironment}
-                onNavigateToMap={() => setCurrentTab('risk-map')}
-                onOpenReportModal={() => setIsReportModalOpen(true)}
-                onNavigateToAlerts={() => setCurrentTab('alerts')}
+                onNavigateToFlashFlood={() => setCurrentTab('flash-flood')}
+                onNavigateToStreetWaterlogging={() => setCurrentTab('street-waterlogging')}
+                onNavigateToMap={() => setCurrentTab('flash-flood')}
                 onNavigateToReport={() => setCurrentTab('report')}
-                onNavigateToResponseCenter={() => setCurrentTab('response-center')}
               />
             )}
 
-            {/* 2. RISK MAP TAB */}
-            {currentTab === 'risk-map' && (
-              <div className="space-y-4">
-                <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-black text-slate-900 tracking-tight font-mono">
-                      LOCAL FLOOD RISK MAP
-                    </h2>
-                    <p className="text-xs text-slate-500">
-                      Click any ward polygon or active warning zone to view concise risk, cause, and safety instructions
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setIsReportModalOpen(true)}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center gap-2 cursor-pointer self-start sm:self-auto"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                    <span>REPORT WATERLOGGING</span>
-                  </button>
-                </div>
-
-                <DisasterMap
-                  locations={locations}
-                  selectedLocation={selectedLocation}
-                  onSelectLocation={setSelectedLocation}
-                  riverNetworks={riverNetworks}
-                  drainageLines={drainageLines}
-                  sensors={sensors}
-                  citizenReports={citizenReports}
-                  infrastructure={infrastructure}
-                  historicalEvents={historicalEvents}
-                  activeFlashWarning={activeFlashWarning}
-                  hospitals={hospitals}
-                  isDemoMode={isDemoMode}
-                  activeLayers={activeLayers}
-                  onToggleLayer={handleToggleLayer}
-                />
-              </div>
+            {/* 2. FLASH FLOOD MONITORING TAB */}
+            {currentTab === 'flash-flood' && (
+              <FlashFloodPage
+                locations={locations}
+                selectedLocation={selectedLocation}
+                onSelectLocation={setSelectedLocation}
+                riverNetworks={riverNetworks}
+                sensors={sensors}
+                activeFlashWarning={activeFlashWarning}
+                historicalEvents={historicalEvents}
+                officialImdWarnings={officialImdWarnings}
+                hospitals={hospitals}
+                isDemoMode={isDemoMode}
+                onNavigateToReport={() => setCurrentTab('report')}
+                onNavigateToSimulator={() => setCurrentTab('simulator')}
+              />
             )}
 
-            {/* 3. REPORT FLOODING TAB */}
+            {/* 3. STREET WATERLOGGING TAB */}
+            {currentTab === 'street-waterlogging' && (
+              <StreetWaterloggingPage
+                locations={locations}
+                selectedLocation={selectedLocation}
+                onSelectLocation={setSelectedLocation}
+                drainageLines={drainageLines}
+                sensors={sensors}
+                citizenReports={citizenReports}
+                isDemoMode={isDemoMode}
+                onOpenReportModal={() => setIsReportModalOpen(true)}
+                onNavigateToSimulator={() => setCurrentTab('simulator')}
+              />
+            )}
+
+            {/* 4. REPORT PAGE TAB */}
             {currentTab === 'report' && (
               <ReportPage
                 locations={locations}
                 selectedLocation={selectedLocation}
                 onReportSubmitted={fetchAllData}
-                onNavigateToMap={() => setCurrentTab('risk-map')}
+                onNavigateToMap={() => setCurrentTab('flash-flood')}
                 onNavigateHome={() => setCurrentTab('home')}
               />
             )}
 
-            {/* 4. ALERTS TAB */}
-            {currentTab === 'alerts' && (
-              <AlertsAndResponse
-                alerts={alerts}
-                activeFlashWarning={activeFlashWarning}
-                isDemoMode={isDemoMode}
-                activeScenario={activeScenario}
-                officialImdWarnings={officialImdWarnings}
-                hospitals={hospitals}
-                onViewOnMap={(locId) => {
-                  if (locId) {
-                    const found = locations.find(l => l.id === locId);
-                    if (found) setSelectedLocation(found);
-                  }
-                  setCurrentTab('risk-map');
-                }}
+            {/* 5. SIMULATOR TAB */}
+            {currentTab === 'simulator' && (
+              <ScenarioSimulator
+                locations={locations}
+                onApplyWarning={handleApplySimulatorWarning}
+                onResetSimulation={handleResetSimulation}
+                onNavigateToMap={() => setCurrentTab('flash-flood')}
+                onNavigateToFlashFlood={() => setCurrentTab('flash-flood')}
+                onNavigateToStreetWaterlogging={() => setCurrentTab('street-waterlogging')}
               />
             )}
 
-            {/* 5. RESPONSE CENTER (AUTHORITY TAB: Operations Center + Scenario Simulator) */}
+            {/* 7. ABOUT / HELP TAB */}
+            {currentTab === 'about' && (
+              <AboutHelpPage
+                onNavigateToFlashFlood={() => setCurrentTab('flash-flood')}
+                onNavigateToStreetWaterlogging={() => setCurrentTab('street-waterlogging')}
+                onNavigateToReport={() => setCurrentTab('report')}
+              />
+            )}
+
+            {/* 8. RESPONSE CENTER (AUTHORITY TAB: Operations Center + EOC) */}
             {currentTab === 'response-center' && (
               <CommandCenter
                 locations={locations}

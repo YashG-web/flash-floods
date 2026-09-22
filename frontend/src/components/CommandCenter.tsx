@@ -162,7 +162,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
           locations={locations}
           onApplyWarning={onApplyWarning}
           onResetSimulation={onResetSimulation}
-          onNavigateToMap={() => onNavigateTab('risk-map')}
+          onNavigateToMap={() => onNavigateTab('flash-flood')}
           onNavigateToAlerts={() => onNavigateTab('alerts')}
         />
       ) : (

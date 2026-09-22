@@ -130,12 +130,12 @@ export const FlashFloodWarningCard: React.FC<FlashFloodWarningCardProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
           <div>
             <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 block mb-1">
-              AFFECTED SECTOR & CORRIDOR
+              AFFECTED REGIONAL FLOOD ZONE
             </span>
             <div className="flex items-center gap-2">
               <MapPin className="w-5 h-5 text-red-600 shrink-0" />
               <h3 className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
-                {warning.locationName.toUpperCase()} — {warning.roadName.toUpperCase()}
+                {warning.locationName.toUpperCase()}
               </h3>
             </div>
           </div>

@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import {
   ShieldAlert,
   Home,
-  Map,
   Camera,
   Bell,
   Radio,
   RefreshCw,
   Menu,
-  X
+  X,
+  Waves,
+  Construction,
+  Sliders,
+  HelpCircle
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -43,10 +46,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navTabs = [
-    { id: 'home', label: 'HOME', icon: Home },
-    { id: 'risk-map', label: 'RISK MAP', icon: Map },
-    { id: 'report', label: 'REPORT FLOODING', icon: Camera, isReport: true },
-    { id: 'alerts', label: 'ALERTS', icon: Bell, badge: activeAlertsCount }
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'flash-flood', label: '🌊 Flash Flood', icon: Waves, isFlash: true },
+    { id: 'street-waterlogging', label: '🚧 Street Waterlogging', icon: Construction, isStreet: true },
+    { id: 'report', label: 'Report', icon: Camera, isReport: true },
+    { id: 'simulator', label: 'Simulator', icon: Sliders },
+    { id: 'about', label: 'About / Help', icon: HelpCircle }
   ];
 
   const handleTabClick = (tabId: string) => {
@@ -129,22 +134,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="bg-transparent text-amber-200 font-semibold focus:outline-hidden cursor-pointer text-[11px]"
               >
                 <option value="scenario_2_drainage_blockage" className="bg-slate-900 text-amber-300">
-                  ⚠️ Blocked Drain + Rain (Ward 12)
+                  ⚠️ Blocked Drain (Ward 12)
                 </option>
                 <option value="scenario_1_heavy_rainfall" className="bg-slate-900 text-red-300">
-                  🌧️ Heavy Rain / Cloudburst (Ward 04)
+                  🌧️ Cloudburst (Ward 04)
                 </option>
                 <option value="baseline" className="bg-slate-900 text-slate-200">
                   ☀️ Nominal Baseline (Clear)
                 </option>
               </select>
-            </div>
-          )}
-
-          {!isDemoMode && (
-            <div className="hidden lg:flex items-center gap-1 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded text-[10px] text-emerald-300 font-mono">
-              <span>Region:</span>
-              <span className="font-bold text-white">Uttarakhand (Rishikesh Basin)</span>
             </div>
           )}
 
@@ -163,76 +161,77 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-4">
         {/* Brand Logo & Tagline */}
         <div
           onClick={() => setCurrentTab('home')}
-          className="flex items-center gap-3 cursor-pointer group select-none"
+          className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
         >
-          <div className="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-700 to-sky-600 flex items-center justify-center text-white shadow-md group-hover:shadow-indigo-500/25 transition">
-            <ShieldAlert className="w-6 h-6 text-white" />
+          <div className="w-9 h-9 rounded-xl bg-linear-to-br from-indigo-700 to-sky-600 flex items-center justify-center text-white shadow-md group-hover:shadow-indigo-500/25 transition">
+            <ShieldAlert className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight text-slate-900 leading-none font-mono">
+            <h1 className="text-lg font-black tracking-tight text-slate-900 leading-none font-mono">
               JALRAKSHAK
             </h1>
-            <p className="text-xs font-bold text-sky-700 tracking-normal mt-0.5">
+            <p className="text-[11px] font-bold text-sky-700 tracking-normal mt-0.5">
               “Know the risk. Act early.”
             </p>
           </div>
         </div>
 
-        {/* Desktop Navigation Tabs: 4 Core Citizen Tabs */}
-        <nav className="hidden lg:flex items-center gap-1.5 bg-slate-100/90 p-1 rounded-xl border border-slate-200/80">
+        {/* Desktop Navigation Tabs: Structured 7 Core Items */}
+        <nav className="hidden lg:flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200/80">
           {navTabs.map((item) => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
+            
+            // Dynamic styling based on system
+            let activeClass = 'bg-white text-slate-900 shadow-xs border border-slate-200';
+            if (isActive) {
+              if (item.isFlash) activeClass = 'bg-blue-600 text-white shadow-xs font-black';
+              else if (item.isStreet) activeClass = 'bg-amber-600 text-white shadow-xs font-black';
+              else if (item.isReport) activeClass = 'bg-red-700 text-white shadow-xs font-black';
+            }
+
             return (
               <button
                 key={item.id}
                 onClick={() => handleTabClick(item.id)}
-                className={`relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
-                  item.isReport
-                    ? isActive
-                      ? 'bg-red-700 text-white shadow-xs'
-                      : 'bg-red-600 text-white hover:bg-red-700 shadow-xs'
-                    : isActive
-                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
+                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  isActive
+                    ? activeClass
+                    : item.isReport
+                    ? 'bg-red-600 text-white hover:bg-red-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${item.isReport ? 'text-white' : isActive ? 'text-sky-600' : 'text-slate-500'}`} />
+                <Icon className={`w-3.5 h-3.5 ${
+                  isActive ? 'text-white' : item.isReport ? 'text-white' : 'text-slate-500'
+                }`} />
                 <span>{item.label}</span>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className="ml-0.5 px-1.5 py-0.2 bg-red-600 text-white rounded-full text-[10px] font-black animate-pulse">
-                    {item.badge}
-                  </span>
-                )}
               </button>
             );
           })}
         </nav>
 
-        {/* Dedicated Authority Tab */}
-        <div className="hidden sm:flex items-center gap-3">
+        {/* Dedicated Authority Access Button */}
+        <div className="hidden sm:flex items-center gap-2 shrink-0">
           <button
             onClick={() => setCurrentTab('response-center')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition border cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
               currentTab === 'response-center'
                 ? 'bg-slate-900 text-sky-300 border-slate-900 shadow-xs'
-                : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 hover:text-slate-900'
+                : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
             }`}
-            title="Municipal Workers & Emergency Responders Command Center"
+            title="Municipal Responders & DEOC Authority Dashboard"
           >
-            <Radio className={`w-4 h-4 ${currentTab === 'response-center' ? 'text-sky-400' : 'text-slate-500'}`} />
-            <span>RESPONSE CENTER</span>
-            <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 bg-slate-800 text-amber-300 rounded font-bold">
-              Authority
-            </span>
+            <Radio className={`w-3.5 h-3.5 ${currentTab === 'response-center' ? 'text-sky-400' : 'text-slate-500'}`} />
+            <span>AUTHORITY</span>
           </button>
         </div>
 
-        {/* Mobile Hamburger Toggle */}
+        {/* Mobile Hamburger Toggle & Quick Report */}
         <div className="flex items-center gap-2 lg:hidden">
           <button
             onClick={onOpenReportModal}
@@ -251,36 +250,103 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile Navigation Dropdown */}
+      {/* Mobile Navigation Dropdown (Section 13 Strict Requirements) */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-2 shadow-lg">
-          {navTabs.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleTabClick(item.id)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
-                  item.isReport
-                    ? 'bg-red-600 text-white'
-                    : isActive
-                    ? 'bg-slate-100 text-sky-700'
-                    : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </div>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className="px-2 py-0.5 bg-red-600 text-white rounded-full text-xs font-black">
-                    {item.badge} ACTIVE
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3 shadow-lg">
+          {/* Two Large Stacked Cards for Mobile */}
+          <div className="space-y-2.5 pb-3 border-b border-slate-100">
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest font-mono">
+              TWO MONITORING ENGINES
+            </div>
+
+            {/* 1. FLASH FLOOD MOBILE CARD */}
+            <div
+              onClick={() => handleTabClick('flash-flood')}
+              className={`p-3.5 rounded-2xl border-2 transition cursor-pointer flex items-center justify-between ${
+                currentTab === 'flash-flood'
+                  ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-300/40'
+                  : 'bg-slate-50 border-slate-200 hover:bg-blue-50/50'
+              }`}
+            >
+              <div>
+                <h3 className="text-sm font-black text-slate-900 font-mono flex items-center gap-1.5">
+                  <span>🌊 FLASH FLOOD</span>
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Monitor flood risk and early warnings.
+                </p>
+              </div>
+              <span className="px-3 py-1 bg-blue-600 text-white rounded-xl text-xs font-black font-mono shadow-xs">
+                OPEN
+              </span>
+            </div>
+
+            {/* 2. STREET WATERLOGGING MOBILE CARD */}
+            <div
+              onClick={() => handleTabClick('street-waterlogging')}
+              className={`p-3.5 rounded-2xl border-2 transition cursor-pointer flex items-center justify-between ${
+                currentTab === 'street-waterlogging'
+                  ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-300/40'
+                  : 'bg-slate-50 border-slate-200 hover:bg-amber-50/50'
+              }`}
+            >
+              <div>
+                <h3 className="text-sm font-black text-slate-900 font-mono flex items-center gap-1.5">
+                  <span>🚧 STREET WATERLOGGING</span>
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Check flooded roads and blocked drains.
+                </p>
+              </div>
+              <span className="px-3 py-1 bg-amber-600 text-white rounded-xl text-xs font-black font-mono shadow-xs">
+                OPEN
+              </span>
+            </div>
+          </div>
+
+          {/* Standard Navigation Links */}
+          <div className="grid grid-cols-2 gap-2 text-xs font-bold pt-1">
+            <button
+              onClick={() => handleTabClick('home')}
+              className={`p-2.5 rounded-xl border text-left flex items-center gap-2 ${
+                currentTab === 'home' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}
+            >
+              <Home className="w-3.5 h-3.5" />
+              <span>Home</span>
+            </button>
+
+
+            <button
+              onClick={() => handleTabClick('report')}
+              className={`p-2.5 rounded-xl border text-left flex items-center gap-2 ${
+                currentTab === 'report' ? 'bg-red-600 text-white' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>Report</span>
+            </button>
+
+            <button
+              onClick={() => handleTabClick('simulator')}
+              className={`p-2.5 rounded-xl border text-left flex items-center gap-2 ${
+                currentTab === 'simulator' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Simulator</span>
+            </button>
+
+            <button
+              onClick={() => handleTabClick('about')}
+              className={`p-2.5 rounded-xl border text-left flex items-center gap-2 col-span-2 ${
+                currentTab === 'about' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>About / Help</span>
+            </button>
+          </div>
 
           <div className="pt-2 border-t border-slate-100">
             <button
@@ -288,15 +354,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setCurrentTab('response-center');
                 setMobileMenuOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold cursor-pointer ${
-                currentTab === 'response-center'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-800'
-              }`}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold"
             >
               <div className="flex items-center gap-2">
                 <Radio className="w-4 h-4 text-sky-400" />
-                <span>RESPONSE CENTER (AUTHORITY)</span>
+                <span>AUTHORITY RESPONSE CENTER</span>
               </div>
               <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-800 text-amber-300 rounded font-bold">
                 EOC

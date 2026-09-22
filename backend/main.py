@@ -149,6 +149,147 @@ def get_live_warnings(
         "retrieved_at": live_data_service.get_ist_now_str()
     }
 
+@app.get("/api/location-safety")
+def get_location_safety(
+    lat: float = Query(..., description="Latitude"),
+    lon: float = Query(..., description="Longitude"),
+    location_name: Optional[str] = Query("Your Location", description="Display name for location"),
+    mode: Optional[str] = Query(None, description="Mode: 'live' or 'demo'"),
+    force_refresh: bool = Query(False, description="Force refresh external weather telemetry")
+):
+    """
+    Evaluates real-time location flood safety for any coordinates in India using Open-Meteo
+    and the JalRakshak risk & cause intelligence engine.
+    """
+    effective_mode = (mode or CURRENT_MODE).upper()
+    is_live = (effective_mode == "LIVE")
+    
+    # Fetch live Open-Meteo data for coordinates
+    om_data = live_data_service.fetch_open_meteo_data(lat, lon)
+    curr = om_data.get("current", {}) if om_data else {}
+    hourly = om_data.get("hourly", {}) if om_data else {}
+
+    # Extract weather metrics
+    temp_c = curr.get("temperature_2m", 24.0)
+    humidity_pct = curr.get("relative_humidity_2m", 70.0)
+    wind_kmh = curr.get("wind_speed_10m", 12.0)
+    precipitation_mm = curr.get("precipitation")
+    if precipitation_mm is None:
+        precipitation_mm = curr.get("rain", 0.0)
+
+    # 24h precipitation forecast
+    precip_arr = hourly.get("precipitation", [])
+    max_next_24h_rain = max(precip_arr[:24]) if (precip_arr and len(precip_arr) > 0) else 0.0
+    total_next_24h_rain = round(sum(precip_arr[:24]), 1) if (precip_arr and len(precip_arr) > 0) else 0.0
+
+    # Modeled soil moisture from hourly forecast (converted to % saturation)
+    soil_moisture_pct = 50.0
+    soil_arr = hourly.get("soil_moisture_0_to_1cm", [])
+    if soil_arr and len(soil_arr) > 0 and soil_arr[0] is not None:
+        saturation = round(min(100.0, max(5.0, (float(soil_arr[0]) / 0.45) * 100.0)), 1)
+        soil_moisture_pct = saturation
+
+    # If DEMO mode, adjust parameters according to flash flood scenario
+    if not is_live:
+        if CURRENT_SCENARIO == "scenario_1_heavy_rain":
+            precipitation_mm = 92.0
+            soil_moisture_pct = 94.0
+        else:
+            precipitation_mm = 14.0
+            soil_moisture_pct = 48.0
+
+    # Flash Flood Infiltration Excess & Surge Model:
+    # Pure Flash Flood Hydrology (Rainfall Intensity + Soil Moisture Saturation + River Catchment Surge)
+    rain_risk = min(100.0, (precipitation_mm / 70.0) * 65.0)
+    saturation_risk = (soil_moisture_pct / 100.0) * (35.0 if precipitation_mm >= 10.0 else 15.0)
+    prob = round(min(100.0, max(5.0, rain_risk + saturation_risk)), 1)
+
+    if prob >= 75.0:
+        risk_level = "CRITICAL"
+        risk_color = "#dc2626"
+    elif prob >= 50.0:
+        risk_level = "HIGH"
+        risk_color = "#f97316"
+    elif prob >= 25.0:
+        risk_level = "MODERATE"
+        risk_color = "#eab308"
+    else:
+        risk_level = "LOW"
+        risk_color = "#16a34a"
+
+    # Flash Flood Probable Causes (Pure Flash Flood Hydrology - Zero street drainage references)
+    if precipitation_mm >= 60.0 and soil_moisture_pct >= 75.0:
+        probable_cause = "Cloudburst Surge & Severe Soil Saturation"
+        explanation = f"Torrential cloudburst precipitation ({precipitation_mm} mm/h) colliding with near-saturated ground ({soil_moisture_pct}%) produces critical flash flood surface runoff and rapid river swell."
+    elif precipitation_mm >= 50.0:
+        probable_cause = "Heavy Basin Precipitation Surge"
+        explanation = f"Intense downpour ({precipitation_mm} mm/h) exceeds standard geological infiltration capacity, generating high-velocity sheet runoff toward regional riverbanks and low-lying valleys."
+    elif soil_moisture_pct >= 80.0 and precipitation_mm >= 15.0:
+        probable_cause = "Soil Saturation & Runoff Infiltration Excess"
+        explanation = f"Ground is near saturation ({soil_moisture_pct}%), preventing rain absorption. Continuing rainfall ({precipitation_mm} mm/h) converts directly into accelerated flash flood surface runoff."
+    elif precipitation_mm >= 20.0:
+        probable_cause = "Catchment Rain Influx & River Swell Watch"
+        explanation = f"Moderate rainfall ({precipitation_mm} mm/h) across local mountain slopes is elevating river basin discharge. Low-lying terraces and stream confluences may experience rising water levels."
+    else:
+        probable_cause = "Normal Basin Hydrology & Safe Soil Absorption"
+        explanation = f"Precipitation ({precipitation_mm} mm/h) and soil saturation ({soil_moisture_pct}%) remain well within safe geological absorption limits. Regional river corridors and mountain catchment streams maintain nominal flow."
+
+    # Official IMD warnings
+    official_warnings = live_data_service.fetch_imd_cap_warnings(force_refresh=force_refresh)
+
+    # Actionable safety advice for citizens (Flash Flood specific)
+    if risk_level in ["CRITICAL", "HIGH"]:
+        advice = [
+            "Evacuate immediately to designated highland shelters away from riverbanks and mountain streams.",
+            "Never attempt to cross flooded causeways, low-lying bridges, or rapidly flowing water.",
+            "Monitor emergency broadcast frequencies and contact State Disaster Helpline (Call 1070 / 112)."
+        ]
+    elif risk_level == "MODERATE":
+        advice = [
+            "Stay alert to rising river water levels and avoid visiting mountain stream crossings or low river ghats.",
+            "Identify nearest high-ground evacuation routes in case precipitation escalates.",
+            "Check official IMD regional bulletins before traveling through valley or mountain road corridors."
+        ]
+    else:
+        advice = [
+            "Precipitation and soil moisture levels present low regional flood vulnerability.",
+            "Mountain catchments and regional river trunks are currently maintaining nominal flow.",
+            "Maintain standard weather vigilance during monsoon periods."
+        ]
+
+    return {
+        "success": True,
+        "location": {
+            "name": location_name or f"Coordinates [{lat:.4f}, {lon:.4f}]",
+            "latitude": lat,
+            "longitude": lon
+        },
+        "mode": effective_mode,
+        "is_demo_mode": not is_live,
+        "assessment": {
+            "risk_level": risk_level,
+            "risk_color": risk_color,
+            "risk_probability": prob,
+            "status_wording": f"currently assessed as {risk_level} RISK",
+            "probable_cause": cause_res.get("probable_cause", "Normal Runoff Dynamics"),
+            "explanation": cause_res.get("explanation", "Precipitation and soil moisture remain within safe absorption capacity."),
+            "advice": advice
+        },
+        "weather_telemetry": {
+            "temperature_c": temp_c,
+            "humidity_pct": humidity_pct,
+            "wind_kmh": wind_kmh,
+            "current_rainfall_mm_hr": precipitation_mm,
+            "soil_moisture_pct": soil_moisture_pct,
+            "forecast_peak_24h_mm_hr": max_next_24h_rain,
+            "forecast_total_24h_mm": total_next_24h_rain,
+            "source": "Open-Meteo Weather API" if is_live else "Demonstration Scenario Model",
+            "observed_at": live_data_service.get_ist_now_str()
+        },
+        "official_warnings": official_warnings,
+        "disclaimer": "Assessments reflect current sensor telemetry, meteorological models, and official bulletins. Ground conditions can change rapidly during cloudbursts or river swells; always adhere to local disaster management and evacuation instructions."
+    }
+
 @app.get("/api/risk/map")
 def get_risk_map(mode: Optional[str] = Query(None)):
     """

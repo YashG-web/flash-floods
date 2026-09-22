@@ -79,3 +79,48 @@ body {
 .animate-critical-pulse {
   animation: critical-pulse 2s infinite ease-in-out;
 }
+
+/* Glowing animated flow arrow styling for Leaflet SVG layers */
+@keyframes flood-stream-dash {
+  0% {
+    stroke-dashoffset: 40;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.flood-flow-arrow {
+  stroke-dasharray: 10, 8;
+  animation: flood-stream-dash 1.3s linear infinite;
+}
+
+@keyframes flood-pulse-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px currentColor);
+    fill-opacity: 0.38;
+  }
+  50% {
+    filter: drop-shadow(0 0 18px currentColor);
+    fill-opacity: 0.58;
+  }
+}
+
+.flood-polygon-glow {
+  animation: flood-pulse-glow 2.2s infinite ease-in-out;
+}
+
+@keyframes arrow-flow-bounce {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
+  }
+}
+
+.flood-arrow-badge {
+  animation: arrow-flow-bounce 1.6s infinite ease-in-out;
+}
