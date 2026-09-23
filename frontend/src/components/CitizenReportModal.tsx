@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { apiClient } from '../api/client';
 import type { LocationData } from '../types';
+import { useTranslation } from '../services/LanguageContext';
 import {
   Camera,
   Upload,
@@ -24,6 +25,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
   locations,
   onReportSubmitted
 }) => {
+  const { t, tr } = useTranslation();
   const [selectedLocationId, setSelectedLocationId] = useState('ward-12');
   const [hazardType, setHazardType] = useState('Water on road');
   const [description, setDescription] = useState('');
@@ -58,18 +60,18 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setIsUsingLocation(false);
-          setLocationSuccessMsg(`GPS pinned (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`);
+          setLocationSuccessMsg(`${tr('GPS pinned')} (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`);
         },
         (error) => {
           setIsUsingLocation(false);
           // Fallback to current selected ward smoothly
-          setLocationSuccessMsg('GPS approximated to current ward');
+          setLocationSuccessMsg(tr('GPS approximated to current ward'));
         },
         { timeout: 5000 }
       );
     } else {
       setIsUsingLocation(false);
-      setLocationSuccessMsg('GPS approximated to current ward');
+      setLocationSuccessMsg(tr('GPS approximated to current ward'));
     }
   };
 
@@ -125,13 +127,14 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
               <Camera className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-extrabold text-base">REPORT WATERLOGGING</h3>
-              <p className="text-xs text-slate-300">Help authorities update the live risk map</p>
+              <h3 className="font-extrabold text-base">{t.reportHazardTitle}</h3>
+              <p className="text-xs text-slate-300">{t.reportHazardSubtitle}</p>
             </div>
           </div>
           <button
             onClick={handleResetAndClose}
             className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            title={t.close}
           >
             <X className="w-5 h-5" />
           </button>
@@ -145,12 +148,9 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
             </div>
 
             <div>
-              <h4 className="text-xl font-black text-slate-900 font-mono">✓ REPORT RECEIVED</h4>
+              <h4 className="text-xl font-black text-slate-900 font-mono">✓ {t.reportSubmittedSuccess}</h4>
               <p className="text-sm font-semibold text-slate-700 mt-2">
-                Your report has been added to the local risk map.
-              </p>
-              <p className="text-xs text-slate-500 mt-1">
-                Municipal response teams and nearby residents can now see this alert.
+                {t.reportDispatchedMsg}
               </p>
             </div>
 
@@ -159,7 +159,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
                 onClick={handleResetAndClose}
                 className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-sm transition cursor-pointer"
               >
-                Close & View Map
+                {t.close}
               </button>
             </div>
           </div>
@@ -169,7 +169,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
             {/* Step 1: Upload / Take Photo */}
             <div>
               <label className="block text-xs font-black text-slate-800 uppercase tracking-wider mb-2">
-                1. Upload or Take Photo
+                1. {t.takeOrUploadPhoto}
               </label>
               
               <div className="flex items-center gap-4">
@@ -188,7 +188,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
                 <div className="flex-1">
                   <label className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold border border-slate-300 cursor-pointer transition">
                     <Upload className="w-4 h-4 text-sky-600" />
-                    <span>Choose Photo / Camera</span>
+                    <span>{t.takeOrUploadPhoto}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -196,9 +196,6 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
                       className="hidden"
                     />
                   </label>
-                  <p className="text-[11px] text-slate-500 mt-1.5">
-                    Clear photos help municipal teams dispatch suction pumps faster.
-                  </p>
                 </div>
               </div>
             </div>
@@ -206,7 +203,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
             {/* Step 2: Location */}
             <div>
               <label className="block text-xs font-black text-slate-800 uppercase tracking-wider mb-2">
-                2. Location
+                2. {t.selectLocation}
               </label>
 
               <div className="flex flex-col sm:flex-row gap-2">
@@ -217,7 +214,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
                 >
                   {locations.map(loc => (
                     <option key={loc.id} value={loc.id}>
-                      {loc.name}
+                      {tr(loc.name)}
                     </option>
                   ))}
                 </select>
@@ -229,7 +226,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
                   className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-800 rounded-xl border border-sky-200 text-xs font-bold transition cursor-pointer"
                 >
                   <Compass className="w-4 h-4 text-sky-600" />
-                  <span>{isUsingLocation ? 'Finding...' : 'Use My Location'}</span>
+                  <span>{isUsingLocation ? t.syncing : t.useMyLocation}</span>
                 </button>
               </div>
 
@@ -243,7 +240,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
             {/* Step 3: What are you seeing? */}
             <div>
               <label className="block text-xs font-black text-slate-800 uppercase tracking-wider mb-2">
-                3. What are you seeing?
+                3. {t.hazardType}
               </label>
 
               <div className="space-y-2">
@@ -264,7 +261,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
                       onChange={() => setHazardType(opt)}
                       className="text-red-600 focus:ring-0 cursor-pointer"
                     />
-                    <span>{opt}</span>
+                    <span>{tr(opt)}</span>
                   </label>
                 ))}
               </div>
@@ -273,13 +270,13 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
             {/* Step 4: Optional description */}
             <div>
               <label className="block text-xs font-black text-slate-800 uppercase tracking-wider mb-1">
-                4. Optional Description
+                4. {t.descriptionPlaceholder}
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                placeholder="e.g. Water knee-deep near the cinema hall; culvert clogged with debris."
+                placeholder={t.descriptionPlaceholder}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-sky-500 focus:outline-hidden"
               />
             </div>
@@ -291,7 +288,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
               className="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl text-sm shadow-md transition cursor-pointer flex items-center justify-center gap-2"
             >
               <Camera className="w-4 h-4" />
-              <span>{isSubmitting ? 'SUBMITTING REPORT...' : 'SUBMIT REPORT'}</span>
+              <span>{isSubmitting ? t.submitting : t.submitReportBtn}</span>
             </button>
           </form>
         )}

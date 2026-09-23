@@ -4,6 +4,7 @@ import type { LocationData, IoTSensor, CitizenReport, HistoricalEvent, FlashFloo
 import type { FloodSpreadStage, FloodSpreadStageKey } from '../../services/floodSpreadService';
 import { MUNICIPAL_ROADS, type MunicipalRoad } from '../../data/municipalRoads';
 import { Layers, X, Clock, AlertTriangle, Plus, Minus, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Compass, RotateCcw } from 'lucide-react';
+import { useTranslation } from '../../services/LanguageContext';
 
 interface DisasterMapProps {
   locations: LocationData[];
@@ -121,6 +122,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
   activeLayers,
   onToggleLayer
 }) => {
+  const { t, tr } = useTranslation();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const baseTileLayerRef = useRef<L.TileLayer | null>(null);
@@ -1100,7 +1102,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
           title="Reset View to Rishikesh Basin"
         >
           <span>🎯</span>
-          <span>Basin</span>
+          <span>{tr('Basin')}</span>
         </button>
 
         <button
@@ -1110,7 +1112,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
           title="View Entire Map of India"
         >
           <span>🇮🇳</span>
-          <span>India View</span>
+          <span>{tr('India View')}</span>
         </button>
 
         <div className="relative">
@@ -1119,7 +1121,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
             className="flex items-center gap-2 px-3.5 py-2 bg-white/95 backdrop-blur-md rounded-xl border border-slate-300 shadow-md text-xs font-bold text-slate-800 hover:bg-white hover:text-slate-900 transition cursor-pointer"
           >
             <Layers className="w-4 h-4 text-sky-600" />
-            <span>LAYERS</span>
+            <span>{tr('LAYERS')}</span>
           </button>
 
         {layersMenuOpen && (
@@ -1128,7 +1130,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
             <div>
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
                 <span className="font-extrabold text-slate-900 uppercase tracking-wider text-[10px]">
-                  Base Map
+                  {tr('Base Map')}
                 </span>
                 <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">
                   FREE / NO KEY
@@ -1151,7 +1153,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
                       title={provider.name}
                     >
                       <span className="text-xs">{provider.icon}</span>
-                      <span className="truncate">{provider.shortName}</span>
+                      <span className="truncate">{tr(provider.shortName)}</span>
                     </button>
                   );
                 })}
@@ -1159,13 +1161,13 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
             </div>
 
             <div className="font-extrabold text-slate-900 pb-1 border-b border-slate-100 uppercase tracking-wider text-[10px]">
-              Display Layers
+              {tr('Display Layers')}
             </div>
 
             <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
               <span className="flex items-center gap-2 text-slate-800 font-semibold">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                <span>Flood Risk</span>
+                <span>{tr('Flood Risk')}</span>
               </span>
               <input
                 type="checkbox"
@@ -1178,7 +1180,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
             <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
               <span className="flex items-center gap-2 text-slate-800 font-semibold">
                 <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                <span>Rainfall</span>
+                <span>{tr('Rainfall')}</span>
               </span>
               <input
                 type="checkbox"
@@ -1191,7 +1193,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
             <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
               <span className="flex items-center gap-2 text-slate-800 font-semibold">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-600" />
-                <span>Drainage</span>
+                <span>{tr('Drainage')}</span>
               </span>
               <input
                 type="checkbox"
@@ -1204,7 +1206,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
             <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
               <span className="flex items-center gap-2 text-slate-800 font-semibold">
                 <span className="text-xs">📡</span>
-                <span>Sensors</span>
+                <span>{tr('Sensors')}</span>
               </span>
               <input
                 type="checkbox"
@@ -1217,7 +1219,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
             <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
               <span className="flex items-center gap-2 text-slate-800 font-semibold">
                 <span className="w-2 h-2 rounded-xs bg-slate-600" />
-                <span>Historical Events</span>
+                <span>{tr('Historical Events')}</span>
               </span>
               <input
                 type="checkbox"
@@ -1230,7 +1232,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
             <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
               <span className="flex items-center gap-2 text-slate-800 font-semibold">
                 <span className="text-xs">🏥</span>
-                <span>Hospitals & Trauma</span>
+                <span>{tr('Hospitals & Trauma')}</span>
               </span>
               <input
                 type="checkbox"
@@ -1250,10 +1252,10 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
           <div className="flex items-start justify-between gap-2 pb-2 border-b border-slate-100">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block">
-                {isWarnedZone ? '🔴 ACTIVE WARNING ZONE' : 'SELECTED AREA'}
+                {isWarnedZone ? tr('ACTIVE WARNING ZONE') : tr('SELECTED AREA')}
               </span>
               <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                {activeLoc.name.toUpperCase()}
+                {tr(activeLoc.name).toUpperCase()}
               </h3>
             </div>
             <button
@@ -1267,36 +1269,36 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
           <div className="mt-3 space-y-2.5 text-xs">
             <div>
-              <span className="text-slate-500 font-semibold block text-[11px]">RISK:</span>
+              <span className="text-slate-500 font-semibold block text-[11px]">{tr('RISK:')}</span>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="text-sm">{riskBadge.symbol}</span>
                 <span className="text-sm font-black text-slate-900 uppercase font-mono">
-                  {activeRiskLevel}
+                  {tr(activeRiskLevel)}
                 </span>
               </div>
             </div>
 
             <div>
-              <span className="text-slate-500 font-semibold block text-[11px]">CAUSE:</span>
+              <span className="text-slate-500 font-semibold block text-[11px]">{tr('CAUSE:')}</span>
               <p className="text-slate-800 font-medium leading-snug mt-0.5">
-                {conciseReason}
+                {tr(conciseReason)}
               </p>
             </div>
 
             <div>
-              <span className="text-slate-500 font-semibold block text-[11px]">WARNING WINDOW:</span>
+              <span className="text-slate-500 font-semibold block text-[11px]">{tr('WARNING WINDOW:')}</span>
               <div className="flex items-center gap-1 text-slate-800 font-bold mt-0.5">
                 <Clock className="w-3.5 h-3.5 text-sky-600" />
-                <span>{warningWindow}</span>
+                <span>{tr(warningWindow)}</span>
               </div>
             </div>
 
             <div className="pt-2 border-t border-slate-100 bg-amber-50/70 p-2.5 rounded-xl border border-amber-200/80">
               <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">
-                ACTION:
+                {tr('ACTION:')}
               </span>
               <p className="text-amber-950 font-bold mt-0.5">
-                {actionAdvice}
+                {tr(actionAdvice)}
               </p>
             </div>
           </div>
@@ -1305,18 +1307,18 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
       {/* Clean 4-Color Map Legend */}
       <div className="absolute bottom-4 left-4 z-40 bg-white/95 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-slate-200 shadow-md text-xs flex flex-wrap items-center gap-3">
-        <span className="font-bold text-slate-800">Risk:</span>
+        <span className="font-bold text-slate-800">{tr('Risk:')}</span>
         <span className="flex items-center gap-1 text-slate-700 font-medium">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Low
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> {tr('Low')}
         </span>
         <span className="flex items-center gap-1 text-slate-700 font-medium">
-          <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" /> Moderate
+          <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" /> {tr('Moderate')}
         </span>
         <span className="flex items-center gap-1 text-slate-700 font-medium">
-          <span className="w-2.5 h-2.5 rounded-full bg-orange-500" /> High
+          <span className="w-2.5 h-2.5 rounded-full bg-orange-500" /> {tr('High')}
         </span>
         <span className="flex items-center gap-1 text-slate-700 font-medium">
-          <span className="w-2.5 h-2.5 rounded-full bg-red-600" /> Critical
+          <span className="w-2.5 h-2.5 rounded-full bg-red-600" /> {tr('Critical')}
         </span>
       </div>
 

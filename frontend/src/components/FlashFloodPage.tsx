@@ -7,6 +7,7 @@ import type {
   OfficialImdWarning,
   Hospital
 } from '../types';
+import { useTranslation } from '../services/LanguageContext';
 import { DisasterMap } from './Map/DisasterMap';
 import { FlashFloodWarningCard } from './FlashFloodWarningCard';
 import { HospitalCapacityPanel } from './HospitalCapacityPanel';
@@ -54,6 +55,7 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
   onNavigateToReport,
   onNavigateToSimulator
 }) => {
+  const { t } = useTranslation();
   const [isSafetyModalOpen, setIsSafetyModalOpen] = useState(false);
 
   const activeLoc = selectedLocation || locations[0] || {
@@ -135,19 +137,19 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
         <div className="space-y-1.5 z-10">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase font-mono bg-blue-500/20 text-blue-300 border border-blue-400/40">
-              Personalized Flood Risk Assessment
+              {t.locationSafetyTitle}
             </span>
             <span className="text-[11px] text-slate-400 font-mono">
-              Open-Meteo Weather + Soil Moisture + IMD Feed
+              Open-Meteo + IMD
             </span>
           </div>
 
           <h2 className="text-xl sm:text-2xl font-black font-mono tracking-tight text-white flex items-center gap-2.5">
-            <span>🏠 Is My Location Safe?</span>
+            <span>🏠 {t.checkLocationSafetyBtn}</span>
           </h2>
 
           <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-            Check real-time flood risk for your current GPS location, ward, or town. Evaluates live rainfall, soil saturation, and official IMD warnings through the JalRakshak risk engine.
+            {t.locationSafetyDesc}
           </p>
         </div>
 
@@ -157,7 +159,7 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
           className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm transition flex items-center gap-2.5 cursor-pointer shadow-lg hover:shadow-amber-500/20 shrink-0 self-start md:self-auto z-10"
         >
           <Home className="w-4 h-4" />
-          <span>CHECK MY LOCATION</span>
+          <span>{t.checkLocationSafetyBtn}</span>
           <ArrowRight className="w-4 h-4" />
         </button>
 
@@ -179,20 +181,15 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
             </div>
             <div>
               <div className="text-[10px] font-black uppercase text-emerald-800 font-mono tracking-wider">
-                NO ACTIVE FLASH FLOOD WARNING
+                {t.safeStatusTitle}
               </div>
               <p className="text-xs text-emerald-950 font-medium mt-0.5">
-                Regional river trunks and basin precipitation levels remain below critical surge thresholds.
+                {t.twoSystemsDesc}
               </p>
             </div>
           </div>
-          <span className="text-xs font-mono text-emerald-700 font-bold hidden sm:inline">
-            SDMA Monitoring Active
-          </span>
         </div>
       )}
-
-
 
       {/* 5. REGIONAL RISK MAP (Flash Flood Focus) */}
       <section className="space-y-4">
@@ -202,17 +199,14 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                  SIMULATION / PREDICTED SPREAD
-                </span>
-                <span className="text-[11px] text-slate-400 font-mono">
-                  Live Hydrodynamic Wavefront Engine
+                  {t.spreadSimulationTitle}
                 </span>
               </div>
               <h2 className="text-lg sm:text-xl font-black font-mono tracking-tight text-white flex items-center gap-2">
-                <span>FLASH FLOOD RISK MAP — FLOOD SPREAD ANIMATION</span>
+                <span>🌊 {t.spreadSimulationTitle}</span>
               </h2>
               <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                Simulates real-time flood wave propagation from the starting high-risk zone ({activeLoc.name.split('(')[0].trim()}) along river corridors, roadways, and neighboring sectors.
+                {t.spreadSimulationDesc}
               </p>
             </div>
 
@@ -225,7 +219,7 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
                   className="px-6 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 hover:from-amber-400 hover:via-orange-400 hover:to-red-500 text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition flex items-center gap-2.5 cursor-pointer shadow-xl hover:shadow-orange-500/25"
                 >
                   <RotateCcw className="w-4 h-4" />
-                  <span>↻ REPLAY ANIMATION</span>
+                  <span>↻ {t.replay}</span>
                 </button>
               ) : animationState === 'running' ? (
                 <button
@@ -234,7 +228,7 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
                   className="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/50 font-black rounded-2xl text-xs sm:text-sm transition flex items-center gap-2.5 cursor-pointer shadow-lg"
                 >
                   <Pause className="w-4 h-4" />
-                  <span>⏸ PAUSE ANIMATION</span>
+                  <span>⏸ {t.pause}</span>
                 </button>
               ) : (
                 <button
@@ -243,7 +237,7 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
                   className="px-7 py-3.5 sm:py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 hover:from-amber-400 hover:via-orange-400 hover:to-red-500 text-slate-950 font-black rounded-2xl text-xs sm:text-sm md:text-base transition flex items-center gap-3 cursor-pointer shadow-2xl hover:shadow-orange-500/30 transform hover:-translate-y-0.5 active:translate-y-0"
                 >
                   <Play className="w-5 h-5 fill-slate-950 animate-pulse" />
-                  <span>▶ START FLOOD SPREAD ANIMATION</span>
+                  <span>▶ {t.startSimulation}</span>
                 </button>
               )}
             </div>

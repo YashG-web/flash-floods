@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
 import type { LocationSafetyResult, OfficialImdWarning, LocationData } from '../types';
+import { useTranslation } from '../services/LanguageContext';
 import {
   X,
   MapPin,
@@ -52,6 +53,7 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
   isDemoMode = true,
   officialImdWarnings = []
 }) => {
+  const { t } = useTranslation();
   const [activeLocation, setActiveLocation] = useState({
     name: 'Ward 04 (Riverfront Embankment)',
     lat: 30.0845,
@@ -190,21 +192,21 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="text-[10px] font-black uppercase font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                Citizen Safety Diagnostic
+                {t.appName}
               </span>
               <span className={`text-[10px] font-black uppercase font-mono px-2 py-0.5 rounded-full ${
                 isDemoMode
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
                   : 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
               }`}>
-                {isDemoMode ? '🟡 DEMO SIMULATION' : '🟢 LIVE METEOROLOGICAL DATA'}
+                {isDemoMode ? t.demoModeActive : t.liveDataActive}
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black font-mono tracking-tight flex items-center gap-2">
-              <span>🏠 Is My Location Safe?</span>
+              <span>🏠 {t.locationSafetyTitle}</span>
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Personalized regional flash flood risk check powered by free Open-Meteo weather telemetry, soil saturation & JalRakshak hydrological models.
+              {t.locationSafetyDesc}
             </p>
           </div>
 
@@ -212,7 +214,7 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
             type="button"
             onClick={onClose}
             className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition cursor-pointer shrink-0"
-            title="Close modal"
+            title={t.close}
           >
             <X className="w-5 h-5" />
           </button>
@@ -225,7 +227,7 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-800">
                 <MapPin className="w-4 h-4 text-sky-600 shrink-0" />
-                <span className="text-slate-500">Target Location:</span>
+                <span className="text-slate-500">{t.selectedWard}:</span>
                 <span className="text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200 truncate max-w-xs">
                   {activeLocation.name}
                 </span>
@@ -243,7 +245,7 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
                 ) : (
                   <Compass className="w-3.5 h-3.5" />
                 )}
-                <span>{isDetectingGps ? 'Detecting GPS...' : '📍 Use Current GPS'}</span>
+                <span>{isDetectingGps ? t.syncing : `📍 ${t.useCurrentGps}`}</span>
               </button>
             </div>
 
@@ -262,7 +264,7 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search any town, city or village in India (e.g., Haridwar, Shimla)..."
+                  placeholder={t.searchCityVillage}
                   className="w-full pl-9 pr-3 py-2 text-xs font-medium rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-hidden focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
                 />
               </div>
@@ -271,7 +273,7 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
                 disabled={isSearching}
                 className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition shrink-0 cursor-pointer disabled:opacity-50"
               >
-                {isSearching ? 'Searching...' : 'Search'}
+                {isSearching ? t.syncing : 'Search'}
               </button>
             </form>
 
@@ -345,34 +347,47 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
                   <span className="text-[10px] font-black uppercase font-mono tracking-wider text-slate-500 block">
-                    CURRENT SAFETY ASSESSMENT
+                    {t.currentStatusHeading}
                   </span>
                   <div className="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-950 flex items-center gap-2">
                     <span>{riskBadgeStyles.symbol}</span>
-                    <span>Currently assessed as {riskLvl} RISK</span>
+                    <span>{riskLvl === 'LOW' ? t.safeStatusTitle : `${t.highRiskStatusTitle} (${riskLvl})`}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 self-start sm:self-auto">
                   <div className="text-right font-mono">
-                    <div className="text-[10px] text-slate-500 uppercase font-bold">Flood Probability</div>
+                    <div className="text-[10px] text-slate-500 uppercase font-bold">{t.flashFloodCardTitle}</div>
                     <div className="text-lg font-black text-slate-900">{assessment.risk_probability}%</div>
                   </div>
+                  <span className={`px-3 py-1 rounded-xl text-white font-mono font-black text-xs ${riskBadgeStyles.bg}`}>
+                    {riskLvl}
+                  </span>
                 </div>
               </div>
 
-              {/* Cause & Personalized Explanation */}
-              <div className="p-3.5 bg-white/90 backdrop-blur-xs rounded-xl border border-slate-200/80 space-y-1">
-                <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 font-mono">
-                  DIAGNOSTIC REASON
-                </div>
-                <div className="text-sm font-black text-slate-900">
-                  {assessment.probable_cause}
-                </div>
-                <p className="text-xs text-slate-700 leading-relaxed pt-0.5">
-                  {assessment.explanation}
-                </p>
+              {/* Explanatory Assessment */}
+              <div className="p-3.5 bg-white/80 rounded-xl border border-slate-200/80 text-xs text-slate-800 space-y-1 font-medium">
+                <div><strong>{t.primaryCause}:</strong> {assessment.probable_cause}</div>
+                <div className="text-slate-600">{assessment.explanation}</div>
               </div>
+
+              {/* Actionable Advice */}
+              {assessment.advice && assessment.advice.length > 0 && (
+                <div className="space-y-2 pt-1">
+                  <span className="text-[10px] font-black uppercase font-mono tracking-wider text-slate-600 block">
+                    {t.whatYouShouldDo}:
+                  </span>
+                  <ul className="space-y-1.5 text-xs text-slate-800">
+                    {assessment.advice.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* 4. METEOROLOGICAL & HYDROLOGICAL TELEMETRY GRID */}
               {weather && (

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Hospital, HospitalStatus, AccessibilityStatus, AmbulanceStatus } from '../types/hospital';
+import { useTranslation } from '../services/LanguageContext';
 import {
   Building2,
   Navigation,
@@ -20,6 +21,7 @@ interface HospitalCardProps {
 }
 
 export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMap, isDemoMode = true }) => {
+  const { t, tr } = useTranslation();
   // Always evaluate as demo if either parent or hospital says demo
   const isDemo = isDemoMode !== undefined ? isDemoMode : (hospital.dataMode !== 'LIVE');
 
@@ -28,25 +30,25 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
     switch (status) {
       case 'AVAILABLE':
         return {
-          label: 'AVAILABLE',
+          label: tr('AVAILABLE'),
           bg: 'bg-emerald-100 text-emerald-800 border-emerald-300',
           dot: 'bg-emerald-500'
         };
       case 'LIMITED':
         return {
-          label: 'LIMITED CAPACITY',
+          label: tr('LIMITED CAPACITY'),
           bg: 'bg-amber-100 text-amber-900 border-amber-300',
           dot: 'bg-amber-500'
         };
       case 'FULL':
         return {
-          label: 'NEAR CAPACITY',
+          label: tr('NEAR CAPACITY'),
           bg: 'bg-rose-100 text-rose-900 border-rose-300',
           dot: 'bg-rose-600'
         };
       default:
         return {
-          label: isDemo ? 'AVAILABLE' : 'CAPACITY UNKNOWN',
+          label: isDemo ? tr('AVAILABLE') : tr('CAPACITY UNKNOWN'),
           bg: isDemo ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-700 border-slate-300',
           dot: isDemo ? 'bg-emerald-500' : 'bg-slate-400'
         };
@@ -92,29 +94,29 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
     switch (acc) {
       case 'GOOD':
         return {
-          label: 'GOOD',
-          sub: 'Road access normal',
+          label: tr('GOOD'),
+          sub: tr('Road access normal'),
           badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
           color: 'text-emerald-700'
         };
       case 'MODERATE':
         return {
-          label: 'MODERATE',
-          sub: 'Some route restrictions',
+          label: tr('MODERATE'),
+          sub: tr('Some route restrictions'),
           badge: 'bg-amber-50 text-amber-700 border-amber-200',
           color: 'text-amber-700'
         };
       case 'LIMITED':
         return {
-          label: 'LIMITED',
-          sub: 'Flooded / restricted approach',
+          label: tr('LIMITED'),
+          sub: tr('Flooded / restricted approach'),
           badge: 'bg-red-50 text-red-700 border-red-200',
           color: 'text-red-700'
         };
       default:
         return {
-          label: 'GOOD',
-          sub: 'Road access normal',
+          label: tr('GOOD'),
+          sub: tr('Road access normal'),
           badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
           color: 'text-emerald-700'
         };
@@ -125,13 +127,13 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
   const getAmbulanceBadge = (amb: AmbulanceStatus) => {
     switch (amb) {
       case 'AVAILABLE':
-        return { label: 'AVAILABLE', color: 'text-emerald-700', bg: 'bg-emerald-50' };
+        return { label: tr('AVAILABLE'), color: 'text-emerald-700', bg: 'bg-emerald-50' };
       case 'LIMITED':
-        return { label: 'LIMITED', color: 'text-amber-700', bg: 'bg-amber-50' };
+        return { label: tr('LIMITED'), color: 'text-amber-700', bg: 'bg-amber-50' };
       case 'UNAVAILABLE':
-        return { label: 'CONSTRAINED', color: 'text-rose-700', bg: 'bg-rose-50' };
+        return { label: tr('CONSTRAINED'), color: 'text-rose-700', bg: 'bg-rose-50' };
       default:
-        return { label: 'AVAILABLE', color: 'text-emerald-700', bg: 'bg-emerald-50' };
+        return { label: tr('AVAILABLE'), color: 'text-emerald-700', bg: 'bg-emerald-50' };
     }
   };
 
@@ -150,16 +152,16 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
             <div className="flex items-center gap-1.5">
               <Building2 className="w-4 h-4 text-sky-600 shrink-0" />
               <h4 className="text-sm font-black text-slate-900 leading-snug line-clamp-1">
-                {hospital.name}
+                {tr(hospital.name)}
               </h4>
             </div>
             <div className="flex items-center gap-2 text-xs flex-wrap">
               <span className="font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80 text-[11px] whitespace-nowrap">
-                {hospital.emergencyCapability || 'Emergency Care + Trauma'}
+                {tr(hospital.emergencyCapability || 'Emergency Care + Trauma')}
               </span>
               <span className="text-slate-400 hidden sm:inline">•</span>
               <span className="text-[11px] text-slate-500 truncate max-w-[150px] sm:max-w-[200px]" title={hospital.location}>
-                {hospital.location}
+                {tr(hospital.location)}
               </span>
             </div>
           </div>
@@ -174,7 +176,7 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
             </span>
           ) : (
             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 shrink-0 whitespace-nowrap">
-              VERIFIED FACILITY
+              {tr('VERIFIED FACILITY')}
             </span>
           )}
         </div>
@@ -183,12 +185,12 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
         <div className="mt-3 flex items-center justify-between text-xs font-mono font-bold text-slate-700 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
           <div className="flex items-center gap-1.5">
             <Navigation className="w-3.5 h-3.5 text-sky-600" />
-            <span>{distance} km away</span>
+            <span>{tr(`${distance} km away`)}</span>
           </div>
           <span className="text-slate-300">|</span>
           <div className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5 text-slate-500" />
-            <span>~{travelTime} min est.</span>
+            <span>{tr(`~${travelTime} min est.`)}</span>
           </div>
         </div>
       </div>
@@ -200,7 +202,7 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5 font-extrabold text-slate-800">
               <Activity className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Emergency Capacity</span>
+              <span>{tr('Emergency Capacity')}</span>
             </div>
 
             {/* DEMO badge or LIVE note */}
@@ -209,7 +211,7 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
                 DEMO
               </span>
             ) : (
-              <span className="text-[10px] font-mono text-slate-500">Official feed</span>
+              <span className="text-[10px] font-mono text-slate-500">{tr('Official feed')}</span>
             )}
           </div>
 
@@ -217,10 +219,10 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
             <div>
               <div className="flex items-baseline justify-between text-xs mb-1">
                 <span className="font-extrabold text-slate-900 font-mono">
-                  {availBeds} / {totalBeds} beds available
+                  {tr(`${availBeds} / ${totalBeds} beds available`)}
                 </span>
                 <span className="text-[11px] text-slate-500 font-medium">
-                  {availPercent}% open
+                  {availPercent}% {tr('open')}
                 </span>
               </div>
 
@@ -239,8 +241,8 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
               </div>
 
               <div className="text-[10px] text-slate-400 mt-1 flex items-center justify-between">
-                <span>{occBeds} beds occupied</span>
-                <span className="font-mono text-[9px] text-amber-700 font-bold">Simulated data</span>
+                <span>{tr(`${occBeds} beds occupied`)}</span>
+                <span className="font-mono text-[9px] text-amber-700 font-bold">{tr('Simulated data')}</span>
               </div>
             </div>
           ) : (
@@ -248,10 +250,10 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
             <div className="py-1 text-xs">
               <div className="font-bold text-slate-700 flex items-center gap-1.5">
                 <HelpCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span>Capacity data unavailable</span>
+                <span>{tr('Capacity data unavailable')}</span>
               </div>
               <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                Current emergency bed counts not reported by authorized source. 24×7 Emergency department officially registered.
+                {tr('Current emergency bed counts not reported by authorized source. 24×7 Emergency department officially registered.')}
               </p>
             </div>
           )}
@@ -262,7 +264,7 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
           {/* Accessibility */}
           <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/70">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">
-              Accessibility
+              {tr('Accessibility')}
             </span>
             <div className="flex items-center gap-1.5">
               <span className={`font-black text-xs font-mono ${accBadge.color}`}>
@@ -270,14 +272,14 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
               </span>
             </div>
             <span className="text-[10px] text-slate-500 block leading-tight mt-0.5">
-              {hospital.floodAccessibilityStatus || accBadge.sub}
+              {hospital.floodAccessibilityStatus ? tr(hospital.floodAccessibilityStatus) : accBadge.sub}
             </span>
           </div>
 
           {/* Ambulance Access */}
           <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/70">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">
-              Ambulance
+              {tr('Ambulance')}
             </span>
             <div className="flex items-center gap-1.5">
               <Ambulance className={`w-3.5 h-3.5 ${ambBadge.color}`} />
@@ -287,10 +289,10 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
             </div>
             <span className="text-[10px] text-slate-500 block leading-tight mt-0.5">
               {hospital.ambulanceAccess === 'AVAILABLE'
-                ? 'Corridor clear'
+                ? tr('Corridor clear')
                 : hospital.ambulanceAccess === 'LIMITED'
-                ? 'Constrained route'
-                : 'Status pending'}
+                ? tr('Constrained route')
+                : tr('Status pending')}
             </span>
           </div>
         </div>
@@ -300,11 +302,11 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
       <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
         <div className="truncate max-w-[210px]" title={hospital.sourceNote || hospital.dataSource}>
           {isDemo ? (
-            <span className="text-amber-800 font-medium">Source: {hospital.dataSource}</span>
+            <span className="text-amber-800 font-medium">{tr('Source:')} {hospital.dataSource}</span>
           ) : (
             <span className="text-slate-600 font-medium flex items-center gap-1">
               <ShieldCheck className="w-3 h-3 text-sky-600 shrink-0" />
-              <span>Source: Verified health data</span>
+              <span>{tr('Source: Verified health data')}</span>
             </span>
           )}
         </div>
@@ -314,7 +316,7 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
             onClick={() => onViewOnMap(hospital)}
             className="text-sky-600 hover:text-sky-800 font-bold hover:underline cursor-pointer shrink-0 ml-2"
           >
-            Inspect Map →
+            {tr('Inspect Map →')}
           </button>
         )}
       </div>

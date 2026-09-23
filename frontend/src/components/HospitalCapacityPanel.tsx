@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { Hospital, HospitalStatus, AccessibilityStatus } from '../types/hospital';
+import { useTranslation } from '../services/LanguageContext';
 import { HospitalCard } from './HospitalCard';
 import {
   Building2,
@@ -27,6 +28,7 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
   onViewOnMap,
   compact = false
 }) => {
+  const { t, tr } = useTranslation();
   const [sortBy, setSortBy] = useState<'distance' | 'availability' | 'accessibility'>('distance');
   const [filterAccessibleOnly, setFilterAccessibleOnly] = useState<boolean>(false);
 
@@ -80,12 +82,12 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
               <Building2 className="w-4 h-4" />
             </div>
             <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900 font-mono">
-              EMERGENCY HEALTHCARE CAPACITY
+              {t.hospitalPanelTitle}
             </h3>
           </div>
           <p className="text-xs text-slate-500">
-            Nearby hospitals and current emergency access information
-            {selectedLocationName ? ` (relative to ${selectedLocationName})` : ''}
+            {t.hospitalPanelDesc}
+            {selectedLocationName ? ` (${tr('relative to')} ${tr(selectedLocationName)})` : ''}
           </p>
         </div>
 
@@ -98,7 +100,7 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
                 : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
             }`}
           >
-            {isDemoMode ? 'DEMO CAPACITY DATA' : 'VERIFIED REGISTRY'}
+            {isDemoMode ? tr('DEMO CAPACITY DATA') : tr('VERIFIED REGISTRY')}
           </span>
         </div>
       </div>
@@ -109,12 +111,10 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
           <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
             <span className="font-bold block">
-              DEMO DATA — Hospital capacity values are simulated for system demonstration.
+              {tr('DEMO DATA — Hospital capacity values are simulated for system demonstration.')}
             </span>
             <p className="text-[11px] text-amber-800">
-              In DEMO mode, capacity and accessibility values are simulated for scenario evaluation (
-              <span className="font-mono font-semibold">{activeScenario?.replace(/_/g, ' ') || 'scenario'}</span>). Do
-              not make critical decisions based on synthetic bed availability numbers.
+              {tr('In DEMO mode, capacity and accessibility values are simulated for scenario evaluation.')}
             </p>
           </div>
         </div>
@@ -123,10 +123,10 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
           <ShieldCheck className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
           <div>
             <span className="font-bold text-slate-900 block">
-              LIVE DATA — Capacity shown only when reported by verified source.
+              {tr('LIVE DATA — Capacity shown only when reported by verified source.')}
             </span>
             <p className="text-[11px] text-slate-500">
-              Institution existence and trauma capabilities are verified from statutory health registries. Real-time emergency bed telemetry is displayed as &quot;Capacity data unavailable&quot; until connected to an authorized health department API.
+              {tr('Institution existence and trauma capabilities are verified from statutory health registries.')}
             </p>
           </div>
         </div>
@@ -136,13 +136,13 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200/80 text-xs">
         {/* Summary Badges */}
         <div className="flex items-center gap-3 font-mono font-bold text-slate-700">
-          <span>{totalFacilities} nearby facilities</span>
+          <span>{totalFacilities} {tr('nearby facilities')}</span>
           <span className="text-slate-300">•</span>
-          <span className="text-emerald-700">{accessibleCount} accessible</span>
+          <span className="text-emerald-700">{accessibleCount} {tr('accessible')}</span>
           {limitedAccessCount > 0 && (
             <>
               <span className="text-slate-300">•</span>
-              <span className="text-red-700">{limitedAccessCount} limited access</span>
+              <span className="text-red-700">{limitedAccessCount} {tr('limited access')}</span>
             </>
           )}
         </div>
@@ -151,15 +151,15 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
         <div className="flex items-center gap-3 ml-auto">
           <div className="flex items-center gap-1.5">
             <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-slate-500 font-semibold text-[11px]">Sort:</span>
+            <span className="text-slate-500 font-semibold text-[11px]">{tr('Sort:')}</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
               className="bg-white border border-slate-300 text-slate-800 text-[11px] font-bold rounded-lg px-2 py-1 focus:outline-none cursor-pointer"
             >
-              <option value="distance">Distance (Nearest first)</option>
-              {isDemoMode && <option value="availability">Availability (Available beds)</option>}
-              <option value="accessibility">Accessibility (Best road access)</option>
+              <option value="distance">{t.sortByDistance}</option>
+              {isDemoMode && <option value="availability">{t.sortByAvailability}</option>}
+              <option value="accessibility">{t.sortByAccessibility}</option>
             </select>
           </div>
 
@@ -170,7 +170,7 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
               onChange={(e) => setFilterAccessibleOnly(e.target.checked)}
               className="rounded text-indigo-600 focus:ring-0 cursor-pointer"
             />
-            <span>Accessible routes only</span>
+            <span>{t.accessibleOnly}</span>
           </label>
         </div>
       </div>
@@ -179,7 +179,7 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
       {sortedHospitals.length === 0 ? (
         <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-slate-500 text-xs">
           <AlertCircle className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-          <span>No facilities match current filter criteria.</span>
+          <span>{tr('No facilities match current filter criteria.')}</span>
         </div>
       ) : (
         <div

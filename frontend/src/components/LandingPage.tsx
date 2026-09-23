@@ -1,6 +1,7 @@
 import React from 'react';
 import type { LocationData, FlashFloodWarning, LiveEnvironmentalData } from '../types';
 import { getAffectedRoadsCount } from '../data/municipalRoads';
+import { useTranslation } from '../services/LanguageContext';
 import {
   ShieldAlert,
   ArrowRight,
@@ -43,6 +44,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onNavigateToMap,
   onNavigateToReport
 }) => {
+  const { t } = useTranslation();
   const activeLoc = selectedLocation || locations[0] || {
     name: 'Ward 12 (Station Road / Market)',
     risk_level: 'HIGH'
@@ -57,19 +59,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <section className="text-center py-6 sm:py-10 space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-sky-400 text-xs font-black uppercase tracking-widest font-mono shadow-xs">
           <ShieldAlert className="w-3.5 h-3.5" />
-          <span>Community Disaster Intelligence Portal</span>
+          <span>{t.portalBadge}</span>
         </div>
 
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-950 font-mono tracking-tight leading-none">
-          JALRAKSHAK
+          {t.appName}
         </h1>
 
         <p className="text-lg sm:text-xl font-bold text-sky-700 tracking-wide">
-          “Know the risk. Act early.”
+          {t.tagline}
         </p>
 
         <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
-          Two dedicated monitoring engines protecting Himalayan river basins and municipal urban roadways.
+          {t.twoSystemsDesc}
         </p>
       </section>
 
@@ -88,16 +90,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="absolute top-4 left-4">
               <span className="px-3 py-1 bg-blue-600/90 text-white rounded-full text-xs font-black font-mono tracking-wider shadow-xs backdrop-blur-xs flex items-center gap-1.5">
                 <Waves className="w-3.5 h-3.5" />
-                <span>REGIONAL / WARD SCALE</span>
+                <span>{t.regionalWardScale}</span>
               </span>
             </div>
 
             <div className="absolute bottom-4 left-4 right-4">
               <h2 className="text-2xl sm:text-3xl font-black text-white font-mono flex items-center gap-2">
-                <span>🌊 FLASH FLOOD</span>
+                <span>{t.flashFloodCardTitle}</span>
               </h2>
               <p className="text-xs text-blue-200 font-semibold mt-0.5">
-                Regional / Ward-Level Risk
+                {t.flashFloodCardSubtitle}
               </p>
             </div>
           </div>
@@ -106,28 +108,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-6">
             <div className="space-y-3">
               <div className="text-xs font-black uppercase text-slate-400 font-mono tracking-wider">
-                Monitor:
+                {t.monitorLabel}
               </div>
               <ul className="space-y-2 text-xs sm:text-sm text-slate-700 font-semibold">
                 <li className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                  <span>Heavy rainfall</span>
+                  <span>{t.heavyRainfall}</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                  <span>Soil saturation</span>
+                  <span>{t.soilSaturation}</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                  <span>Terrain / slope</span>
+                  <span>{t.terrainSlope}</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                  <span>River / water levels</span>
+                  <span>{t.riverWaterLevels}</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                  <span>Historical risk</span>
+                  <span>{t.historicalRisk}</span>
                 </li>
               </ul>
             </div>
@@ -136,7 +138,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               onClick={onNavigateToFlashFlood}
               className="w-full py-3.5 px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-md group-hover:bg-blue-700"
             >
-              <span>VIEW FLASH FLOOD</span>
+              <span>{t.viewFlashFloodBtn}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
             </button>
           </div>
@@ -155,16 +157,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="absolute top-4 left-4">
               <span className="px-3 py-1 bg-amber-600/90 text-white rounded-full text-xs font-black font-mono tracking-wider shadow-xs backdrop-blur-xs flex items-center gap-1.5">
                 <Construction className="w-3.5 h-3.5" />
-                <span>ROAD / STREET SCALE</span>
+                <span>{t.roadStreetScale}</span>
               </span>
             </div>
 
             <div className="absolute bottom-4 left-4 right-4">
               <h2 className="text-2xl sm:text-3xl font-black text-white font-mono flex items-center gap-2">
-                <span>🚧 STREET WATERLOGGING</span>
+                <span>{t.streetWaterloggingCardTitle}</span>
               </h2>
               <p className="text-xs text-amber-200 font-semibold mt-0.5">
-                Road-Level Local Risk
+                {t.streetWaterloggingCardSubtitle}
               </p>
             </div>
           </div>
@@ -173,28 +175,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-6">
             <div className="space-y-3">
               <div className="text-xs font-black uppercase text-slate-400 font-mono tracking-wider">
-                Monitor:
+                {t.monitorLabel}
               </div>
               <ul className="space-y-2 text-xs sm:text-sm text-slate-700 font-semibold">
                 <li className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-amber-600 shrink-0" />
-                  <span>Waterlogging</span>
+                  <span>{t.drainCapacity}</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-amber-600 shrink-0" />
-                  <span>Blocked drains</span>
+                  <span>{t.drainBlockage}</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-amber-600 shrink-0" />
-                  <span>Citizen reports</span>
+                  <span>{t.citizenReportsLabel}</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-amber-600 shrink-0" />
-                  <span>Drainage condition</span>
+                  <span>{t.roadWaterDepth}</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-amber-600 shrink-0" />
-                  <span>Road-level flooding</span>
+                  <span>{t.waterloggingTrend}</span>
                 </li>
               </ul>
             </div>
@@ -203,7 +205,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               onClick={onNavigateToStreetWaterlogging}
               className="w-full py-3.5 px-5 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-md group-hover:bg-amber-700"
             >
-              <span>VIEW STREET WATERLOGGING</span>
+              <span>{t.viewWaterloggingBtn}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
             </button>
           </div>
@@ -216,12 +218,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="flex items-center gap-2">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
             <h3 className="text-xs font-black uppercase tracking-widest text-slate-900 font-mono">
-              CURRENT LOCAL STATUS
+              {t.currentStatusHeading}
             </h3>
           </div>
 
           <div className="text-[11px] text-slate-400 font-mono">
-            Observed at {lastUpdated}
+            {t.observed} {lastUpdated}
           </div>
         </div>
 
@@ -231,15 +233,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div>
               <div className="text-[10px] font-black uppercase text-blue-800 font-mono tracking-wider mb-1 flex items-center gap-1.5">
                 <Waves className="w-3.5 h-3.5 text-blue-600" />
-                <span>Regional Flood Danger</span>
+                <span>{t.flashFloodCardSubtitle}</span>
               </div>
               <div className="text-base font-black text-slate-900 font-mono flex items-center gap-2">
-                <span>{hasFlashWarning ? '🔴 HIGH FLASH FLOOD RISK' : '🟢 NORMAL RIVER FLOWS'}</span>
+                <span>{hasFlashWarning ? `🔴 ${t.riskCritical}` : `🟢 ${t.safe}`}</span>
               </div>
               <p className="text-xs text-slate-600 mt-1">
                 {hasFlashWarning
-                  ? `Active warning issued for ${activeFlashWarning.locationName.split(' ')[0]}. Expected in next 1–3 hours.`
-                  : 'All regional river basins and drainage channels are operating within safe design limits.'}
+                  ? `${t.activeWarningBadge}: ${activeFlashWarning.locationName.split(' ')[0]} (${t.estimatedTime}: 1–3 hr)`
+                  : t.safeStatusTitle}
               </p>
             </div>
 
@@ -247,7 +249,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               onClick={onNavigateToFlashFlood}
               className="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 self-start cursor-pointer hover:underline"
             >
-              <span>Go to Flash Flood Monitoring</span>
+              <span>{t.viewFlashFloodBtn}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -257,13 +259,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div>
               <div className="text-[10px] font-black uppercase text-amber-800 font-mono tracking-wider mb-1 flex items-center gap-1.5">
                 <Construction className="w-3.5 h-3.5 text-amber-600" />
-                <span>Road-Level Conditions</span>
+                <span>{t.streetWaterloggingCardSubtitle}</span>
               </div>
               <div className="text-base font-black text-slate-900 font-mono flex items-center gap-2">
-                <span>🔴 {affectedRoadsCount} ROADS WATERLOGGED</span>
+                <span>🔴 {affectedRoadsCount} {t.affectedRoadsCount}</span>
               </div>
               <p className="text-xs text-slate-600 mt-1">
-                Severe waterlogging confirmed on Main Market Road due to choked culvert. Diversions active.
+                {t.primaryCause}: {t.scenarioBlockedDrain}
               </p>
             </div>
 
@@ -271,7 +273,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               onClick={onNavigateToStreetWaterlogging}
               className="text-xs font-bold text-amber-800 hover:text-amber-950 flex items-center gap-1 self-start cursor-pointer hover:underline"
             >
-              <span>Go to Street Waterlogging Dashboard</span>
+              <span>{t.viewWaterloggingBtn}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

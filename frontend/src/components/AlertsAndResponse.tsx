@@ -1,4 +1,6 @@
+import React from 'react';
 import type { EarlyWarningAlert, FlashFloodWarning, OfficialImdWarning, Hospital } from '../types';
+import { useTranslation } from '../services/LanguageContext';
 import { FlashFloodWarningCard } from './FlashFloodWarningCard';
 import { HospitalCapacityPanel } from './HospitalCapacityPanel';
 import {
@@ -32,6 +34,7 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
   hospitals = [],
   onViewOnMap
 }) => {
+  const { t, tr } = useTranslation();
   const hasActiveWarning = activeFlashWarning && activeFlashWarning.status !== 'NONE';
 
   // Secondary alerts that are not the main flash warning
@@ -59,10 +62,10 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
               <h2 className={`text-xl font-black tracking-tight font-mono ${
                 hasActiveWarning ? 'text-white' : 'text-slate-900'
               }`}>
-                ALERTS & EARLY WARNINGS
+                {t.activeAlerts}
               </h2>
               <p className={`text-xs ${hasActiveWarning ? 'text-red-100' : 'text-slate-500'}`}>
-                Active community hazard warnings, escalation timelines, and prescribed safety actions
+                {t.flashFloodMonitorDesc}
               </p>
             </div>
           </div>
@@ -71,15 +74,15 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono uppercase ${
               !isDemoMode ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
             }`}>
-              {!isDemoMode ? 'LIVE MODE' : 'DEMO MODE'}
+              {!isDemoMode ? t.liveDataBtn : t.demoDataBtn}
             </span>
             {hasActiveWarning ? (
               <span className="px-3 py-1 bg-white text-red-700 text-xs font-black rounded-full font-mono shrink-0 animate-pulse">
-                1 ACTIVE
+                {tr('1 ACTIVE')}
               </span>
             ) : (
               <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-black rounded-full font-mono shrink-0">
-                ALL CLEAR
+                {tr('ALL CLEAR')}
               </span>
             )}
           </div>
@@ -95,15 +98,15 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
             </div>
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 font-mono">
-                OFFICIAL WEATHER WARNINGS — INDIA METEOROLOGICAL DEPARTMENT (IMD)
+                {tr('OFFICIAL WEATHER WARNINGS — INDIA METEOROLOGICAL DEPARTMENT (IMD)')}
               </h3>
               <p className="text-[11px] text-slate-500">
-                Direct statutory warnings retrieved via the official IMD Common Alerting Protocol (CAP)
+                {tr('Direct statutory warnings retrieved via the official IMD Common Alerting Protocol (CAP)')}
               </p>
             </div>
           </div>
           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold hidden sm:inline">
-            GOVT DATA SOURCE
+            {tr('GOVT DATA SOURCE')}
           </span>
         </div>
 
@@ -123,7 +126,7 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
                   <h4 className="font-extrabold text-sm text-slate-900">{warn.title}</h4>
                   <p className="text-xs text-slate-700 leading-relaxed">{warn.description}</p>
                   <div className="flex items-center justify-between pt-2 border-t border-amber-200/60 text-[11px] text-slate-500">
-                    <span>Source: {warn.source}</span>
+                    <span>{tr('Source:')} {warn.source}</span>
                     {warn.link && (
                       <a
                         href={warn.link}
@@ -131,7 +134,7 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
                         rel="noreferrer"
                         className="text-sky-600 hover:underline flex items-center gap-1 font-bold"
                       >
-                        <span>Official IMD Bulletin</span>
+                        <span>{tr('Official IMD Bulletin')}</span>
                         <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
@@ -144,10 +147,10 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
               <div>
                 <div className="text-xs font-black uppercase tracking-wide">
-                  ✓ NO SEVERE WEATHER WARNING ISSUED BY IMD
+                  ✓ {tr('NO SEVERE WEATHER WARNING ISSUED BY IMD')}
                 </div>
                 <p className="text-xs text-emerald-800 mt-0.5">
-                  India Meteorological Department (IMD) has issued no active heavy rainfall or flash flood warnings for the selected Uttarakhand district.
+                  {tr('India Meteorological Department (IMD) has issued no active heavy rainfall or flash flood warnings for the selected Uttarakhand district.')}
                 </p>
               </div>
             </div>
@@ -157,10 +160,10 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
             <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
             <div>
               <div className="text-xs font-black uppercase tracking-wide text-slate-900">
-                OFFICIAL IMD BULLETINS PAUSED IN SIMULATION MODE
+                {tr('OFFICIAL IMD BULLETINS PAUSED IN SIMULATION MODE')}
               </div>
               <p className="text-xs text-slate-600 mt-0.5">
-                Demonstration mode is active ({activeScenario?.replace(/_/g, ' ')}). Switch to <strong>LIVE DATA</strong> to retrieve real official meteorological warnings from IMD.
+                {tr('Demonstration mode is active. Switch to LIVE DATA to retrieve real official meteorological warnings from IMD.')}
               </p>
             </div>
           </div>
@@ -176,13 +179,13 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
             </div>
             <div>
               <div className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-800 uppercase tracking-wider mb-1">
-                <span>{!isDemoMode ? 'JALRAKSHAK RISK STATUS: NOMINAL' : 'SIMULATED STATUS: NOMINAL'}</span>
+                <span>{!isDemoMode ? tr('JALRAKSHAK RISK STATUS: NOMINAL') : tr('SIMULATED STATUS: NOMINAL')}</span>
               </div>
               <h3 className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
-                ✓ NO ACTIVE FLASH FLOOD WARNING
+                ✓ {t.noActiveFlashWarning}
               </h3>
               <p className="text-sm text-slate-600 mt-2 max-w-xl">
-                Current conditions are being monitored across all municipal sectors. Drainage and river thresholds are within nominal limits.
+                {t.noActiveFlashWarningDesc}
               </p>
             </div>
           </div>
@@ -194,8 +197,8 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
                 <Activity className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs font-bold text-slate-500">Monitoring Status</div>
-                <div className="font-extrabold text-slate-900 text-xs">All sensors active</div>
+                <div className="text-xs font-bold text-slate-500">{tr('Monitoring Status')}</div>
+                <div className="font-extrabold text-slate-900 text-xs">{tr('All sensors active')}</div>
               </div>
             </div>
             <div className="flex items-center gap-3 text-sm">
@@ -203,8 +206,8 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs font-bold text-slate-500">Drainage Status</div>
-                <div className="font-extrabold text-slate-900 text-xs">Within limits</div>
+                <div className="text-xs font-bold text-slate-500">{tr('Drainage Status')}</div>
+                <div className="font-extrabold text-slate-900 text-xs">{tr('Within limits')}</div>
               </div>
             </div>
             <div className="flex items-center gap-3 text-sm">
@@ -212,8 +215,8 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
                 <Bell className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs font-bold text-slate-500">Alert Engine</div>
-                <div className="font-extrabold text-slate-900 text-xs">Running — no trigger</div>
+                <div className="text-xs font-bold text-slate-500">{tr('Alert Engine')}</div>
+                <div className="font-extrabold text-slate-900 text-xs">{tr('Running — no trigger')}</div>
               </div>
             </div>
           </div>
@@ -225,12 +228,12 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
         <div className="space-y-2">
           <div className="flex items-center justify-between px-1">
             <span className="text-xs font-black uppercase tracking-widest text-slate-500 font-mono">
-              {!isDemoMode ? 'JALRAKSHAK HYPERLOCAL RISK ASSESSMENT' : 'SIMULATED HAZARD FORECAST (DEMO)'}
+              {!isDemoMode ? tr('JALRAKSHAK HYPERLOCAL RISK ASSESSMENT') : tr('SIMULATED HAZARD FORECAST (DEMO)')}
             </span>
             <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-black ${
               !isDemoMode ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
             }`}>
-              {!isDemoMode ? 'AI INFERENCE' : 'SCENARIO SIMULATION'}
+              {!isDemoMode ? tr('AI INFERENCE') : tr('SCENARIO SIMULATION')}
             </span>
           </div>
           <FlashFloodWarningCard
@@ -246,7 +249,7 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
           <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
             <ShieldCheck className="w-6 h-6 text-sky-600" />
             <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">
-              WHAT SHOULD YOU DO?
+              {t.whatYouShouldDoNow}
             </h3>
           </div>
 
@@ -269,14 +272,13 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
                 }`}>
                   {idx + 1}
                 </span>
-                <span>{action}</span>
+                <span>{tr(action)}</span>
               </div>
             ))}
 
             {/* Drainage-specific tip if choked */}
             <div className="p-3 bg-sky-50 rounded-xl border border-sky-200 text-sky-950 text-xs font-medium">
-              <strong>Emergency Helpline:</strong> Contact municipal disaster control room at{' '}
-              <strong className="font-black font-mono">112</strong> if you are in immediate danger.
+              <strong>{tr('Emergency Helpline: 112')}</strong> — {t.safetyRule1}
             </div>
           </div>
         </section>
@@ -286,7 +288,7 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
       {secondaryAlerts.length > 0 && (
         <div className="space-y-3">
           <span className="text-xs font-black uppercase tracking-wider text-slate-400 block px-1">
-            Secondary Sector Bulletins
+            {tr('Secondary Sector Bulletins')}
           </span>
 
           {secondaryAlerts.map((alert) => (
@@ -298,18 +300,18 @@ export const AlertsAndResponse: React.FC<AlertsAndResponseProps> = ({
                 <div className="flex items-center gap-2 font-bold text-slate-900 mb-1">
                   <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                   <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{alert.location_name}</span>
+                  <span>{tr(alert.location_name)}</span>
                   <span className="text-slate-400">•</span>
-                  <span className="text-amber-800 font-mono">{alert.severity}</span>
+                  <span className="text-amber-800 font-mono">{tr(alert.severity)}</span>
                 </div>
-                <p className="text-slate-600">{alert.headline}</p>
+                <p className="text-slate-600">{tr(alert.headline)}</p>
               </div>
 
               <button
                 onClick={() => onViewOnMap && onViewOnMap(alert.location_id)}
                 className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold shrink-0 self-start sm:self-auto cursor-pointer flex items-center gap-1"
               >
-                <span>Inspect on Map</span>
+                <span>{tr('Inspect on Map')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>

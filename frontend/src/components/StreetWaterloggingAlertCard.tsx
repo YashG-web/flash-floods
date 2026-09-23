@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../services/LanguageContext';
 import {
   AlertTriangle,
   MapPin,
@@ -34,6 +35,8 @@ export const StreetWaterloggingAlertCard: React.FC<StreetWaterloggingAlertCardPr
   onViewOnMap,
   onOpenReport
 }) => {
+  const { t, tr } = useTranslation();
+
   if (!alert || alert.status === 'CLEAR') {
     return (
       <div className="bg-white rounded-3xl border-2 border-emerald-300 p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -43,18 +46,18 @@ export const StreetWaterloggingAlertCard: React.FC<StreetWaterloggingAlertCardPr
           </div>
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-800 uppercase tracking-wider mb-0.5">
-              <span>ROAD CONDITION: ALL PASSABLE</span>
+              <span>{tr('ROAD CONDITION: ALL PASSABLE')}</span>
             </div>
             <h3 className="text-base sm:text-lg font-black text-slate-900 font-mono">
-              ✓ NO SEVERE ROAD WATERLOGGING REPORTED
+              ✓ {tr('NO SEVERE ROAD WATERLOGGING REPORTED')}
             </h3>
             <p className="text-xs text-slate-600 mt-0.5">
-              Municipal arterial roads and key commercial corridors are currently clear for vehicle and pedestrian transit.
+              {tr('Municipal arterial roads and key commercial corridors are currently clear for vehicle and pedestrian transit.')}
             </p>
           </div>
         </div>
         <div className="text-xs text-slate-400 font-mono shrink-0">
-          Street Patrol Active
+          {tr('Street Patrol Active')}
         </div>
       </div>
     );
@@ -68,8 +71,8 @@ export const StreetWaterloggingAlertCard: React.FC<StreetWaterloggingAlertCardPr
           badgeBg: 'bg-red-100 text-red-800 border-red-200',
           border: 'border-red-500',
           indicator: '🔴',
-          label: 'SEVERE WATERLOGGING',
-          sub: 'Road impassable for two-wheelers and compact vehicles. Avoid route.'
+          label: tr('SEVERE WATERLOGGING'),
+          sub: tr('Road impassable for two-wheelers and compact vehicles. Avoid route.')
         };
       case 'MODERATE':
         return {
@@ -77,8 +80,8 @@ export const StreetWaterloggingAlertCard: React.FC<StreetWaterloggingAlertCardPr
           badgeBg: 'bg-amber-100 text-amber-900 border-amber-200',
           border: 'border-amber-500',
           indicator: '🟠',
-          label: 'MODERATE WATERLOGGING',
-          sub: 'Water accumulating in curb lanes. Drive with extreme caution.'
+          label: tr('MODERATE WATERLOGGING'),
+          sub: tr('Water accumulating in curb lanes. Drive with extreme caution.')
         };
       case 'MINOR':
         return {
@@ -86,8 +89,8 @@ export const StreetWaterloggingAlertCard: React.FC<StreetWaterloggingAlertCardPr
           badgeBg: 'bg-yellow-100 text-yellow-900 border-yellow-200',
           border: 'border-yellow-400',
           indicator: '🟡',
-          label: 'MINOR WATERLOGGING',
-          sub: 'Puddle accumulation near storm drain inlets.'
+          label: tr('MINOR WATERLOGGING'),
+          sub: tr('Puddle accumulation near storm drain inlets.')
         };
       default:
         return {
@@ -95,8 +98,8 @@ export const StreetWaterloggingAlertCard: React.FC<StreetWaterloggingAlertCardPr
           badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-200',
           border: 'border-emerald-500',
           indicator: '🟢',
-          label: 'PASSABLE',
-          sub: 'Normal road conditions.'
+          label: tr('PASSABLE'),
+          sub: tr('Normal road conditions.')
         };
     }
   };
@@ -113,10 +116,10 @@ export const StreetWaterloggingAlertCard: React.FC<StreetWaterloggingAlertCardPr
           </div>
           <div>
             <div className="text-[10px] font-black uppercase tracking-wider text-white/90 font-mono">
-              ROAD HAZARD ALERT
+              {tr('ROAD HAZARD ALERT')}
             </div>
             <h3 className="text-base sm:text-lg font-black tracking-tight leading-tight">
-              🚧 STREET WATERLOGGING
+              {t.streetWaterloggingCardTitle}
             </h3>
           </div>
         </div>
@@ -134,22 +137,22 @@ export const StreetWaterloggingAlertCard: React.FC<StreetWaterloggingAlertCardPr
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
             <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Affected Roadway
+              {tr('Affected Roadway')}
             </div>
             <div className="text-xl font-black text-slate-900 font-mono flex items-center gap-2 mt-0.5">
-              <span>{alert.roadName}</span>
-              <span className="text-xs font-bold text-slate-500 font-sans">({alert.wardName})</span>
+              <span>{tr(alert.roadName)}</span>
+              <span className="text-xs font-bold text-slate-500 font-sans">({tr(alert.wardName)})</span>
             </div>
           </div>
 
           <div className="flex items-center gap-3 text-xs text-slate-500">
             <div className="flex items-center gap-1 font-mono">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <span>Updated {alert.lastUpdated}</span>
+              <span>{tr(`Updated ${alert.lastUpdated}`)}</span>
             </div>
             <span>•</span>
             <div className="font-semibold text-slate-700">
-              {alert.citizenReportsCount} citizen reports
+              {tr(`${alert.citizenReportsCount} citizen reports`)}
             </div>
           </div>
         </div>
@@ -159,14 +162,14 @@ export const StreetWaterloggingAlertCard: React.FC<StreetWaterloggingAlertCardPr
           <div className="p-3.5 bg-amber-50/70 border border-amber-200 rounded-2xl">
             <div className="text-[11px] font-black uppercase text-amber-900 tracking-wider flex items-center gap-1.5 mb-1">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />
-              <span>Observed Cause</span>
+              <span>{tr('Observed Cause')}</span>
             </div>
             <p className="text-xs text-amber-950 font-medium">
-              {alert.cause}
+              {tr(alert.cause)}
             </p>
             {alert.waterDepth && (
               <div className="mt-2 text-[11px] font-bold text-amber-800">
-                Water Depth: <span className="font-mono">{alert.waterDepth}</span>
+                {tr('Water Depth')}: <span className="font-mono">{tr(alert.waterDepth)}</span>
               </div>
             )}
           </div>
@@ -174,14 +177,14 @@ export const StreetWaterloggingAlertCard: React.FC<StreetWaterloggingAlertCardPr
           <div className="p-3.5 bg-red-50/70 border border-red-200 rounded-2xl">
             <div className="text-[11px] font-black uppercase text-red-900 tracking-wider flex items-center gap-1.5 mb-1">
               <ShieldAlert className="w-3.5 h-3.5 text-red-700" />
-              <span>Recommended Action</span>
+              <span>{tr('Recommended Action')}</span>
             </div>
             <p className="text-xs text-red-950 font-bold">
-              ⚠ {alert.recommendedAction}
+              ⚠ {tr(alert.recommendedAction)}
             </p>
             {alert.alternateRoute && (
               <div className="mt-2 text-[11px] text-slate-700 font-medium">
-                Alternate Route: <span className="font-bold text-slate-900">{alert.alternateRoute}</span>
+                {tr('Alternate Route')}: <span className="font-bold text-slate-900">{tr(alert.alternateRoute)}</span>
               </div>
             )}
           </div>
@@ -194,7 +197,7 @@ export const StreetWaterloggingAlertCard: React.FC<StreetWaterloggingAlertCardPr
               onClick={() => onViewOnMap(alert.roadName)}
               className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs"
             >
-              <span>VIEW STREET MAP</span>
+              <span>{tr('VIEW STREET MAP')}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           )}
@@ -204,7 +207,7 @@ export const StreetWaterloggingAlertCard: React.FC<StreetWaterloggingAlertCardPr
               onClick={onOpenReport}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer"
             >
-              <span>UPDATE / REPORT THIS ROAD</span>
+              <span>{tr('UPDATE / REPORT THIS ROAD')}</span>
             </button>
           )}
         </div>

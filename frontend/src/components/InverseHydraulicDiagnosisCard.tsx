@@ -5,6 +5,7 @@ import type {
   HydraulicDiagnosisResult,
   DrainageNode
 } from '../services/hydraulicDiagnosis';
+import { useTranslation } from '../services/LanguageContext';
 import {
   AlertTriangle,
   ArrowRight,
@@ -28,6 +29,7 @@ export const InverseHydraulicDiagnosisCard: React.FC<InverseHydraulicDiagnosisCa
   input,
   onOpenReport
 }) => {
+  const { t, tr } = useTranslation();
   const diagnosis: HydraulicDiagnosisResult = diagnoseInverseHydraulics(input);
   const simple = diagnosis.simple;
 
@@ -51,10 +53,10 @@ export const InverseHydraulicDiagnosisCard: React.FC<InverseHydraulicDiagnosisCa
           </div>
           <div>
             <h3 className="text-lg font-black text-slate-950 font-mono tracking-tight">
-              DRAINAGE DIAGNOSIS & PREDICTION
+              {t.hydraulicDiagnosisTitle}
             </h3>
             <p className="text-xs text-slate-500 font-medium">
-              Subsurface hydraulic forecast & waterlogging onset prediction
+              {t.hydraulicDiagnosisSubtitle}
             </p>
           </div>
         </div>
@@ -83,19 +85,19 @@ export const InverseHydraulicDiagnosisCard: React.FC<InverseHydraulicDiagnosisCa
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="text-xl sm:text-2xl font-black font-mono flex items-center gap-2 tracking-tight text-slate-950">
             <span>{simple.stateBadge.symbol}</span>
-            <span>{simple.stateBadge.title}</span>
+            <span>{tr(simple.stateBadge.title)}</span>
           </div>
 
           <span className="text-[11px] font-black uppercase font-mono px-2.5 py-0.5 rounded-full bg-white/90 border border-slate-300 text-slate-700">
-            {simple.statusLabel}
+            {tr(simple.statusLabel)}
           </span>
         </div>
 
         <p className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
-          {simple.headline}
+          {tr(simple.headline)}
         </p>
 
-        {/* PREDICTED ONSET TIMING (Prominently shows when waterlogging will start) */}
+        {/* PREDICTED ONSET TIMING */}
         <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3 p-3.5 bg-slate-950 text-white rounded-xl shadow-xs border border-slate-800">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
@@ -103,11 +105,11 @@ export const InverseHydraulicDiagnosisCard: React.FC<InverseHydraulicDiagnosisCa
             </div>
             <div>
               <div className="text-[10px] font-black uppercase tracking-wider text-amber-400 font-mono">
-                PREDICTED WATERLOGGING ONSET
+                {t.spreadSimulationTitle}
               </div>
               <div className="text-sm font-black font-mono text-white flex items-center gap-1.5">
                 <span>⏱️</span>
-                <span>{simple.predictedStartTime}</span>
+                <span>{tr(simple.predictedStartTime)}</span>
               </div>
             </div>
           </div>
@@ -115,10 +117,10 @@ export const InverseHydraulicDiagnosisCard: React.FC<InverseHydraulicDiagnosisCa
           {simple.predictedPeakTime && simple.predictedPeakTime !== 'N/A' && (
             <div className="text-left sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800 w-full sm:w-auto">
               <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
-                Anticipated Peak
+                {t.estimatedTime}
               </div>
               <div className="text-xs font-mono font-bold text-slate-200">
-                🌊 {simple.predictedPeakTime}
+                🌊 {tr(simple.predictedPeakTime)}
               </div>
             </div>
           )}
@@ -128,10 +130,10 @@ export const InverseHydraulicDiagnosisCard: React.FC<InverseHydraulicDiagnosisCa
       {/* 3. PROBABLE CAUSE */}
       <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
         <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 font-mono block">
-          PROBABLE CAUSE
+          {t.primaryCause}
         </span>
         <div className="text-sm sm:text-base font-black text-slate-950">
-          {simple.probableCause}
+          {tr(simple.probableCause)}
         </div>
       </div>
 

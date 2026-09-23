@@ -11,8 +11,10 @@ import {
   Waves,
   Construction,
   Sliders,
-  HelpCircle
+  HelpCircle,
+  Globe
 } from 'lucide-react';
+import { useTranslation, type Language } from '../services/LanguageContext';
 
 interface NavbarProps {
   currentTab: string;
@@ -44,14 +46,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenReportModal
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { language, setLanguage, t } = useTranslation();
 
   const navTabs = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'flash-flood', label: '🌊 Flash Flood', icon: Waves, isFlash: true },
-    { id: 'street-waterlogging', label: '🚧 Street Waterlogging', icon: Construction, isStreet: true },
-    { id: 'report', label: 'Report', icon: Camera, isReport: true },
-    { id: 'simulator', label: 'Simulator', icon: Sliders },
-    { id: 'about', label: 'About / Help', icon: HelpCircle }
+    { id: 'home', label: t.navHome, icon: Home },
+    { id: 'flash-flood', label: t.navFlashFlood, icon: Waves, isFlash: true },
+    { id: 'street-waterlogging', label: t.navStreetWaterlogging, icon: Construction, isStreet: true },
+    { id: 'report', label: t.navReport, icon: Camera, isReport: true },
+    { id: 'simulator', label: t.navSimulator, icon: Sliders },
+    { id: 'about', label: t.navAboutHelp, icon: HelpCircle }
   ];
 
   const handleTabClick = (tabId: string) => {
@@ -70,32 +73,47 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="flex items-center gap-2">
               <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-xs shadow-emerald-400/50" />
               <span className="text-emerald-400 font-black uppercase tracking-wider text-[11px] font-mono">
-                ● LIVE DATA ACTIVE
+                {t.liveDataActive}
               </span>
               <span className="text-slate-600 hidden sm:inline">|</span>
               <span className="text-slate-300 text-[11px] hidden md:inline">
-                Source: <b className="text-white">IMD CAP</b> + <b className="text-white">Open-Meteo</b>
+                {t.source}: <b className="text-white">IMD CAP</b> + <b className="text-white">Open-Meteo</b>
               </span>
               <span className="text-slate-600 hidden md:inline">•</span>
               <span className="text-slate-400 text-[11px] hidden sm:inline">
-                Observed: <span className="text-emerald-300 font-mono font-bold">{lastObservedTime || lastUpdated}</span>
+                {t.observed}: <span className="text-emerald-300 font-mono font-bold">{lastObservedTime || lastUpdated}</span>
               </span>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-400" />
               <span className="text-amber-400 font-black uppercase tracking-wider text-[11px] font-mono">
-                ⚙ DEMO / SIMULATION MODE
+                {t.demoModeActive}
               </span>
               <span className="text-slate-600 hidden sm:inline">|</span>
               <span className="text-slate-400 text-[11px] hidden sm:inline">
-                Controlled parameters • Not live data
+                {t.controlledParameters}
               </span>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-2.5">
+          {/* Language Selector (English, Hindi, Marathi) */}
+          <div className="flex items-center bg-slate-800 rounded-lg px-2 py-0.5 border border-slate-700 text-[11px]">
+            <Globe className="w-3.5 h-3.5 text-sky-400 mr-1.5 shrink-0" />
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as Language)}
+              className="bg-transparent text-white font-bold cursor-pointer focus:outline-hidden text-[11px]"
+              aria-label={t.selectLanguage}
+            >
+              <option value="en" className="bg-slate-900 text-white">English</option>
+              <option value="hi" className="bg-slate-900 text-white">हिन्दी (Hindi)</option>
+              <option value="mr" className="bg-slate-900 text-white">मराठी (Marathi)</option>
+            </select>
+          </div>
+
           {/* Mode Switcher Toggle */}
           <div className="flex items-center bg-slate-800/90 rounded-lg p-0.5 border border-slate-700 shadow-xs">
             <button
@@ -108,7 +126,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Switch to Real External Weather & Government Observations"
             >
               <span className={`w-1.5 h-1.5 rounded-full ${!isDemoMode ? 'bg-white animate-pulse' : 'bg-slate-500'}`} />
-              <span>LIVE DATA</span>
+              <span>{t.liveDataBtn}</span>
             </button>
             <button
               onClick={() => setIsDemoMode(true)}
@@ -120,27 +138,27 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Switch to Demonstration Scenario Testing Mode"
             >
               <span>⚙</span>
-              <span>DEMO DATA</span>
+              <span>{t.demoDataBtn}</span>
             </button>
           </div>
 
           {/* Quick Scenario Selector (Visible in Demo Mode) */}
           {isDemoMode && (
             <div className="hidden md:flex items-center gap-1.5 bg-slate-800 px-2 py-1 rounded-md border border-slate-700 text-[11px]">
-              <span className="text-amber-400 font-bold">Scenario:</span>
+              <span className="text-amber-400 font-bold">{t.scenario}:</span>
               <select
                 value={activeScenario}
                 onChange={(e) => onScenarioChange(e.target.value)}
                 className="bg-transparent text-amber-200 font-semibold focus:outline-hidden cursor-pointer text-[11px]"
               >
                 <option value="scenario_2_drainage_blockage" className="bg-slate-900 text-amber-300">
-                  ⚠️ Blocked Drain (Ward 12)
+                  {t.scenarioBlockedDrain}
                 </option>
                 <option value="scenario_1_heavy_rainfall" className="bg-slate-900 text-red-300">
-                  🌧️ Cloudburst (Ward 04)
+                  {t.scenarioCloudburst}
                 </option>
                 <option value="baseline" className="bg-slate-900 text-slate-200">
-                  ☀️ Nominal Baseline (Clear)
+                  {t.scenarioNominal}
                 </option>
               </select>
             </div>
@@ -155,7 +173,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-400' : ''}`} />
-            <span className="hidden xl:inline">{isRefreshing ? 'Syncing...' : 'Refresh'}</span>
+            <span className="hidden xl:inline">{isRefreshing ? t.syncing : t.refreshBtn}</span>
           </button>
         </div>
       </div>
@@ -172,10 +190,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div>
             <h1 className="text-lg font-black tracking-tight text-slate-900 leading-none font-mono">
-              JALRAKSHAK
+              {t.appName}
             </h1>
             <p className="text-[11px] font-bold text-sky-700 tracking-normal mt-0.5">
-              “Know the risk. Act early.”
+              {t.tagline}
             </p>
           </div>
         </div>
@@ -227,7 +245,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Municipal Responders & DEOC Authority Dashboard"
           >
             <Radio className={`w-3.5 h-3.5 ${currentTab === 'response-center' ? 'text-sky-400' : 'text-slate-500'}`} />
-            <span>AUTHORITY</span>
+            <span>{t.navAuthority}</span>
           </button>
         </div>
 
@@ -238,7 +256,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-1 px-2.5 py-1.5 bg-red-600 text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer"
           >
             <Camera className="w-3.5 h-3.5" />
-            <span>REPORT</span>
+            <span>{t.navReport}</span>
           </button>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -313,9 +331,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Home className="w-3.5 h-3.5" />
-              <span>Home</span>
+              <span>{t.navHome}</span>
             </button>
-
 
             <button
               onClick={() => handleTabClick('report')}
@@ -324,7 +341,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Camera className="w-3.5 h-3.5" />
-              <span>Report</span>
+              <span>{t.navReport}</span>
             </button>
 
             <button
@@ -334,7 +351,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Sliders className="w-3.5 h-3.5" />
-              <span>Simulator</span>
+              <span>{t.navSimulator}</span>
             </button>
 
             <button
@@ -344,7 +361,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <HelpCircle className="w-3.5 h-3.5" />
-              <span>About / Help</span>
+              <span>{t.navAboutHelp}</span>
             </button>
           </div>
 
@@ -358,7 +375,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <div className="flex items-center gap-2">
                 <Radio className="w-4 h-4 text-sky-400" />
-                <span>AUTHORITY RESPONSE CENTER</span>
+                <span>{t.navAuthority}</span>
               </div>
               <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-800 text-amber-300 rounded font-bold">
                 EOC

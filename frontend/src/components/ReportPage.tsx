@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { apiClient } from '../api/client';
 import type { LocationData } from '../types';
+import { useTranslation } from '../services/LanguageContext';
 import {
   Camera,
   Upload,
@@ -33,6 +34,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
   onNavigateHome,
   initialReportType = 'street'
 }) => {
+  const { t } = useTranslation();
   const [reportType, setReportType] = useState<'street' | 'flood'>(initialReportType);
   const defaultLocId = selectedLocation?.id || 'ward-12';
 
@@ -148,10 +150,10 @@ export const ReportPage: React.FC<ReportPageProps> = ({
       {/* 1. PAGE HEADER */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl sm:text-4xl font-black text-slate-950 font-mono tracking-tight">
-          REPORT AN ISSUE
+          {t.reportHazardTitle}
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
-          Help emergency teams and fellow citizens by submitting geo-located observations. Choose the disaster category below.
+          {t.reportHazardSubtitle}
         </p>
       </div>
 
@@ -171,35 +173,31 @@ export const ReportPage: React.FC<ReportPageProps> = ({
               <span className="text-2xl">📸</span>
               {reportType === 'street' && (
                 <span className="px-2.5 py-0.5 bg-amber-600 text-white font-mono text-[10px] font-black rounded-full uppercase">
-                  Selected
+                  ✓
                 </span>
               )}
             </div>
 
             <h2 className="text-lg sm:text-xl font-black text-slate-900 font-mono mt-2 flex items-center gap-2">
-              <span>REPORT STREET WATERLOGGING</span>
+              <span>{t.reportTypeStreet}</span>
             </h2>
 
             <div className="mt-3 space-y-1.5 text-xs text-slate-700">
               <div className="font-bold text-slate-900 text-[11px] uppercase font-mono text-amber-800">
-                Report:
+                {t.monitorLabel}
               </div>
               <ul className="space-y-1 text-slate-600">
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-                  <span>Flooded road</span>
+                  <span>{t.roadStreetScale}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-                  <span>Blocked drain</span>
+                  <span>{t.drainBlockage}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-                  <span>Water entering shop/home</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-                  <span>Rising street water</span>
+                  <span>{t.roadWaterDepth}</span>
                 </li>
               </ul>
             </div>
@@ -213,7 +211,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
                 : 'bg-slate-100 text-slate-700 hover:bg-amber-100'
             }`}
           >
-            <span>[ REPORT WATERLOGGING ]</span>
+            <span>[ {t.reportWaterloggingBtn} ]</span>
           </button>
         </div>
 
@@ -231,35 +229,31 @@ export const ReportPage: React.FC<ReportPageProps> = ({
               <span className="text-2xl">⚠</span>
               {reportType === 'flood' && (
                 <span className="px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] font-black rounded-full uppercase">
-                  Selected
+                  ✓
                 </span>
               )}
             </div>
 
             <h2 className="text-lg sm:text-xl font-black text-slate-900 font-mono mt-2 flex items-center gap-2">
-              <span>REPORT FLOOD CONDITION</span>
+              <span>{t.reportTypeFlood}</span>
             </h2>
 
             <div className="mt-3 space-y-1.5 text-xs text-slate-700">
               <div className="font-bold text-slate-900 text-[11px] uppercase font-mono text-blue-800">
-                Report:
+                {t.monitorLabel}
               </div>
               <ul className="space-y-1 text-slate-600">
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                  <span>Rapidly rising water</span>
+                  <span>{t.riverWaterLevels}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                  <span>River/stream overflow</span>
+                  <span>{t.heavyRainfall}</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                  <span>Flash flood conditions</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                  <span>Dangerous flood situation</span>
+                  <span>{t.regionalWardScale}</span>
                 </li>
               </ul>
             </div>
@@ -273,7 +267,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
                 : 'bg-slate-100 text-slate-700 hover:bg-blue-100'
             }`}
           >
-            <span>[ REPORT FLOOD ]</span>
+            <span>[ {t.reportTypeFlood} ]</span>
           </button>
         </div>
       </div>
@@ -281,27 +275,27 @@ export const ReportPage: React.FC<ReportPageProps> = ({
       {/* 3. REPORT FORM OR CONFIRMATION */}
       {submitted ? (
         <div className="bg-white rounded-3xl p-8 border-2 border-emerald-300 shadow-sm text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center text-3xl">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center text-3xl font-black">
             ✓
           </div>
           <h3 className="text-xl font-black text-slate-900 font-mono">
-            {reportType === 'street' ? 'ROAD WATERLOGGING REPORT RECEIVED' : 'FLASH FLOOD REPORT DISPATCHED'}
+            {t.reportSubmittedSuccess}
           </h3>
           <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
-            Your report has been logged and forwarded to municipal crews and emergency coordination units. Thank you for keeping your community informed.
+            {t.reportDispatchedMsg}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
             <button
               onClick={handleReset}
               className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition cursor-pointer"
             >
-              Submit Another Report
+              {t.submitAnotherReport}
             </button>
             <button
-              onClick={onNavigateToMap}
+              onClick={onNavigateHome}
               className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition cursor-pointer"
             >
-              View on Risk Map
+              {t.backToHome}
             </button>
           </div>
         </div>
@@ -309,12 +303,12 @@ export const ReportPage: React.FC<ReportPageProps> = ({
         <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
           <div className="border-b border-slate-100 pb-4 flex items-center justify-between">
             <h3 className="text-base font-black text-slate-900 font-mono flex items-center gap-2">
-              <span>{reportType === 'street' ? '🚧 ROAD WATERLOGGING DETAILS' : '🌊 FLASH FLOOD CONDITION DETAILS'}</span>
+              <span>{reportType === 'street' ? `🚧 ${t.streetWaterloggingCardTitle}` : `🌊 ${t.flashFloodCardTitle}`}</span>
             </h3>
             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono uppercase ${
               reportType === 'street' ? 'bg-amber-100 text-amber-900' : 'bg-blue-100 text-blue-900'
             }`}>
-              {reportType === 'street' ? 'STREET LEVEL' : 'REGIONAL LEVEL'}
+              {reportType === 'street' ? t.roadStreetScale : t.regionalWardScale}
             </span>
           </div>
 
@@ -322,7 +316,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
             {/* Condition Category */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                Hazard Type *
+                {t.hazardType} *
               </label>
               <select
                 value={hazardType}
@@ -340,7 +334,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
             {/* Location / Ward */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                Municipal Ward / Area *
+                {t.selectLocation} *
               </label>
               <select
                 value={selectedLocationId}
@@ -360,13 +354,13 @@ export const ReportPage: React.FC<ReportPageProps> = ({
           {reportType === 'street' && (
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                Road / Street Name *
+                {t.roadOrStreetName} *
               </label>
               <input
                 type="text"
                 value={roadName}
                 onChange={(e) => setRoadName(e.target.value)}
-                placeholder="e.g., Main Market Road, Station Road Culvert"
+                placeholder="e.g., Station Road, Market Chowk"
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-amber-500 font-medium"
                 required
               />
@@ -376,7 +370,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
           {/* Photo Upload & Preview */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Photo Evidence (Automatic Flood Vision Analysis)
+              {t.takeOrUploadPhoto}
             </label>
             <div className="flex flex-col sm:flex-row gap-4 items-center">
               <div className="w-full sm:w-44 h-32 rounded-2xl overflow-hidden border border-slate-300 bg-slate-100 shrink-0">
@@ -390,7 +384,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
               <div className="w-full space-y-2">
                 <label className="flex items-center justify-center gap-2 w-full py-3 px-4 border-2 border-dashed border-slate-300 rounded-2xl hover:border-slate-400 cursor-pointer text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 transition">
                   <Upload className="w-4 h-4 text-slate-500" />
-                  <span>Upload Street Photo or Video</span>
+                  <span>{t.takeOrUploadPhoto}</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -398,9 +392,6 @@ export const ReportPage: React.FC<ReportPageProps> = ({
                     className="hidden"
                   />
                 </label>
-                <p className="text-[11px] text-slate-400">
-                  Supported formats: JPG, PNG. Automated YOLO model detects blocked drains, submerged vehicles, and water depth.
-                </p>
               </div>
             </div>
           </div>
@@ -410,7 +401,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-slate-500" />
               <span className="text-xs font-semibold text-slate-700">
-                {locationSuccessMsg || 'Attach Current Device GPS Coordinates'}
+                {locationSuccessMsg || t.useMyLocation}
               </span>
             </div>
             <button
@@ -420,23 +411,19 @@ export const ReportPage: React.FC<ReportPageProps> = ({
               className="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 transition cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
             >
               <Compass className={`w-3.5 h-3.5 ${isUsingLocation ? 'animate-spin text-sky-600' : ''}`} />
-              <span>{isUsingLocation ? 'Acquiring GPS...' : 'Use My GPS'}</span>
+              <span>{isUsingLocation ? t.syncing : t.useMyLocation}</span>
             </button>
           </div>
 
           {/* Description */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Observations / Notes (Optional)
+              {t.descriptionPlaceholder}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={
-                reportType === 'street'
-                  ? 'Describe road blockage, water height relative to curbs/shops, or stalled vehicles...'
-                  : 'Describe river water speed, rate of water level rise, or areas cut off...'
-              }
+              placeholder={t.descriptionPlaceholder}
               rows={3}
               className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
             />
@@ -449,7 +436,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
               onClick={onNavigateHome}
               className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
             >
-              Cancel
+              {t.close}
             </button>
 
             <button
@@ -461,7 +448,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
                   : 'bg-blue-600 hover:bg-blue-700'
               } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              <span>{isSubmitting ? 'Submitting Report...' : reportType === 'street' ? 'SUBMIT WATERLOGGING REPORT' : 'SUBMIT FLASH FLOOD REPORT'}</span>
+              <span>{isSubmitting ? t.submitting : t.submitReportBtn}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

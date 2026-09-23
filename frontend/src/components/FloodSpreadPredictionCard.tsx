@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { FloodSpreadSimulation, FloodSpreadStage, FloodSpreadStageKey } from '../services/floodSpreadService';
+import { useTranslation } from '../services/LanguageContext';
 import {
   Play,
   Pause,
@@ -27,6 +28,7 @@ export const FloodSpreadPredictionCard: React.FC<FloodSpreadPredictionCardProps>
   isPlaying,
   onTogglePlay
 }) => {
+  const { t, tr } = useTranslation();
   const activeStage = simulation.stages[activeStageKey];
   const stageKeys = simulation.stageOrder;
 
@@ -37,26 +39,26 @@ export const FloodSpreadPredictionCard: React.FC<FloodSpreadPredictionCardProps>
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase font-mono bg-blue-500/15 text-blue-700 border border-blue-300">
-              🌊 FLASH FLOOD MODEL
+              {t.flashFloodCardTitle}
             </span>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase font-mono bg-amber-500/15 text-amber-800 border border-amber-300">
-              SIMULATION / PREDICTED SPREAD
+              {t.spreadSimulationTitle}
             </span>
           </div>
 
           <h3 className="text-lg sm:text-xl font-black text-slate-900 font-mono tracking-tight flex items-center gap-2 mt-1">
-            <span>🌊 FLOOD SPREAD PREDICTION</span>
+            <span>{t.spreadSimulationTitle}</span>
           </h3>
 
           <p className="text-xs text-slate-500">
-            Hydrodynamic floodwave propagation derived deterministically from current cloudburst rainfall ({simulation.rainfallIntensityMmHr} mm/h) and ground saturation ({simulation.soilMoisturePct}%).
+            {t.spreadSimulationDesc}
           </p>
         </div>
 
         {/* Location badge */}
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-mono font-bold text-slate-800 self-start md:self-auto shrink-0">
           <MapPin className="w-3.5 h-3.5 text-blue-600" />
-          <span>{simulation.targetLocationName.split('(')[0]}</span>
+          <span>{tr(simulation.targetLocationName.split('(')[0].trim())}</span>
         </div>
       </div>
 
@@ -65,9 +67,9 @@ export const FloodSpreadPredictionCard: React.FC<FloodSpreadPredictionCardProps>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-300">
             <Clock className="w-4 h-4 text-amber-400" />
-            <span>TIME PROGRESSION:</span>
+            <span>{tr('TIME PROGRESSION:')}</span>
             <span className="text-white font-black bg-slate-800 px-2 py-0.5 rounded">
-              {activeStage.label}
+              {tr(activeStage.label)}
             </span>
           </div>
 
@@ -84,12 +86,12 @@ export const FloodSpreadPredictionCard: React.FC<FloodSpreadPredictionCardProps>
             {isPlaying ? (
               <>
                 <Pause className="w-3.5 h-3.5 fill-current" />
-                <span>PAUSE ANIMATION</span>
+                <span>{tr('PAUSE ANIMATION')}</span>
               </>
             ) : (
               <>
                 <Play className="w-3.5 h-3.5 fill-current" />
-                <span>PLAY ANIMATION</span>
+                <span>{tr('PLAY ANIMATION')}</span>
               </>
             )}
           </button>
@@ -125,15 +127,15 @@ export const FloodSpreadPredictionCard: React.FC<FloodSpreadPredictionCardProps>
                       color: key === 'NOW' ? '#0f172a' : '#ffffff'
                     }}
                   >
-                    STAGE {index + 1}
+                    {tr('STAGE')} {index + 1}
                   </span>
                   <span className="text-[10px] font-mono text-slate-400 font-bold">
-                    {stage.severityLabel}
+                    {tr(stage.severityLabel)}
                   </span>
                 </div>
 
                 <div className="text-sm font-black font-mono text-white mt-0.5">
-                  {key}
+                  {tr(key)}
                 </div>
 
                 <div className="text-[11px] font-mono text-slate-300 mt-1 flex items-center justify-between">
@@ -160,49 +162,49 @@ export const FloodSpreadPredictionCard: React.FC<FloodSpreadPredictionCardProps>
         {/* Inundated Area */}
         <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
           <span className="text-slate-500 text-[10px] uppercase font-bold block mb-1">
-            Predicted Inundation Area
+            {tr('Predicted Inundation Area')}
           </span>
           <div className="text-base font-black text-slate-950 flex items-center gap-1.5">
             <Waves className="w-4 h-4 text-blue-600" />
             <span>{activeStage.inundatedAreaKm2} km²</span>
           </div>
           <div className="text-[11px] text-slate-500 mt-0.5 font-bold">
-            {activeStage.inundatedHectares} Hectares covered
+            {activeStage.inundatedHectares} {tr('Hectares covered')}
           </div>
         </div>
 
         {/* Projected Water Depth */}
         <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
           <span className="text-slate-500 text-[10px] uppercase font-bold block mb-1">
-            Surface Water Depth
+            {tr('Surface Water Depth')}
           </span>
           <div className="text-base font-black text-slate-950 flex items-center gap-1.5">
             <span className="text-blue-500">📏</span>
             <span>{activeStage.depthRangeMeters}</span>
           </div>
           <div className="text-[11px] text-slate-500 mt-0.5">
-            Above river baseline datum
+            {tr('Above river baseline datum')}
           </div>
         </div>
 
         {/* Floodwave Velocity */}
         <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
           <span className="text-slate-500 text-[10px] uppercase font-bold block mb-1">
-            Estimated Wave Velocity
+            {tr('Estimated Wave Velocity')}
           </span>
           <div className="text-base font-black text-slate-950 flex items-center gap-1.5">
             <TrendingUp className="w-4 h-4 text-amber-600" />
             <span>{activeStage.flowVelocityKmh}</span>
           </div>
           <div className="text-[11px] text-slate-500 mt-0.5">
-            Valley downhill surge speed
+            {tr('Valley downhill surge speed')}
           </div>
         </div>
 
         {/* Severity Level */}
         <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col justify-between">
           <span className="text-slate-500 text-[10px] uppercase font-bold block mb-1">
-            Hazard Severity
+            {tr('Hazard Severity')}
           </span>
           <div className="flex items-center gap-2">
             <span
@@ -213,11 +215,11 @@ export const FloodSpreadPredictionCard: React.FC<FloodSpreadPredictionCardProps>
               className="text-sm font-black uppercase"
               style={{ color: activeStage.color }}
             >
-              {activeStage.severityLabel} SURGE
+              {tr(activeStage.severityLabel)} {tr('SURGE')}
             </span>
           </div>
           <div className="text-[10px] text-slate-400 mt-0.5">
-            Stage {stageKeys.indexOf(activeStageKey) + 1} of 4
+            {tr('STAGE')} {stageKeys.indexOf(activeStageKey) + 1} / 4
           </div>
         </div>
       </div>
@@ -226,10 +228,10 @@ export const FloodSpreadPredictionCard: React.FC<FloodSpreadPredictionCardProps>
       <div className="p-4 rounded-2xl border bg-slate-50 border-slate-200 space-y-2.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 font-mono">
-            PREDICTED INUNDATION REACHES AT {activeStage.key}:
+            {tr('PREDICTED INUNDATION REACHES AT')} {tr(activeStage.key)}:
           </span>
           <span className="text-[11px] font-mono text-slate-500">
-            {activeStage.affectedCorridors.length} vulnerable corridors mapped
+            {activeStage.affectedCorridors.length} {tr('vulnerable corridors mapped')}
           </span>
         </div>
 
@@ -240,14 +242,14 @@ export const FloodSpreadPredictionCard: React.FC<FloodSpreadPredictionCardProps>
               className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold bg-white border border-slate-300 text-slate-800 shadow-2xs flex items-center gap-1.5"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              <span>{corridor}</span>
+              <span>{tr(corridor)}</span>
             </span>
           ))}
         </div>
 
         <p className="text-xs text-slate-600 leading-relaxed pt-1">
-          <strong>Hydrological Dynamics: </strong>
-          {activeStage.description}
+          <strong>{tr('Hydrological Dynamics:')} </strong>
+          {tr(activeStage.description)}
         </p>
       </div>
     </div>

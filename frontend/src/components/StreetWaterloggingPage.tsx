@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { LocationData, CitizenReport, IoTSensor } from '../types';
 import { MUNICIPAL_ROADS, type MunicipalRoad } from '../data/municipalRoads';
+import { useTranslation } from '../services/LanguageContext';
 import { DisasterMap } from './Map/DisasterMap';
 import { InverseHydraulicDiagnosisCard } from './InverseHydraulicDiagnosisCard';
 import type { HydraulicDiagnosisInput } from '../services/hydraulicDiagnosis';
@@ -33,6 +34,7 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
   onOpenReportModal,
   onNavigateToSimulator
 }) => {
+  const { t, tr } = useTranslation();
   const [roads, setRoads] = useState<MunicipalRoad[]>(MUNICIPAL_ROADS);
   const [selectedRoad, setSelectedRoad] = useState<MunicipalRoad>(MUNICIPAL_ROADS[0]);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
@@ -120,21 +122,21 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
           <div>
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-amber-700 font-mono">
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-              <span>SUBSURFACE HYDRAULIC PREDICTION</span>
+              <span>{t.hydraulicDiagnosisSubtitle}</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-mono flex items-center gap-2 mt-0.5">
-              <span>🕳️ DRAINAGE DIAGNOSIS & WATERLOGGING PREDICTION</span>
+              <span>{t.hydraulicDiagnosisTitle}</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-600">
-              Predicts street waterlogging onset times and hidden drainage blockages before flooding occurs.
+              {tr('Predicts street waterlogging onset times and hidden drainage blockages before flooding occurs.')}
             </p>
           </div>
 
           <div className="flex items-center gap-1.5 text-xs text-slate-700 font-mono bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
             <span>📍</span>
-            <span className="font-bold text-slate-900">{selectedRoad.name}</span>
+            <span className="font-bold text-slate-900">{tr(selectedRoad.name)}</span>
             <span className="text-slate-400">·</span>
-            <span>{selectedRoad.wardId ? selectedRoad.wardId.replace('-', ' ').toUpperCase() : 'WARD 12'}</span>
+            <span>{selectedRoad.wardId ? tr(selectedRoad.wardId.replace('-', ' ').toUpperCase()) : 'WARD 12'}</span>
           </div>
         </div>
 
@@ -150,25 +152,23 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-base font-black text-slate-900 font-mono">
-                STREET & DRAINAGE NETWORK RISK MAP
+                {t.streetWaterloggingMonitorTitle}
               </h3>
               <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
                 waterloggingViewMode === 'predicted'
                   ? 'bg-amber-100 text-amber-900 border border-amber-300'
                   : 'bg-blue-100 text-blue-900 border border-blue-300'
               }`}>
-                {waterloggingViewMode === 'predicted' ? '🔮 PREDICTIVE FORECAST' : '📡 REAL-TIME LOGGING'}
+                {waterloggingViewMode === 'predicted' ? t.spreadSimulationTitle : t.liveDataActive}
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              {waterloggingViewMode === 'predicted'
-                ? 'Showing predicted waterlogging onset timing and forecasted street inundation levels from subsurface hydraulic modeling.'
-                : 'Showing real-time verified street inundation levels, observed water depths, and crowd reports.'}
+              {t.streetWaterloggingMonitorDesc}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* View Mode Toggle Button: Real-Time Status vs Predicted Waterlogging */}
+            {/* View Mode Toggle Button */}
             <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200">
               <button
                 type="button"
@@ -179,7 +179,7 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span>📡 REAL-TIME STATUS</span>
+                <span>📡 {t.liveDataBtn}</span>
               </button>
               <button
                 type="button"
@@ -190,7 +190,7 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span>🔮 PREDICTED WATERLOGGING</span>
+                <span>🔮 {t.spreadSimulationTitle}</span>
               </button>
             </div>
 
@@ -202,11 +202,11 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="bg-slate-100 border border-slate-300 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 cursor-pointer"
               >
-                <option value="ALL">All Roads ({roads.length})</option>
-                <option value="SEVERE">🔴 Severe Only</option>
-                <option value="MODERATE">🟠 Moderate Only</option>
-                <option value="MINOR">🟡 Minor Only</option>
-                <option value="CLEAR">🟢 Clear Only</option>
+                <option value="ALL">{t.roadStatusFilterAll} ({roads.length})</option>
+                <option value="SEVERE">🔴 {t.roadStatusFilterCritical}</option>
+                <option value="MODERATE">🟠 {t.roadStatusFilterHigh}</option>
+                <option value="MINOR">🟡 {t.roadStatusFilterModerate}</option>
+                <option value="CLEAR">🟢 {t.roadStatusFilterClear}</option>
               </select>
             </div>
           </div>
@@ -240,13 +240,13 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div>
             <div className="text-[10px] font-black text-red-600 uppercase tracking-widest font-mono">
-              CROWDSOURCED VERIFICATIONS
+              {tr('CROWDSOURCED VERIFICATIONS')}
             </div>
             <h3 className="text-lg font-black text-slate-900 font-mono flex items-center gap-2">
-              <span>RECENT CITIZEN WATERLOGGING REPORTS</span>
+              <span>{tr('RECENT CITIZEN WATERLOGGING REPORTS')}</span>
             </h3>
             <p className="text-xs text-slate-500">
-              Photographic evidence and water depth logs submitted by drivers, shopkeepers and residents
+              {tr('Photographic evidence and water depth logs submitted by drivers, shopkeepers and residents')}
             </p>
           </div>
 
@@ -255,7 +255,7 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
             className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
           >
             <Camera className="w-3.5 h-3.5" />
-            <span>SUBMIT PHOTO REPORT</span>
+            <span>{tr('SUBMIT PHOTO REPORT')}</span>
           </button>
         </div>
 
@@ -274,10 +274,10 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
                   className="w-full h-full object-cover"
                 />
                 <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-black/70 backdrop-blur-xs text-white text-[10px] font-mono font-bold rounded-md">
-                  📍 {report.location_name.split('(')[0]}
+                  📍 {tr(report.location_name.split('(')[0].trim())}
                 </span>
                 <span className="absolute top-2.5 right-2.5 px-2 py-0.5 bg-red-600 text-white text-[10px] font-black font-mono rounded-md">
-                  {report.severity || 'CRITICAL'}
+                  {tr(report.severity || 'CRITICAL')}
                 </span>
               </div>
 
@@ -286,20 +286,20 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
                 <div>
                   <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono">
                     <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-slate-400" />
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
                       {report.timestamp}
                     </span>
                     <span className="text-emerald-700 font-bold">
-                      ✓ AI Verified
+                      ✓ {tr('AI Verified')}
                     </span>
                   </div>
 
                   <h4 className="text-xs font-bold text-slate-900 mt-1">
-                    {report.location_name}
+                    {tr(report.location_name)}
                   </h4>
 
                   <p className="text-[11px] text-slate-600 mt-1 leading-snug">
-                    {report.description}
+                    {tr(report.description)}
                   </p>
                 </div>
 
@@ -312,7 +312,7 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
                     }}
                     className="text-sky-600 font-bold hover:underline cursor-pointer"
                   >
-                    Inspect road →
+                    {tr('Inspect road →')}
                   </button>
                 </div>
               </div>
@@ -324,9 +324,9 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
       {/* 6. BOTTOM NAVIGATION */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-5 bg-slate-900 text-white rounded-3xl">
         <div>
-          <h4 className="text-sm font-black font-mono">SIMULATE DRAINAGE BLOCKAGE</h4>
+          <h4 className="text-sm font-black font-mono">{tr('SIMULATE DRAINAGE BLOCKAGE')}</h4>
           <p className="text-xs text-slate-400">
-            Test how choked stormwater drains and local rainfall produce street-level waterlogging.
+            {tr('Test how choked stormwater drains and local rainfall produce street-level waterlogging.')}
           </p>
         </div>
 
@@ -334,7 +334,7 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
           onClick={onNavigateToSimulator}
           className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs"
         >
-          <span>OPEN STREET WATERLOGGING SIMULATOR</span>
+          <span>{tr('OPEN STREET WATERLOGGING SIMULATOR')}</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>

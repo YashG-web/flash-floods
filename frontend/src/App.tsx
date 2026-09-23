@@ -24,6 +24,7 @@ import { AlertsAndResponse } from './components/AlertsAndResponse';
 import { CitizenReportModal } from './components/CitizenReportModal';
 import { ReportPage } from './components/ReportPage';
 import { RefreshCw, Camera } from 'lucide-react';
+import { useTranslation } from './services/LanguageContext';
 
 const INITIAL_DEMO_WARNING_SCENARIO_2: FlashFloodWarning = {
   id: 'warn-ward-12-initial',
@@ -88,6 +89,7 @@ const INITIAL_DEMO_WARNING_SCENARIO_1: FlashFloodWarning = {
 };
 
 export function App() {
+  const { t, tr } = useTranslation();
   const [currentTab, setCurrentTab] = useState<string>('home');
   const [isDemoMode, setIsDemoMode] = useState<boolean>(true);
   const [activeScenario, setActiveScenario] = useState<string>('scenario_2_drainage_blockage');
@@ -385,7 +387,7 @@ export function App() {
         {loading ? (
           <div className="h-96 flex flex-col items-center justify-center text-slate-500 gap-3">
             <RefreshCw className="w-8 h-8 animate-spin text-sky-600" />
-            <div className="font-bold text-sm">Syncing Local Flood Risk & Sensor Network...</div>
+            <div className="font-bold text-sm">{tr('Syncing Local Flood Risk & Sensor Network...')}</div>
           </div>
         ) : (
           <>
@@ -513,19 +515,19 @@ export function App() {
           <div className="flex items-center gap-2.5">
             <span className="font-black text-white font-mono text-sm tracking-wide">JALRAKSHAK</span>
             <span>—</span>
-            <span>Know the risk. Act early.</span>
+            <span>{t.knowRiskActEarly}</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-4 text-xs">
-            <span>Emergency Helpline: <b className="text-white font-mono">112</b></span>
+            <span>{tr('Emergency Helpline: 112')}</span>
             <span>•</span>
-            <span>Municipal Disaster Management Cell</span>
+            <span>{tr('Municipal Disaster Management Cell')}</span>
             <span>•</span>
             <button
               onClick={() => setCurrentTab('response-center')}
               className="text-sky-400 hover:underline font-semibold cursor-pointer"
             >
-              Authority Center (EOC / Simulator)
+              {tr('Authority Center (EOC / Simulator)')}
             </button>
           </div>
         </div>

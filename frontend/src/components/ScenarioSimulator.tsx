@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { LocationData, FlashFloodWarning, WarningStatus } from '../types';
 import { InverseHydraulicDiagnosisCard } from './InverseHydraulicDiagnosisCard';
+import { useTranslation } from '../services/LanguageContext';
 import {
   Sliders,
   CloudRain,
@@ -36,6 +37,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
   onNavigateToFlashFlood,
   onNavigateToStreetWaterlogging
 }) => {
+  const { t, tr } = useTranslation();
   // Mode switcher: Flash Flood vs Street Waterlogging
   const [simulatorMode, setSimulatorMode] = useState<'flash-flood' | 'street-waterlogging'>('flash-flood');
 
@@ -220,13 +222,13 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
           <div>
             <div className="flex items-center gap-2 text-sky-400 text-xs font-mono font-black tracking-widest uppercase mb-1">
               <Sliders className="w-4 h-4" />
-              <span>DECISION-SUPPORT STRESS TESTING</span>
+              <span>{tr('DECISION-SUPPORT STRESS TESTING')}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
-              FLOOD SCENARIO SIMULATOR
+              {tr('FLOOD SCENARIO SIMULATOR')}
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 mt-1">
-              Test independent emergency conditions. Choose a disaster scenario below.
+              {tr('Test independent emergency conditions. Choose a disaster scenario below.')}
             </p>
           </div>
 
@@ -235,14 +237,14 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
             className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition border border-slate-700 self-start sm:self-auto cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Baseline</span>
+            <span>{tr('Reset Baseline')}</span>
           </button>
         </div>
 
         {/* 2. CHOOSE SCENARIO: [ 🌊 FLASH FLOOD ] OR [ 🚧 STREET WATERLOGGING ] */}
         <div className="mt-6 pt-5 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center gap-3">
           <span className="text-xs font-bold text-slate-400 font-mono uppercase tracking-wider">
-            Choose Scenario:
+            {tr('Choose Scenario:')}
           </span>
 
           <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-2xl border border-slate-800 w-full sm:w-auto">
@@ -257,7 +259,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                   : 'text-slate-400 hover:text-white'
                 }`}
             >
-              <span>🌊 FLASH FLOOD</span>
+              <span>{tr('🌊 FLASH FLOOD')}</span>
             </button>
 
             <button
@@ -271,7 +273,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                   : 'text-slate-400 hover:text-white'
                 }`}
             >
-              <span>🚧 STREET WATERLOGGING</span>
+              <span>{tr('🚧 STREET WATERLOGGING')}</span>
             </button>
           </div>
         </div>
@@ -283,15 +285,15 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
             <div>
               <span className="text-[10px] font-black uppercase text-blue-700 font-mono tracking-wider">
-                REGIONAL SIMULATION CONTROLS
+                {tr('REGIONAL SIMULATION CONTROLS')}
               </span>
               <h2 className="text-xl font-black text-slate-900 font-mono">
-                FLASH FLOOD SIMULATOR
+                {tr('FLASH FLOOD SIMULATOR')}
               </h2>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500">Target Ward:</span>
+              <span className="text-xs font-bold text-slate-500">{tr('Target Ward:')}</span>
               <select
                 value={ffWardId}
                 onChange={(e) => setFfWardId(e.target.value)}
@@ -299,7 +301,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
               >
                 {locations.map(loc => (
                   <option key={loc.id} value={loc.id}>
-                    {loc.name}
+                    {tr(loc.name)}
                   </option>
                 ))}
               </select>
@@ -313,7 +315,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-slate-800 flex items-center gap-1.5 font-mono">
                   <CloudRain className="w-4 h-4 text-blue-600" />
-                  <span>Rainfall Intensity</span>
+                  <span>{tr('Rainfall Intensity')}</span>
                 </span>
                 <span className="font-mono font-black text-blue-700 text-sm">{rainfall} mm/h</span>
               </div>
@@ -326,9 +328,9 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                 className="w-full accent-blue-600 cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                <span>0 mm (Dry)</span>
-                <span>50 mm (Heavy)</span>
-                <span>150+ mm (Cloudburst)</span>
+                <span>0 mm</span>
+                <span>50 mm</span>
+                <span>150+ mm</span>
               </div>
             </div>
 
@@ -337,7 +339,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-slate-800 flex items-center gap-1.5 font-mono">
                   <Droplets className="w-4 h-4 text-sky-600" />
-                  <span>Soil Moisture Saturation</span>
+                  <span>{tr('Soil Moisture Saturation')}</span>
                 </span>
                 <span className="font-mono font-black text-sky-700 text-sm">{soilMoisture}%</span>
               </div>
@@ -350,9 +352,9 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                 className="w-full accent-sky-600 cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                <span>10% (Dry)</span>
-                <span>50% (Normal)</span>
-                <span>90%+ (Saturated)</span>
+                <span>10%</span>
+                <span>50%</span>
+                <span>90%+</span>
               </div>
             </div>
 
@@ -360,7 +362,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
               <span className="font-bold text-slate-800 flex items-center gap-1.5 font-mono text-xs">
                 <Mountain className="w-4 h-4 text-indigo-600" />
-                <span>Slope & Terrain Gradient</span>
+                <span>{tr('Slope & Terrain Gradient')}</span>
               </span>
               <div className="grid grid-cols-3 gap-2 pt-1">
                 {(['LOW', 'MEDIUM', 'HIGH'] as const).map(lvl => (
@@ -371,7 +373,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                     className={`py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${slope === lvl ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white border border-slate-300 text-slate-700'
                       }`}
                   >
-                    {lvl}
+                    {tr(lvl)}
                   </button>
                 ))}
               </div>
@@ -381,7 +383,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
               <span className="font-bold text-slate-800 flex items-center gap-1.5 font-mono text-xs">
                 <Waves className="w-4 h-4 text-teal-600" />
-                <span>River Water Level Condition</span>
+                <span>{tr('River Water Level Condition')}</span>
               </span>
               <div className="grid grid-cols-3 gap-2 pt-1">
                 {(['NORMAL', 'RISING', 'CRITICAL'] as const).map(lvl => (
@@ -394,7 +396,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                         : 'bg-white border border-slate-300 text-slate-700'
                       }`}
                   >
-                    {lvl}
+                    {tr(lvl)}
                   </button>
                 ))}
               </div>
@@ -404,7 +406,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 md:col-span-2">
               <span className="font-bold text-slate-800 flex items-center gap-1.5 font-mono text-xs">
                 <History className="w-4 h-4 text-slate-600" />
-                <span>Historical Catchment Flood Vulnerability</span>
+                <span>{tr('Historical Catchment Flood Vulnerability')}</span>
               </span>
               <div className="grid grid-cols-3 gap-2 pt-1 max-w-md">
                 {(['LOW', 'MEDIUM', 'HIGH'] as const).map(lvl => (
@@ -415,7 +417,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                     className={`py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${historicalRisk === lvl ? 'bg-slate-900 text-white' : 'bg-white border border-slate-300 text-slate-700'
                       }`}
                   >
-                    {lvl} RISK HISTORY
+                    {tr(lvl)}
                   </button>
                 ))}
               </div>
@@ -426,22 +428,22 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
           <div className="p-5 rounded-2xl bg-blue-50/80 border-2 border-blue-200 space-y-3">
             <div className="flex items-center justify-between">
               <div className="text-xs font-black uppercase text-blue-900 font-mono tracking-wider">
-                SIMULATED OUTPUT: FLASH FLOOD RISK
+                {tr('SIMULATED OUTPUT: FLASH FLOOD RISK')}
               </div>
               <span className={`px-3 py-1 rounded-full text-xs font-black font-mono ${ffResult.riskLevel === 'CRITICAL' ? 'bg-red-600 text-white' :
                   ffResult.riskLevel === 'HIGH' ? 'bg-amber-600 text-white' :
                     ffResult.riskLevel === 'MODERATE' ? 'bg-yellow-500 text-slate-950' : 'bg-emerald-600 text-white'
                 }`}>
-                {ffResult.riskLevel} ({ffResult.riskScore}%)
+                {tr(ffResult.riskLevel)} ({ffResult.riskScore}%)
               </span>
             </div>
 
             <p className="text-xs sm:text-sm text-blue-950 font-bold">
-              {ffResult.reason}
+              {tr(ffResult.reason)}
             </p>
 
             <div className="text-xs text-slate-700 font-medium">
-              Action: <b className="text-slate-900">{ffResult.action}</b>
+              {tr('ACTION:')} <b className="text-slate-900">{tr(ffResult.action)}</b>
             </div>
 
             {/* Generate Flash Flood Warning Button */}
@@ -451,14 +453,14 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                 onClick={handleGenerateFlashFloodWarning}
                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-sm"
               >
-                <span>GENERATE FLASH FLOOD WARNING</span>
+                <span>{tr('GENERATE FLASH FLOOD WARNING')}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
               {ffWarningGenerated && (
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-700">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Warning dispatched to Flash Flood Dashboard & Risk Map</span>
+                  <span>{tr('Warning dispatched to Flash Flood Dashboard & Risk Map')}</span>
                 </div>
               )}
             </div>
@@ -472,24 +474,24 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
             <div>
               <span className="text-[10px] font-black uppercase text-amber-700 font-mono tracking-wider">
-                ROAD-LEVEL SIMULATION CONTROLS
+                {tr('ROAD-LEVEL SIMULATION CONTROLS')}
               </span>
               <h2 className="text-xl font-black text-slate-900 font-mono">
-                STREET WATERLOGGING SIMULATOR
+                {tr('STREET WATERLOGGING SIMULATOR')}
               </h2>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500">Target Road:</span>
+              <span className="text-xs font-bold text-slate-500">{tr('Target Road:')}</span>
               <select
                 value={selectedRoadName}
                 onChange={(e) => setSelectedRoadName(e.target.value)}
                 className="bg-slate-100 border border-slate-300 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 cursor-pointer"
               >
-                <option value="Main Market Road">Main Market Road (Ward 12)</option>
-                <option value="Station Culvert Link Road">Station Culvert Link Road</option>
-                <option value="Riverfront Embankment Road">Riverfront Embankment Road</option>
-                <option value="Old Mandi Cross Road">Old Mandi Cross Road</option>
+                <option value="Main Market Road">{tr('Main Market Road')} (Ward 12)</option>
+                <option value="Station Culvert Link Road">{tr('Station Culvert Link Road') || 'स्टेशन नाला लिंक रोड'}</option>
+                <option value="Riverfront Embankment Road">{tr('Riverfront Embankment Road') || 'रिवरफ्रंट बांध रोड'}</option>
+                <option value="Old Mandi Cross Road">{tr('Old Mandi Cross Road') || 'पुरानी मंडी क्रॉस रोड'}</option>
               </select>
             </div>
           </div>
@@ -499,9 +501,9 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-xs font-black uppercase text-amber-900 font-mono flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-amber-600" />
-                <span>HYDRAULIC DIAGNOSIS DEMONSTRATION PRESETS:</span>
+                <span>{tr('HYDRAULIC DIAGNOSIS DEMONSTRATION PRESETS:')}</span>
               </span>
-              <span className="text-[10px] text-amber-800 font-bold font-mono">1-Click Scenarios</span>
+              <span className="text-[10px] text-amber-800 font-bold font-mono">{tr('1-Click Scenarios')}</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -515,10 +517,10 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
               >
                 <div className="font-black text-xs font-mono flex items-center gap-1">
                   <span>🟢</span>
-                  <span>NORMAL RAINFALL</span>
+                  <span>{tr('NORMAL RAINFALL')}</span>
                 </div>
                 <div className={`text-[10px] mt-0.5 ${localRainfall === 10 && drainageCondition === 'GOOD' ? 'text-slate-300' : 'text-slate-500'}`}>
-                  10 mm/h · Balanced Flow (Nominal)
+                  {tr('10 mm/h · Balanced Flow (Nominal)')}
                 </div>
               </button>
 
@@ -532,10 +534,10 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
               >
                 <div className="font-black text-xs font-mono flex items-center gap-1">
                   <span>🟡</span>
-                  <span>HEAVY RAINFALL</span>
+                  <span>{tr('HEAVY RAINFALL')}</span>
                 </div>
                 <div className={`text-[10px] mt-0.5 ${localRainfall === 85 ? 'text-slate-300' : 'text-slate-500'}`}>
-                  85 mm/h · Surface Inundation (No Blockage)
+                  {tr('85 mm/h · Surface Inundation (No Blockage)')}
                 </div>
               </button>
 
@@ -549,10 +551,10 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
               >
                 <div className="font-black text-xs font-mono flex items-center gap-1">
                   <span>🟠</span>
-                  <span>MODERATE RAIN + BLOCKED DRAIN</span>
+                  <span>{tr('MODERATE RAIN + BLOCKED DRAIN')}</span>
                 </div>
                 <div className={`text-[10px] mt-0.5 ${localRainfall === 18 && blockedDrain === 'COMPLETELY_BLOCKED' ? 'text-amber-100' : 'text-amber-700 font-semibold'}`}>
-                  18 mm/h · Triggers Hidden Blockage (MH-07)
+                  {tr('18 mm/h · Triggers Hidden Blockage (MH-07)')}
                 </div>
               </button>
             </div>
@@ -565,7 +567,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-slate-800 flex items-center gap-1.5 font-mono">
                   <CloudRain className="w-4 h-4 text-amber-600" />
-                  <span>Rainfall Intensity</span>
+                  <span>{tr('Rainfall Intensity')}</span>
                 </span>
                 <span className="font-mono font-black text-amber-700 text-sm">{localRainfall} mm/h</span>
               </div>
@@ -578,9 +580,9 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                 className="w-full accent-amber-600 cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                <span>0 mm (Clear)</span>
-                <span>18 mm (Moderate)</span>
-                <span>80+ mm (Extreme)</span>
+                <span>0 mm</span>
+                <span>18 mm</span>
+                <span>80+ mm</span>
               </div>
             </div>
 
@@ -589,7 +591,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-slate-800 flex items-center gap-1.5 font-mono">
                   <Sliders className="w-4 h-4 text-slate-700" />
-                  <span>Impervious Area / Runoff Coeff (C)</span>
+                  <span>{tr('Impervious Area / Runoff Coeff (C)')}</span>
                 </span>
                 <span className="font-mono font-black text-slate-900 text-sm">{runoffCoefficient.toFixed(2)}</span>
               </div>
@@ -603,9 +605,9 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                 className="w-full accent-slate-800 cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                <span>0.30 (Permeable)</span>
-                <span>0.82 (Dense Bazaar)</span>
-                <span>0.95 (Concrete)</span>
+                <span>0.30</span>
+                <span>0.82</span>
+                <span>0.95</span>
               </div>
             </div>
 
@@ -613,7 +615,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
               <span className="font-bold text-slate-800 flex items-center gap-1.5 font-mono text-xs">
                 <Waves className="w-4 h-4 text-blue-600" />
-                <span>Observed Water Accumulation</span>
+                <span>{tr('Observed Water Accumulation')}</span>
               </span>
               <div className="grid grid-cols-4 gap-1.5 pt-1">
                 {(['ANKLE', 'KNEE', 'WAIST', 'SUBMERGED'] as const).map(lvl => (
@@ -626,7 +628,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                         : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
                       }`}
                   >
-                    {lvl}
+                    {tr(lvl)}
                   </button>
                 ))}
               </div>
@@ -636,7 +638,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
               <span className="font-bold text-slate-800 flex items-center gap-1.5 font-mono text-xs">
                 <Construction className="w-4 h-4 text-amber-600" />
-                <span>Drainage Condition</span>
+                <span>{tr('Drainage Condition')}</span>
               </span>
               <div className="grid grid-cols-3 gap-2 pt-1">
                 {(['GOOD', 'STRESSED', 'CHOKED'] as const).map(lvl => (
@@ -649,7 +651,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                         : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
                       }`}
                   >
-                    {lvl}
+                    {tr(lvl)}
                   </button>
                 ))}
               </div>
@@ -660,9 +662,9 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-slate-800 flex items-center gap-1.5 font-mono">
                   <Camera className="w-4 h-4 text-slate-700" />
-                  <span>Citizen Reports Received</span>
+                  <span>{tr('Citizen Reports Received')}</span>
                 </span>
-                <span className="font-mono font-black text-slate-900 text-sm">{citizenReportsCount} reports</span>
+                <span className="font-mono font-black text-slate-900 text-sm">{citizenReportsCount} {tr('citizen reports')}</span>
               </div>
               <input
                 type="range"
@@ -673,9 +675,9 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                 className="w-full accent-slate-800 cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                <span>0 reports</span>
-                <span>14 reports</span>
-                <span>25+ reports</span>
+                <span>0</span>
+                <span>14</span>
+                <span>25+</span>
               </div>
             </div>
 
@@ -683,7 +685,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
               <span className="font-bold text-slate-800 flex items-center gap-1.5 font-mono text-xs">
                 <AlertTriangle className="w-4 h-4 text-amber-600" />
-                <span>Drainage Network Response</span>
+                <span>{tr('Drainage Network Response')}</span>
               </span>
               <div className="grid grid-cols-3 gap-2 pt-1">
                 {(['NORMAL', 'SLUGGISH', 'RESTRICTED'] as const).map(lvl => (
@@ -696,7 +698,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                         : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
                       }`}
                   >
-                    {lvl}
+                    {tr(lvl)}
                   </button>
                 ))}
               </div>
@@ -707,22 +709,22 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
           <div className="p-5 rounded-2xl bg-amber-50/80 border-2 border-amber-200 space-y-3">
             <div className="flex items-center justify-between">
               <div className="text-xs font-black uppercase text-amber-900 font-mono tracking-wider">
-                SIMULATED OUTPUT: STREET WATERLOGGING RISK
+                {tr('SIMULATED OUTPUT: STREET WATERLOGGING RISK')}
               </div>
               <span className={`px-3 py-1 rounded-full text-xs font-black font-mono ${swResult.status === 'SEVERE' ? 'bg-red-600 text-white' :
                   swResult.status === 'MODERATE' ? 'bg-amber-600 text-white' :
                     swResult.status === 'MINOR' ? 'bg-yellow-500 text-slate-950' : 'bg-emerald-600 text-white'
                 }`}>
-                {swResult.status} ({swResult.depthText})
+                {tr(swResult.status)} ({tr(swResult.depthText)})
               </span>
             </div>
 
             <p className="text-xs sm:text-sm text-amber-950 font-bold">
-              Cause: {swResult.cause}
+              {tr('CAUSE:')} {tr(swResult.cause)}
             </p>
 
             <div className="text-xs text-slate-700 font-medium">
-              Action: <b className="text-slate-900">{swResult.action}</b>
+              {tr('ACTION:')} <b className="text-slate-900">{tr(swResult.action)}</b>
             </div>
 
             {/* Generate Waterlogging Alert Button */}
@@ -732,14 +734,14 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                 onClick={handleGenerateWaterloggingAlert}
                 className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-sm"
               >
-                <span>GENERATE WATERLOGGING ALERT</span>
+                <span>{tr('GENERATE WATERLOGGING ALERT')}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
               {swAlertGenerated && (
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-700">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Road Alert logged for {selectedRoadName}</span>
+                  <span>{tr('Road Alert logged for')} {tr(selectedRoadName)}</span>
                 </div>
               )}
             </div>
@@ -749,7 +751,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
           <div className="pt-3 border-t-2 border-amber-200 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
               <span className="text-xs font-black uppercase text-amber-950 font-mono tracking-wider flex items-center gap-1.5">
-                <span>🕳️ INVERSE HYDRAULIC DIAGNOSIS ENGINE (SIMULATED DRAINAGE CORRIDOR)</span>
+                <span>🕳️ {tr('INVERSE HYDRAULIC DIAGNOSIS')}</span>
               </span>
               <span className="text-[10px] font-mono text-slate-500">Live Topological Inference Engine</span>
             </div>
