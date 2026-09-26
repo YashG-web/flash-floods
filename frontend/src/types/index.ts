@@ -1,6 +1,24 @@
 export type RiskLevel = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
 export * from './hospital';
 
+export interface DrainageManholeRecord {
+  sr_no: number;
+  sewer_stretch_location: string;
+  area: string;
+  ward_or_zone: string;
+  sewer_diameter_mm: number;
+  sewer_length_m: number;
+  manhole_depth_min_m: number;
+  manhole_depth_max_m: number;
+  estimated_manhole_count: number;
+  typical_manhole_spacing_m: number;
+  drainage_condition: 'GOOD' | 'NORMAL' | 'STRESSED' | 'CHOKED' | string;
+  drainage_risk: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' | string;
+  data_status: string;
+  source_note: string;
+}
+
+
 export interface LocationData {
   id: string;
   name: string;
@@ -300,6 +318,8 @@ export interface LocationSafetyResult {
     advice: string[];
   };
   weather_telemetry: {
+    condition?: string;
+    weather_code?: number;
     temperature_c: number;
     humidity_pct: number;
     wind_kmh: number;

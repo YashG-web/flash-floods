@@ -38,7 +38,7 @@ interface FlashFloodPageProps {
   hospitals?: Hospital[];
   isDemoMode?: boolean;
   onNavigateToReport: () => void;
-  onNavigateToSimulator: () => void;
+  onNavigateToSimulator?: () => void;
 }
 
 export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
@@ -52,26 +52,34 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
   officialImdWarnings = [],
   hospitals = [],
   isDemoMode = true,
-  onNavigateToReport,
-  onNavigateToSimulator
+  onNavigateToReport
 }) => {
   const { t } = useTranslation();
   const [isSafetyModalOpen, setIsSafetyModalOpen] = useState(false);
 
-  const activeLoc = selectedLocation || locations[0] || {
-    id: 'ward-04',
-    name: 'Ward 04 (Riverfront Embankment & Lowlands)',
-    risk_level: 'CRITICAL',
-    rainfall: 94,
-    soil_moisture: 92,
-    slope: 2.1,
-    sensor_water_level: 4.6
-  } as LocationData;
+  const villages = useMemo(() => {
+    const vList = locations.filter(l => l.type === 'VILLAGE');
+    return vList.length > 0 ? vList : locations;
+  }, [locations]);
 
-  // 🌊 Flood Spread Prediction Simulation (Deterministic, strictly based on current flash flood simulation parameters)
+  const activeVillage = useMemo(() => {
+    if (selectedLocation && selectedLocation.type === 'VILLAGE') return selectedLocation;
+    return villages.find(v => v.id === 'village-sangam') || villages[0] || {
+      id: 'village-sangam',
+      name: 'Village Sangam (Tributary Confluence)',
+      type: 'VILLAGE',
+      risk_level: 'CRITICAL',
+      rainfall: 68,
+      soil_moisture: 74,
+      slope: 9.2,
+      sensor_water_level: 3.2
+    } as LocationData;
+  }, [villages, selectedLocation]);
+
+  // 🌊 Flood Spread Prediction Simulation (Realistic hydrodynamic shape for selected village)
   const spreadSimulation: FloodSpreadSimulation = useMemo(() => {
-    return calculateFloodSpreadSimulation(activeLoc, activeFlashWarning);
-  }, [activeLoc, activeFlashWarning]);
+    return calculateFloodSpreadSimulation(activeVillage, activeFlashWarning);
+  }, [activeVillage, activeFlashWarning]);
 
   const [activeSpreadStageKey, setActiveSpreadStageKey] = useState<FloodSpreadStageKey>('NOW');
   const [animationState, setAnimationState] = useState<'idle' | 'running' | 'completed'>('idle');
@@ -171,7 +179,7 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
       {activeFlashWarning && activeFlashWarning.status !== 'NONE' ? (
         <FlashFloodWarningCard
           warning={activeFlashWarning}
-          onViewOnMap={() => {}}
+          onViewOnMap={() => { }}
         />
       ) : (
         <div className="bg-emerald-50 border-2 border-emerald-300 rounded-3xl p-5 sm:p-6 flex items-center justify-between gap-4">
@@ -262,11 +270,10 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
                         setActiveSpreadStageKey(key);
                         if (animationState === 'running') setAnimationState('idle');
                       }}
-                      className={`px-3 py-1.5 rounded-xl font-mono text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer ${
-                        isActive
+                      className={`px-3 py-1.5 rounded-xl font-mono text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer ${isActive
                           ? 'text-white shadow-lg'
                           : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
-                      }`}
+                        }`}
                       style={isActive ? { backgroundColor: stage.color } : {}}
                     >
                       {isActive && <span className="w-2 h-2 rounded-full bg-white animate-ping" />}
@@ -303,29 +310,39 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
           </div>
         </div>
 
-        {/* Ward Inspection Selector Bar */}
+        {/* Village Inspection Selector Bar */}
         <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-black text-slate-900 tracking-tight font-mono flex items-center gap-2">
-              <span>ACTIVE RISK MAP LAYER VIEW</span>
-            </h3>
+          <div className="space-y-0.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-black text-slate-900 tracking-tight font-mono flex items-center gap-2">
+                <span>VILLAGE-WISE FLASH FLOOD RISK VIEW</span>
+              </h3>
+              <span className={`text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full border ${
+                activeVillage.risk_level === 'CRITICAL' ? 'bg-red-50 text-red-700 border-red-300' :
+                activeVillage.risk_level === 'HIGH' ? 'bg-orange-50 text-orange-700 border-orange-300' :
+                activeVillage.risk_level === 'MODERATE' ? 'bg-amber-50 text-amber-700 border-amber-300' :
+                'bg-emerald-50 text-emerald-700 border-emerald-300'
+              }`}>
+                OVERALL RISK: {activeVillage.risk_level || 'EVALUATING'} ({activeVillage.risk_probability || 78}%)
+              </span>
+            </div>
             <p className="text-xs text-slate-500">
-              Showing flood-risk zones, ultrasonic river gauge networks, and predicted flow vectors
+              Showing overall flash flood risk for selected village with clean boundaries, river gauges, and hydrodynamic flow vectors
             </p>
           </div>
 
-          {/* Quick Ward Picker */}
+          {/* Quick Village Picker */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-500">Inspect Ward:</span>
+            <span className="text-xs font-bold text-slate-600">Select Village:</span>
             <select
-              value={activeLoc.id}
+              value={activeVillage.id}
               onChange={(e) => {
-                const found = locations.find(l => l.id === e.target.value);
+                const found = villages.find(l => l.id === e.target.value);
                 if (found) onSelectLocation(found);
               }}
-              className="bg-slate-100 border border-slate-300 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 cursor-pointer"
+              className="bg-slate-100 border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 cursor-pointer focus:ring-2 focus:ring-blue-500"
             >
-              {locations.map(loc => (
+              {villages.map(loc => (
                 <option key={loc.id} value={loc.id}>
                   {loc.name} ({loc.risk_level || 'EVALUATING'})
                 </option>
@@ -337,7 +354,7 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
         {/* Existing Map locked to Flash Flood System */}
         <DisasterMap
           locations={locations}
-          selectedLocation={activeLoc}
+          selectedLocation={activeVillage}
           onSelectLocation={onSelectLocation}
           riverNetworks={riverNetworks}
           drainageLines={[]}
@@ -366,7 +383,7 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
       <section className="space-y-3">
         <HospitalCapacityPanel
           hospitals={hospitals}
-          selectedLocationName={activeLoc.name}
+          selectedLocationName={activeVillage.name}
           isDemoMode={isDemoMode}
           activeScenario={isDemoMode ? 'flash-flood' : undefined}
         />
@@ -398,23 +415,6 @@ export const FlashFloodPage: React.FC<FlashFloodPageProps> = ({
         </section>
       )}
 
-      {/* 8. QUICK ACTIONS */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-5 bg-slate-900 text-white rounded-3xl">
-        <div>
-          <h4 className="text-sm font-black font-mono">SIMULATE FLASH FLOOD SCENARIOS</h4>
-          <p className="text-xs text-slate-400">
-            Stress-test heavy cloudburst and rainfall saturation scenarios in the simulator.
-          </p>
-        </div>
-
-        <button
-          onClick={onNavigateToSimulator}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs"
-        >
-          <span>OPEN FLASH FLOOD SIMULATOR</span>
-          <ArrowRight className="w-4 h-4" />
-        </button>
-      </div>
 
       {/* 9. 🏠 IS MY LOCATION SAFE? MODAL */}
       <LocationSafetyModal

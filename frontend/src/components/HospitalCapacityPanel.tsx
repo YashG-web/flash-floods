@@ -29,16 +29,11 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
   compact = false
 }) => {
   const { t, tr } = useTranslation();
-  const [sortBy, setSortBy] = useState<'distance' | 'availability' | 'accessibility'>('distance');
-  const [filterAccessibleOnly, setFilterAccessibleOnly] = useState<boolean>(false);
+  const [sortBy, setSortBy] = useState<'distance' | 'availability'>('distance');
 
   // Factual sorting without biased "best hospital" labels
   const sortedHospitals = useMemo(() => {
     let list = [...hospitals];
-
-    if (filterAccessibleOnly) {
-      list = list.filter(h => h.accessibilityStatus === 'GOOD' || h.accessibilityStatus === 'MODERATE');
-    }
 
     list.sort((a, b) => {
       if (sortBy === 'distance') {
@@ -50,27 +45,14 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
         const bBeds = b.availableEmergencyBeds ?? -1;
         return bBeds - aBeds;
       }
-      if (sortBy === 'accessibility') {
-        const order: Record<AccessibilityStatus, number> = {
-          GOOD: 1,
-          MODERATE: 2,
-          LIMITED: 3,
-          UNKNOWN: 4
-        };
-        return (order[a.accessibilityStatus] || 5) - (order[b.accessibilityStatus] || 5);
-      }
       return 0;
     });
 
     return list;
-  }, [hospitals, sortBy, filterAccessibleOnly]);
+  }, [hospitals, sortBy]);
 
   // Aggregate statistics
   const totalFacilities = hospitals.length;
-  const accessibleCount = hospitals.filter(
-    h => h.accessibilityStatus === 'GOOD' || h.accessibilityStatus === 'MODERATE'
-  ).length;
-  const limitedAccessCount = hospitals.filter(h => h.accessibilityStatus === 'LIMITED').length;
 
   return (
     <section className="bg-white rounded-3xl border-2 border-slate-200 p-5 sm:p-7 shadow-xs space-y-5">
@@ -114,7 +96,7 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
               {tr('DEMO DATA — Hospital capacity values are simulated for system demonstration.')}
             </span>
             <p className="text-[11px] text-amber-800">
-              {tr('In DEMO mode, capacity and accessibility values are simulated for scenario evaluation.')}
+              {tr('In DEMO mode, capacity values are simulated for scenario evaluation.')}
             </p>
           </div>
         </div>
@@ -135,19 +117,12 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
       {/* Operational Summary Bar & Sorting Controls */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200/80 text-xs">
         {/* Summary Badges */}
-        <div className="flex items-center gap-3 font-mono font-bold text-slate-700">
-          <span>{totalFacilities} {tr('nearby facilities')}</span>
-          <span className="text-slate-300">•</span>
-          <span className="text-emerald-700">{accessibleCount} {tr('accessible')}</span>
-          {limitedAccessCount > 0 && (
-            <>
-              <span className="text-slate-300">•</span>
-              <span className="text-red-700">{limitedAccessCount} {tr('limited access')}</span>
-            </>
-          )}
+        <div className="flex items-center gap-2 font-mono font-bold text-slate-700">
+          <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+          <span>{totalFacilities} {tr('emergency healthcare facilities')}</span>
         </div>
 
-        {/* Factual Sort & Filter */}
+        {/* Factual Sort */}
         <div className="flex items-center gap-3 ml-auto">
           <div className="flex items-center gap-1.5">
             <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
@@ -159,21 +134,11 @@ export const HospitalCapacityPanel: React.FC<HospitalCapacityPanelProps> = ({
             >
               <option value="distance">{t.sortByDistance}</option>
               {isDemoMode && <option value="availability">{t.sortByAvailability}</option>}
-              <option value="accessibility">{t.sortByAccessibility}</option>
             </select>
           </div>
-
-          <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={filterAccessibleOnly}
-              onChange={(e) => setFilterAccessibleOnly(e.target.checked)}
-              className="rounded text-indigo-600 focus:ring-0 cursor-pointer"
-            />
-            <span>{t.accessibleOnly}</span>
-          </label>
         </div>
       </div>
+
 
       {/* Hospital Cards Grid */}
       {sortedHospitals.length === 0 ? (

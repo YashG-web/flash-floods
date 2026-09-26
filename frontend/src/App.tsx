@@ -19,58 +19,58 @@ import { StreetWaterloggingPage } from './components/StreetWaterloggingPage';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
 import { AboutHelpPage } from './components/AboutHelpPage';
 import { CommandCenter } from './components/CommandCenter';
-import { DisasterMap } from './components/Map/DisasterMap';
-import { AlertsAndResponse } from './components/AlertsAndResponse';
 import { CitizenReportModal } from './components/CitizenReportModal';
 import { ReportPage } from './components/ReportPage';
-import { RefreshCw, Camera } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useTranslation } from './services/LanguageContext';
+import { DataSyncProvider, useDataSync } from './services/DataSyncContext';
+import { dataSyncService } from './services/dataSyncService';
 
 const INITIAL_DEMO_WARNING_SCENARIO_2: FlashFloodWarning = {
-  id: 'warn-ward-12-initial',
+  id: 'warn-village-sangam-initial',
   status: 'CRITICAL',
   statusLabel: 'FLASH FLOOD WARNING',
-  locationId: 'ward-12',
-  locationName: 'Ward 12 (Station Road / Market)',
-  roadName: 'Main Market Road',
+  locationId: 'village-sangam',
+  locationName: 'Village Sangam (Tributary Confluence)',
+  roadName: 'Valley Riparian Corridor',
   riskLevel: 'HIGH',
   estimatedWindow: 'NEXT 1–3 HOURS',
-  reason: 'Moderate rainfall combined with blocked drainage is creating localized waterlogging',
+  reason: 'Extreme upstream catchment precipitation combined with rapid tributary inflow',
   affectedAreas: [
-    'Main Market Road',
-    'Low-Lying Market Zone',
-    'Station Road Culvert Ingress'
+    'Village Sangam (Lower Terraces)',
+    'Tributary Sluice Channel',
+    'Ghat Approach Terraces'
   ],
   actions: [
-    'Avoid Main Market Road',
-    'Move away from low-lying areas and ground level shops',
-    'Allow municipal suction crews to inspect and clear culvert',
-    'Follow local authority instructions (Call 112)'
+    'Immediate evacuation of low-lying riverbank homes',
+    'Move to designated highland emergency shelters',
+    'Do not walk or drive through flowing water',
+    'Follow instructions from municipal emergency personnel (Call 112)'
   ],
   timeline: [
     { label: 'NOW', subtext: 'Surface runoff rate escalating', isTriggered: true },
-    { label: 'Rainfall increasing', subtext: '42.0 mm/h inflow recorded', isTriggered: true },
-    { label: 'Soil moisture rising', subtext: 'Ground saturation at 82%', isTriggered: true },
-    { label: 'Drainage stress detected', subtext: 'Culvert efficiency down to 18% (Choked)', isTriggered: true },
+    { label: 'Rainfall increasing', subtext: '68.0 mm/h inflow recorded', isTriggered: true },
+    { label: 'Soil moisture rising', subtext: 'Ground saturation at 74%', isTriggered: true },
+    { label: 'Tributary stress detected', subtext: 'Water level surging to +3.2m', isTriggered: true },
     { label: '⚠️ HIGH FLOOD RISK', subtext: 'NEXT 1–3 HOURS', isTriggered: true }
   ],
   timestamp: '13:30:15 IST'
 };
 
 const INITIAL_DEMO_WARNING_SCENARIO_1: FlashFloodWarning = {
-  id: 'warn-ward-04-heavy-rain',
+  id: 'warn-village-shivpuri-heavy-rain',
   status: 'CRITICAL',
   statusLabel: 'FLASH FLOOD WARNING',
-  locationId: 'ward-04',
-  locationName: 'Ward 04 (Upper Valley / Riverside)',
+  locationId: 'village-shivpuri',
+  locationName: 'Village Shivpuri (Upper Valley Riparian)',
   roadName: 'Valley Riverside Road',
   riskLevel: 'CRITICAL',
   estimatedWindow: 'NEXT 1–3 HOURS',
-  reason: 'Heavy rainfall overload exceeding local drainage capacity',
+  reason: 'Heavy rainfall overload exceeding local riparian drainage capacity',
   affectedAreas: [
-    'Valley Riverside Road',
-    'Lower Ghat Terraces',
-    'Bridge Ingress Approach'
+    'Village Shivpuri Valley Terraces',
+    'Lower Gorge Terraces',
+    'Suspension Bridge Ingress Approach'
   ],
   actions: [
     'Avoid Valley Riverside Road and low-lying river ghats',
@@ -82,40 +82,32 @@ const INITIAL_DEMO_WARNING_SCENARIO_1: FlashFloodWarning = {
     { label: 'NOW', subtext: 'Cloudburst precipitation at 110 mm/h', isTriggered: true },
     { label: 'Rainfall increasing', subtext: 'Runoff velocity surging', isTriggered: true },
     { label: 'Soil moisture rising', subtext: 'Pore pressure saturation at 96%', isTriggered: true },
-    { label: 'Drainage stress detected', subtext: 'Channel capacity overwhelmed', isTriggered: true },
+    { label: 'River surge detected', subtext: 'Channel capacity overwhelmed', isTriggered: true },
     { label: '⚠️ CRITICAL FLOOD RISK', subtext: 'NEXT 1–3 HOURS', isTriggered: true }
   ],
   timestamp: '13:30:15 IST'
 };
 
-export function App() {
+function AppMain() {
   const { t, tr } = useTranslation();
+  const sync = useDataSync();
+
   const [currentTab, setCurrentTab] = useState<string>('home');
-  const [isDemoMode, setIsDemoMode] = useState<boolean>(true);
-  const [activeScenario, setActiveScenario] = useState<string>('scenario_2_drainage_blockage');
-  const [lastUpdated, setLastUpdated] = useState<string>('13:30:15 IST');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // Live Environmental Data State
   const [liveEnvironment, setLiveEnvironment] = useState<LiveEnvironmentalData | null>(null);
   const [officialImdWarnings, setOfficialImdWarnings] = useState<OfficialImdWarning[]>([]);
 
-  // Core Data States
-  const [locations, setLocations] = useState<LocationData[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
+  // Other Core Data States
   const [riverNetworks, setRiverNetworks] = useState<any[]>([]);
   const [drainageLines, setDrainageLines] = useState<any[]>([]);
   const [sensors, setSensors] = useState<IoTSensor[]>([]);
-  const [citizenReports, setCitizenReports] = useState<CitizenReport[]>([]);
   const [infrastructure, setInfrastructure] = useState<any[]>([]);
   const [historicalEvents, setHistoricalEvents] = useState<HistoricalEvent[]>([]);
-  const [alerts, setAlerts] = useState<EarlyWarningAlert[]>([]);
   const [hospitals, setHospitals] = useState<Hospital[]>(() =>
-    getHospitalsForState(true, 'scenario_2_drainage_blockage', [30.092, 78.269])
+    getHospitalsForState(true, 'scenario_2_drainage_blockage', [30.104, 78.283])
   );
-
-  // Flash Flood Warning State (Component 1 & 2)
-  const [activeFlashWarning, setActiveFlashWarning] = useState<FlashFloodWarning | null>(INITIAL_DEMO_WARNING_SCENARIO_2);
 
   // Layer Toggles
   const [activeLayers, setActiveLayers] = useState({
@@ -133,10 +125,15 @@ export function App() {
 
   // Modal
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  // Active selected location depending on tab context
+  const activeFocusLocation = currentTab === 'street-waterlogging'
+    ? sync.selectedWard
+    : (sync.selectedVillage || sync.locations[0]);
 
   const fetchAllData = async (targetMode?: 'LIVE' | 'DEMO', forceRefresh: boolean = false) => {
-    const effectiveMode = targetMode !== undefined ? targetMode : (isDemoMode ? 'DEMO' : 'LIVE');
+    const effectiveMode = targetMode !== undefined ? targetMode : (sync.isDemoMode ? 'DEMO' : 'LIVE');
     setIsRefreshing(true);
     try {
       const [mapRes, alertsRes, sensorsRes, histRes, liveEnvRes, hospRes] = await Promise.all([
@@ -144,11 +141,11 @@ export function App() {
         apiClient.getAlerts(effectiveMode.toLowerCase()),
         apiClient.getSensors(),
         apiClient.getHistoricalEvents(),
-        effectiveMode === 'LIVE' ? apiClient.getLiveEnvironment(selectedLocation?.id || 'ward-12', forceRefresh) : Promise.resolve(null),
+        effectiveMode === 'LIVE' ? apiClient.getLiveEnvironment(activeFocusLocation?.id || 'village-sangam', forceRefresh) : Promise.resolve(null),
         apiClient.getHospitals(
           effectiveMode,
-          activeScenario,
-          selectedLocation ? [selectedLocation.coordinates[0], selectedLocation.coordinates[1]] : [30.092, 78.269]
+          sync.activeScenario,
+          activeFocusLocation ? [activeFocusLocation.coordinates[0], activeFocusLocation.coordinates[1]] : [30.104, 78.283]
         )
       ]);
 
@@ -156,22 +153,21 @@ export function App() {
         setHospitals(hospRes.hospitals);
       }
 
-      if (mapRes && mapRes.locations) {
-        setLocations(mapRes.locations);
-        if (!selectedLocation) {
-          const ward12 = mapRes.locations.find(l => l.id === 'ward-12') || mapRes.locations[0];
-          setSelectedLocation(ward12);
-        } else {
-          const updatedSelected = mapRes.locations.find(l => l.id === selectedLocation.id);
-          if (updatedSelected) setSelectedLocation(updatedSelected);
-        }
+      if (mapRes && mapRes.locations && mapRes.locations.length > 0) {
+        // Merge with existing rich village/ward data if backend returned partial list
+        const mergedLocations = mapRes.locations.length >= sync.locations.length
+          ? mapRes.locations
+          : sync.locations.map(existing => {
+              const fromBackend = mapRes.locations.find((l: any) => l.id === existing.id);
+              return fromBackend ? { ...existing, ...fromBackend } : existing;
+            });
+        sync.setLocations(mergedLocations);
         setRiverNetworks(mapRes.river_networks || []);
         setDrainageLines(mapRes.drainage_lines || []);
         setInfrastructure(mapRes.critical_infrastructure || []);
       }
 
       if (alertsRes && alertsRes.alerts) {
-        setAlerts(alertsRes.alerts);
         if (alertsRes.official_imd_warnings) {
           setOfficialImdWarnings(alertsRes.official_imd_warnings);
         }
@@ -181,10 +177,9 @@ export function App() {
         if (liveEnvRes) {
           setLiveEnvironment(liveEnvRes);
         }
-        // In LIVE mode: inspect if actual severe alerts are issued
-        const criticalAlert = alertsRes?.alerts?.find(a => a.severity === 'CRITICAL' || a.severity === 'WARNING');
+        const criticalAlert = alertsRes?.alerts?.find((a: any) => a.severity === 'CRITICAL' || a.severity === 'WARNING');
         if (criticalAlert) {
-          setActiveFlashWarning({
+          sync.setActiveFlashWarning({
             id: criticalAlert.alert_id,
             status: criticalAlert.severity as any,
             statusLabel: 'FLASH FLOOD WARNING',
@@ -194,25 +189,14 @@ export function App() {
             riskLevel: criticalAlert.severity as any,
             estimatedWindow: criticalAlert.expected_window,
             reason: criticalAlert.cause_explanation,
-            affectedAreas: [criticalAlert.location_name, 'Low-lying riparian roads'],
-            actions: criticalAlert.recommended_actions?.map(a => a.title) || ['Avoid low-lying roadways', 'Follow safety guidelines'],
+            affectedAreas: [criticalAlert.location_name, 'Low-lying riparian valley reach'],
+            actions: criticalAlert.recommended_actions?.map((a: any) => a.title) || ['Avoid low-lying roadways', 'Follow safety guidelines'],
             timeline: [
               { label: 'NOW', subtext: 'External telemetry active', isTriggered: true },
               { label: 'Inflow rate monitored', subtext: 'Real-time observation', isTriggered: true }
             ],
             timestamp: new Date().toLocaleTimeString('en-IN') + ' IST'
           });
-        } else {
-          setActiveFlashWarning(null);
-        }
-      } else {
-        // DEMO mode: restore scenario warning
-        if (activeScenario === 'scenario_2_drainage_blockage') {
-          setActiveFlashWarning(INITIAL_DEMO_WARNING_SCENARIO_2);
-        } else if (activeScenario === 'scenario_1_heavy_rainfall') {
-          setActiveFlashWarning(INITIAL_DEMO_WARNING_SCENARIO_1);
-        } else {
-          setActiveFlashWarning(null);
         }
       }
 
@@ -223,13 +207,6 @@ export function App() {
       if (histRes && histRes.events) {
         setHistoricalEvents(histRes.events);
       }
-
-      if (mapRes && mapRes.citizen_reports) {
-        setCitizenReports(mapRes.citizen_reports);
-      }
-
-      const now = new Date();
-      setLastUpdated(now.toLocaleTimeString('en-IN') + ' IST');
     } catch (err) {
       console.error('Error fetching disaster intelligence data:', err);
     } finally {
@@ -243,7 +220,7 @@ export function App() {
   }, []);
 
   const handleModeChange = async (newModeIsDemo: boolean) => {
-    setIsDemoMode(newModeIsDemo);
+    sync.setMode(newModeIsDemo);
     setIsRefreshing(true);
     try {
       await apiClient.setMode(newModeIsDemo ? 'DEMO' : 'LIVE');
@@ -254,90 +231,29 @@ export function App() {
   };
 
   const handleScenarioChange = async (scenario: string) => {
-    setActiveScenario(scenario);
+    let warning: FlashFloodWarning | null = null;
+    if (scenario === 'scenario_1_heavy_rainfall') {
+      warning = INITIAL_DEMO_WARNING_SCENARIO_1;
+    } else if (scenario === 'scenario_2_drainage_blockage') {
+      warning = INITIAL_DEMO_WARNING_SCENARIO_2;
+    }
+
+    sync.setScenario(scenario, warning);
+
     try {
       await apiClient.switchScenario(scenario);
-
-      if (scenario === 'baseline') {
-        setActiveFlashWarning(null);
-      } else if (scenario === 'scenario_1_heavy_rainfall') {
-        setActiveFlashWarning({
-          id: 'warn-ward-04-heavy-rain',
-          status: 'CRITICAL',
-          statusLabel: 'FLASH FLOOD WARNING',
-          locationId: 'ward-04',
-          locationName: 'Ward 04 (Upper Valley / Riverside)',
-          roadName: 'Valley Riverside Road',
-          riskLevel: 'CRITICAL',
-          estimatedWindow: 'NEXT 1–3 HOURS',
-          reason: 'Heavy rainfall overload exceeding local drainage capacity',
-          affectedAreas: [
-            'Valley Riverside Road',
-            'Lower Ghat Terraces',
-            'Bridge Ingress Approach'
-          ],
-          actions: [
-            'Avoid Valley Riverside Road and low-lying river ghats',
-            'Move to designated highland emergency shelters',
-            'Do not walk or drive through flowing water',
-            'Follow instructions from municipal emergency personnel (Call 112)'
-          ],
-          timeline: [
-            { label: 'NOW', subtext: 'Cloudburst precipitation at 110 mm/h', isTriggered: true },
-            { label: 'Rainfall increasing', subtext: 'Runoff velocity surging', isTriggered: true },
-            { label: 'Soil moisture rising', subtext: 'Pore pressure saturation at 96%', isTriggered: true },
-            { label: 'Drainage stress detected', subtext: 'Channel capacity overwhelmed', isTriggered: true },
-            { label: '⚠️ CRITICAL FLOOD RISK', subtext: 'NEXT 1–3 HOURS', isTriggered: true }
-          ],
-          timestamp: new Date().toLocaleTimeString('en-IN') + ' IST'
-        });
-      } else if (scenario === 'scenario_2_drainage_blockage') {
-        setActiveFlashWarning({
-          id: 'warn-ward-12-blocked',
-          status: 'CRITICAL',
-          statusLabel: 'FLASH FLOOD WARNING',
-          locationId: 'ward-12',
-          locationName: 'Ward 12 (Station Road / Market)',
-          roadName: 'Main Market Road',
-          riskLevel: 'HIGH',
-          estimatedWindow: 'NEXT 1–3 HOURS',
-          reason: 'Moderate rainfall combined with blocked drainage is creating localized waterlogging',
-          affectedAreas: [
-            'Main Market Road',
-            'Low-Lying Market Zone',
-            'Station Road Culvert Ingress'
-          ],
-          actions: [
-            'Avoid Main Market Road',
-            'Move away from low-lying areas and ground level shops',
-            'Allow municipal suction crews to inspect and clear culvert',
-            'Follow local authority instructions (Call 112)'
-          ],
-          timeline: [
-            { label: 'NOW', subtext: 'Moderate rainfall at 42.0 mm/h', isTriggered: true },
-            { label: 'Rainfall increasing', subtext: 'Surface water accumulating', isTriggered: true },
-            { label: 'Soil moisture rising', subtext: 'Saturation at 81.5%', isTriggered: true },
-            { label: 'Drainage stress detected', subtext: 'Station culvert choked (18% throughput)', isTriggered: true },
-            { label: '⚠️ HIGH FLOOD RISK', subtext: 'NEXT 1–3 HOURS', isTriggered: true }
-          ],
-          timestamp: new Date().toLocaleTimeString('en-IN') + ' IST'
-        });
-      }
-
       fetchAllData();
     } catch (err) {
       console.error('Failed to switch scenario:', err);
     }
   };
 
-  // Simulator Generated Warning handler (Section 10 & 12)
   const handleApplySimulatorWarning = (warning: FlashFloodWarning, updatedLoc: LocationData) => {
-    setActiveFlashWarning(warning);
-    setSelectedLocation(updatedLoc);
-    setLocations(prev => prev.map(l => l.id === updatedLoc.id ? updatedLoc : l));
+    sync.applySimulatorWarning(warning, updatedLoc);
   };
 
   const handleResetSimulation = () => {
+    sync.resetSimulation();
     handleScenarioChange('baseline');
   };
 
@@ -348,21 +264,21 @@ export function App() {
     }));
   };
 
-  // Keep hospital distances and scenario states strictly synchronized with selected ward location
+  // Keep hospital distances synchronized with active focus location
   useEffect(() => {
-    const coords: [number, number] = selectedLocation
-      ? [selectedLocation.coordinates[0], selectedLocation.coordinates[1]]
-      : [30.092, 78.269];
-    apiClient.getHospitals(isDemoMode ? 'DEMO' : 'LIVE', activeScenario, coords).then(res => {
+    const coords: [number, number] = activeFocusLocation
+      ? [activeFocusLocation.coordinates[0], activeFocusLocation.coordinates[1]]
+      : [30.104, 78.283];
+    apiClient.getHospitals(sync.isDemoMode ? 'DEMO' : 'LIVE', sync.activeScenario, coords).then(res => {
       if (res && res.hospitals) {
         setHospitals(res.hospitals);
       }
     });
-  }, [selectedLocation?.id, isDemoMode, activeScenario]);
+  }, [activeFocusLocation?.id, sync.isDemoMode, sync.activeScenario]);
 
   // Calculate active alerts count including flash warning
-  const activeAlertsCount = (activeFlashWarning && activeFlashWarning.status !== 'NONE' ? 1 : 0) +
-    alerts.filter(a => a.severity === 'CRITICAL' || a.severity === 'WARNING').length;
+  const activeAlertsCount = (sync.activeFlashWarning && sync.activeFlashWarning.status !== 'NONE' ? 1 : 0) +
+    sync.alerts.filter(a => a.severity === 'CRITICAL' || a.severity === 'WARNING').length;
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
@@ -370,12 +286,12 @@ export function App() {
       <Navbar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
-        isDemoMode={isDemoMode}
+        isDemoMode={sync.isDemoMode}
         setIsDemoMode={handleModeChange}
-        activeScenario={activeScenario}
+        activeScenario={sync.activeScenario}
         onScenarioChange={handleScenarioChange}
         activeAlertsCount={activeAlertsCount}
-        lastUpdated={lastUpdated}
+        lastUpdated={sync.lastUpdated}
         lastObservedTime={liveEnvironment?.observed_at}
         isRefreshing={isRefreshing}
         onRefresh={() => fetchAllData(undefined, true)}
@@ -394,11 +310,11 @@ export function App() {
             {/* 1. HOME TAB */}
             {currentTab === 'home' && (
               <LandingPage
-                locations={locations}
-                selectedLocation={selectedLocation}
-                activeFlashWarning={activeFlashWarning}
-                lastUpdated={lastUpdated}
-                isDemoMode={isDemoMode}
+                locations={sync.locations}
+                selectedLocation={sync.selectedVillage || sync.locations[0]}
+                activeFlashWarning={sync.activeFlashWarning}
+                lastUpdated={sync.lastUpdated}
+                isDemoMode={sync.isDemoMode}
                 liveEnvironment={liveEnvironment}
                 onNavigateToFlashFlood={() => setCurrentTab('flash-flood')}
                 onNavigateToStreetWaterlogging={() => setCurrentTab('street-waterlogging')}
@@ -407,34 +323,38 @@ export function App() {
               />
             )}
 
-            {/* 2. FLASH FLOOD MONITORING TAB */}
+            {/* 2. FLASH FLOOD MONITORING TAB (Village-Wise) */}
             {currentTab === 'flash-flood' && (
               <FlashFloodPage
-                locations={locations}
-                selectedLocation={selectedLocation}
-                onSelectLocation={setSelectedLocation}
+                locations={sync.locations}
+                selectedLocation={sync.selectedVillage}
+                onSelectLocation={(loc) => {
+                  sync.setSelectedVillageId(loc.id);
+                }}
                 riverNetworks={riverNetworks}
                 sensors={sensors}
-                activeFlashWarning={activeFlashWarning}
+                activeFlashWarning={sync.activeFlashWarning}
                 historicalEvents={historicalEvents}
                 officialImdWarnings={officialImdWarnings}
                 hospitals={hospitals}
-                isDemoMode={isDemoMode}
+                isDemoMode={sync.isDemoMode}
                 onNavigateToReport={() => setCurrentTab('report')}
                 onNavigateToSimulator={() => setCurrentTab('simulator')}
               />
             )}
 
-            {/* 3. STREET WATERLOGGING TAB */}
+            {/* 3. STREET WATERLOGGING TAB (Ward-Wise) */}
             {currentTab === 'street-waterlogging' && (
               <StreetWaterloggingPage
-                locations={locations}
-                selectedLocation={selectedLocation}
-                onSelectLocation={setSelectedLocation}
+                locations={sync.locations}
+                selectedLocation={sync.selectedWard}
+                onSelectLocation={(loc) => {
+                  sync.setSelectedWardId(loc.id);
+                }}
                 drainageLines={drainageLines}
                 sensors={sensors}
-                citizenReports={citizenReports}
-                isDemoMode={isDemoMode}
+                citizenReports={sync.citizenReports}
+                isDemoMode={sync.isDemoMode}
                 onOpenReportModal={() => setIsReportModalOpen(true)}
                 onNavigateToSimulator={() => setCurrentTab('simulator')}
               />
@@ -443,8 +363,8 @@ export function App() {
             {/* 4. REPORT PAGE TAB */}
             {currentTab === 'report' && (
               <ReportPage
-                locations={locations}
-                selectedLocation={selectedLocation}
+                locations={sync.locations}
+                selectedLocation={activeFocusLocation}
                 onReportSubmitted={fetchAllData}
                 onNavigateToMap={() => setCurrentTab('flash-flood')}
                 onNavigateHome={() => setCurrentTab('home')}
@@ -454,7 +374,7 @@ export function App() {
             {/* 5. SIMULATOR TAB */}
             {currentTab === 'simulator' && (
               <ScenarioSimulator
-                locations={locations}
+                locations={sync.locations}
                 onApplyWarning={handleApplySimulatorWarning}
                 onResetSimulation={handleResetSimulation}
                 onNavigateToMap={() => setCurrentTab('flash-flood')}
@@ -475,17 +395,20 @@ export function App() {
             {/* 8. RESPONSE CENTER (AUTHORITY TAB: Operations Center + EOC) */}
             {currentTab === 'response-center' && (
               <CommandCenter
-                locations={locations}
-                selectedLocation={selectedLocation || locations[0]}
-                onSelectLocation={setSelectedLocation}
+                locations={sync.locations}
+                selectedLocation={activeFocusLocation || sync.locations[0]}
+                onSelectLocation={(loc) => {
+                  if (loc.type === 'VILLAGE') sync.setSelectedVillageId(loc.id);
+                  else sync.setSelectedWardId(loc.id);
+                }}
                 riverNetworks={riverNetworks}
                 drainageLines={drainageLines}
                 sensors={sensors}
-                citizenReports={citizenReports}
+                citizenReports={sync.citizenReports}
                 infrastructure={infrastructure}
                 historicalEvents={historicalEvents}
-                alerts={alerts}
-                activeFlashWarning={activeFlashWarning}
+                alerts={sync.alerts}
+                activeFlashWarning={sync.activeFlashWarning}
                 onApplyWarning={handleApplySimulatorWarning}
                 onResetSimulation={handleResetSimulation}
                 activeLayers={activeLayers}
@@ -493,8 +416,8 @@ export function App() {
                 onNavigateTab={setCurrentTab}
                 onOpenReportModal={() => setIsReportModalOpen(true)}
                 hospitals={hospitals}
-                isDemoMode={isDemoMode}
-                activeScenario={activeScenario}
+                isDemoMode={sync.isDemoMode}
+                activeScenario={sync.activeScenario}
               />
             )}
           </>
@@ -505,7 +428,7 @@ export function App() {
       <CitizenReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
-        locations={locations}
+        locations={sync.locations}
         onReportSubmitted={fetchAllData}
       />
 
@@ -533,6 +456,14 @@ export function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <DataSyncProvider>
+      <AppMain />
+    </DataSyncProvider>
   );
 }
 

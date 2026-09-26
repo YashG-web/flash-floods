@@ -762,10 +762,54 @@ export const apiClient = {
       }));
     }
 
-    return {
-      success: true,
-      scenario: scenarioId,
-      message: `Scenario switched to ${scenarioId}`
-    };
-  }
-};
+      return {
+        success: true,
+        scenario: scenarioId,
+        message: `Scenario switched to ${scenarioId}`
+      };
+    },
+
+    async searchDrainage(q: string = '', limit: number = 15) {
+      try {
+        const res = await fetch(`${API_BASE}/drainage/search?q=${encodeURIComponent(q)}&limit=${limit}`);
+        if (res.ok) return await res.json();
+      } catch {
+        // Fallback
+      }
+      return { success: false, results: [] };
+    },
+
+    async getDrainageRecord(srNo: number) {
+      try {
+        const res = await fetch(`${API_BASE}/drainage/record/${srNo}`);
+        if (res.ok) return await res.json();
+      } catch {
+        // Fallback
+      }
+      return { success: false, record: null };
+    },
+
+    async getDrainageDiagnosis(params: {
+      sr_no: number;
+      mode?: string;
+      rainfall?: number;
+      accumulation?: string;
+      citizen_reports?: number;
+    }) {
+      try {
+        const query = new URLSearchParams();
+        query.set('sr_no', String(params.sr_no));
+        if (params.mode) query.set('mode', params.mode);
+        if (params.rainfall !== undefined) query.set('rainfall', String(params.rainfall));
+        if (params.accumulation) query.set('accumulation', params.accumulation);
+        if (params.citizen_reports !== undefined) query.set('citizen_reports', String(params.citizen_reports));
+
+        const res = await fetch(`${API_BASE}/drainage/diagnosis?${query.toString()}`);
+        if (res.ok) return await res.json();
+      } catch {
+        // Fallback
+      }
+      return null;
+    }
+  };
+

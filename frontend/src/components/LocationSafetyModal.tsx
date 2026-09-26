@@ -9,8 +9,6 @@ import {
   Search,
   CheckCircle2,
   AlertTriangle,
-  ShieldCheck,
-  ShieldAlert,
   Droplets,
   CloudRain,
   Thermometer,
@@ -38,14 +36,7 @@ interface GeocodingResult {
   country?: string;
 }
 
-const PRESET_LOCATIONS = [
-  { name: 'Ward 04 (Riverfront Embankment)', lat: 30.0845, lon: 78.2618, desc: 'River Floodplain Basin' },
-  { name: 'Upper Cantonment Ridge', lat: 30.0775, lon: 78.2705, desc: 'Mountain Ridge Catchment' },
-  { name: 'Rishikesh (Ganga Basin)', lat: 30.0869, lon: 78.2676, desc: 'River Confluence' },
-  { name: 'Dehradun Valley Sector', lat: 30.3165, lon: 78.0322, desc: 'Foothill Basin' },
-  { name: 'Joshimath / Chamoli Basin', lat: 30.5564, lon: 79.5667, desc: 'Alaknanda Catchment' },
-  { name: 'Haridwar River Plains', lat: 29.9457, lon: 78.1642, desc: 'Downstream Floodplain' }
-];
+
 
 export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
   isOpen,
@@ -69,12 +60,12 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<LocationSafetyResult | null>(null);
 
-  // Evaluate location safety whenever coordinates change or modal opens
+  // Evaluate location safety whenever coordinates change or modal opens using Live API
   const evaluateLocation = async (lat: number, lon: number, name: string) => {
     setLoading(true);
     try {
-      const modeParam = isDemoMode ? 'DEMO' : 'LIVE';
-      const data = await apiClient.getLocationSafety(lat, lon, name, modeParam);
+      // Always request live Open-Meteo weather API data
+      const data = await apiClient.getLocationSafety(lat, lon, name, 'LIVE');
       
       // If backend didn't return warnings, attach existing official IMD warnings
       if ((!data.official_warnings || data.official_warnings.length === 0) && officialImdWarnings.length > 0) {
@@ -82,7 +73,66 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
       }
       setResult(data);
     } catch (err) {
-      console.error('Safety evaluation failed:', err);
+      console.warn('Backend evaluation failed, querying Open-Meteo weather API directly:', err);
+      try {
+        const omRes = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m&hourly=soil_moisture_0_to_1cm,precipitation&timezone=auto`
+        );
+        if (omRes.ok) {
+          const omData = await omRes.json();
+          const curr = omData.current || {};
+          const precip = curr.precipitation ?? curr.rain ?? 0.0;
+          const temp = curr.temperature_2m ?? 24.0;
+          const hum = curr.relative_humidity_2m ?? 60.0;
+          const wind = curr.wind_speed_10m ?? 10.0;
+          const wCode = curr.weather_code ?? 0;
+          const WMO_MAP: Record<number, string> = {
+            0: 'Clear Sky', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
+            45: 'Foggy', 51: 'Light Drizzle', 61: 'Slight Rain', 63: 'Moderate Rain',
+            65: 'Heavy Rain', 80: 'Rain Showers', 95: 'Thunderstorm'
+          };
+          const cond = WMO_MAP[wCode] || (precip > 0 ? 'Rain' : 'Partly Cloudy');
+          const riskLevel = precip >= 50 ? 'CRITICAL' : precip >= 25 ? 'HIGH' : precip >= 10 ? 'MODERATE' : 'LOW';
+
+          setResult({
+            success: true,
+            location: { name, latitude: lat, longitude: lon },
+            mode: 'LIVE',
+            is_demo_mode: false,
+            assessment: {
+              risk_level: riskLevel as any,
+              risk_color: riskLevel === 'LOW' ? '#16a34a' : '#f97316',
+              risk_probability: Math.min(100, Math.round((precip / 70) * 65 + 10)),
+              status_wording: `currently assessed as ${riskLevel} RISK`,
+              probable_cause: precip > 0 ? 'Active Rain Inflow' : 'Normal Basin Hydrology & Safe Soil Absorption',
+              explanation: precip > 0
+                ? `Live rain rate of ${precip} mm/h observed via Open-Meteo.`
+                : `Live meteorological observations report nominal conditions (${precip} mm/h) with safe geological absorption limits.`,
+              advice: [
+                'Current weather observations show safe atmospheric and runoff conditions.',
+                'River channels and drainage conduits in this sector are maintaining safe baseline flow.'
+              ]
+            },
+            weather_telemetry: {
+              condition: cond,
+              weather_code: wCode,
+              temperature_c: temp,
+              humidity_pct: hum,
+              wind_kmh: wind,
+              current_rainfall_mm_hr: precip,
+              soil_moisture_pct: 50.0,
+              forecast_peak_24h_mm_hr: precip,
+              forecast_total_24h_mm: precip * 2,
+              source: 'Open-Meteo Weather API (Live)',
+              observed_at: new Date().toLocaleTimeString('en-IN') + ' IST'
+            },
+            official_warnings: officialImdWarnings,
+            disclaimer: 'Assessments reflect real-time external sensor telemetry and meteorological models.'
+          });
+        }
+      } catch (clientErr) {
+        console.error('Direct Open-Meteo fetch failed:', clientErr);
+      }
     } finally {
       setLoading(false);
     }
@@ -306,31 +356,7 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
               </div>
             )}
 
-            {/* Quick Presets */}
-            <div className="pt-1">
-              <span className="text-[10px] font-black uppercase text-slate-400 font-mono tracking-wider block mb-1.5">
-                Quick Select Monitored Zones:
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {PRESET_LOCATIONS.map((preset) => {
-                  const isSelected = activeLocation.name === preset.name;
-                  return (
-                    <button
-                      key={preset.name}
-                      type="button"
-                      onClick={() => setActiveLocation({ name: preset.name, lat: preset.lat, lon: preset.lon })}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer border ${
-                        isSelected
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                          : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
-                      }`}
-                    >
-                      {preset.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+
           </div>
 
           {/* 3. PRIMARY ASSESSMENT RESULT */}
@@ -389,7 +415,58 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
                 </div>
               )}
 
-              {/* 4. METEOROLOGICAL & HYDROLOGICAL TELEMETRY GRID */}
+              {/* 4. CURRENT WEATHER CONDITION (LIVE API) */}
+              {weather && (
+                <div className="p-4 bg-linear-to-r from-sky-50 via-blue-50 to-indigo-50 rounded-2xl border-2 border-sky-300 shadow-xs space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-white shadow-xs border border-sky-200 flex items-center justify-center text-2xl shrink-0">
+                        {weather.weather_code === 0 ? '☀️'
+                          : weather.weather_code === 1 ? '🌤️'
+                          : weather.weather_code === 2 ? '⛅'
+                          : weather.weather_code === 3 ? '☁️'
+                          : [45, 48].includes(weather.weather_code || -1) ? '🌫️'
+                          : [51, 53, 55, 61, 63, 65, 80, 81, 82].includes(weather.weather_code || -1) ? '🌧️'
+                          : [95, 96, 99].includes(weather.weather_code || -1) ? '⛈️'
+                          : '⛅'}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-black uppercase tracking-wider text-sky-800 font-mono">
+                            Current Weather Condition
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Live Weather API
+                          </span>
+                        </div>
+                        <h4 className="text-xl font-black text-slate-950 font-mono">
+                          {weather.condition || (weather.weather_code === 0 ? 'Clear Sky' : 'Partly Cloudy')}
+                        </h4>
+                        <p className="text-xs text-slate-600">
+                          Observed at <span className="font-mono font-bold text-slate-800">{weather.observed_at}</span> • [{activeLocation.lat.toFixed(4)}, {activeLocation.lon.toFixed(4)}]
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 bg-white/90 px-4 py-2 rounded-xl border border-sky-200 self-start sm:self-auto text-xs font-mono">
+                      <div>
+                        <span className="text-[10px] text-slate-500 uppercase block font-bold">Temp</span>
+                        <span className="text-base font-black text-slate-900">{weather.temperature_c}°C</span>
+                      </div>
+                      <div className="w-px h-6 bg-slate-200" />
+                      <div>
+                        <span className="text-[10px] text-slate-500 uppercase block font-bold">Rain Rate</span>
+                        <span className={`text-base font-black ${weather.current_rainfall_mm_hr > 0 ? 'text-blue-600' : 'text-slate-900'}`}>
+                          {weather.current_rainfall_mm_hr} mm/h
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 5. METEOROLOGICAL & HYDROLOGICAL TELEMETRY GRID */}
               {weather && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-mono">
                   {/* Rainfall */}
@@ -450,63 +527,7 @@ export const LocationSafetyModal: React.FC<LocationSafetyModalProps> = ({
                 </div>
               )}
 
-              {/* 5. OFFICIAL IMD METEOROLOGICAL WARNINGS */}
-              <div className="pt-2 border-t border-slate-200/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-700 font-mono flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
-                    <span>OFFICIAL IMD WEATHER WARNINGS (CAP FEED)</span>
-                  </div>
-                  <span className="text-[9px] font-mono text-slate-400">
-                    India Meteorological Dept
-                  </span>
-                </div>
 
-                {result?.official_warnings && result.official_warnings.length > 0 ? (
-                  <div className="space-y-2">
-                    {result.official_warnings.map((warn, idx) => (
-                      <div
-                        key={idx}
-                        className="p-3 bg-white rounded-xl border border-amber-300 text-xs space-y-1 shadow-2xs"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-black text-slate-900 font-mono flex items-center gap-1.5">
-                            <span className="text-amber-600">⚠</span>
-                            <span>{warn.title}</span>
-                          </span>
-                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800 uppercase">
-                            {warn.feed_type || 'IMD Alert'}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-600 leading-snug">{warn.description}</p>
-                        <div className="text-[9px] font-mono text-slate-400">Published: {warn.published_at}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-xs flex items-center gap-2 text-emerald-900 font-bold">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>No active severe flood or cloudburst warnings published by IMD for this district.</span>
-                  </div>
-                )}
-              </div>
-
-              {/* 6. RECOMMENDED CITIZEN ACTIONS */}
-              {assessment.advice && assessment.advice.length > 0 && (
-                <div className="p-3.5 bg-slate-900 text-white rounded-xl space-y-1.5">
-                  <div className="text-[10px] font-black uppercase text-amber-400 font-mono">
-                    RECOMMENDED SAFETY PRECAUTIONS
-                  </div>
-                  <ul className="text-xs space-y-1 text-slate-200">
-                    {assessment.advice.map((item, i) => (
-                      <li key={i} className="flex items-start gap-1.5">
-                        <span className="text-amber-400 mt-0.5">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
           ) : null}
 

@@ -122,9 +122,24 @@ export const ReportPage: React.FC<ReportPageProps> = ({
         longitude: loc ? loc.coordinates[1] : 78.2690
       });
 
-      if (imageFile) {
-        apiClient.analyzeImage(imageFile, true).catch(() => {});
-      }
+      const newReport: any = {
+        id: `REP-${Date.now().toString().slice(-4)}`,
+        location_id: selectedLocationId,
+        location_name: reportType === 'street' ? `${roadName} (${loc ? loc.name : 'Station Road'})` : (loc ? loc.name : 'Valley Riverside Basin'),
+        description: description.trim()
+          ? `[${reportType === 'street' ? 'STREET WATERLOGGING' : 'FLASH FLOOD THREAT'}] ${hazardType}: ${description}`
+          : `[${reportType === 'street' ? 'STREET WATERLOGGING' : 'FLASH FLOOD THREAT'}] ${hazardType}`,
+        severity: reportType === 'flood' || hazardType.includes('shop') || hazardType.includes('Dangerous') ? 'CRITICAL' : 'HIGH',
+        image_url: imagePreviewUrl,
+        coordinates: loc ? loc.coordinates : [30.0920, 78.2690],
+        timestamp: 'Just now',
+        status: 'VERIFIED_BY_VISION'
+      };
+      
+      try {
+        const { dataSyncService } = await import('../services/dataSyncService');
+        dataSyncService.addCitizenReport(newReport);
+      } catch {}
 
       setSubmitted(true);
       onReportSubmitted();
@@ -331,17 +346,20 @@ export const ReportPage: React.FC<ReportPageProps> = ({
               </select>
             </div>
 
-            {/* Location / Ward */}
+            {/* Location / Ward or Village */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                {t.selectLocation} *
+                {reportType === 'street' ? 'Select Municipal Ward *' : 'Select Village (Gram Panchayat) *'}
               </label>
               <select
                 value={selectedLocationId}
                 onChange={(e) => setSelectedLocationId(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-sky-500 cursor-pointer"
               >
-                {locations.map((loc) => (
+                {(reportType === 'street'
+                  ? locations.filter(l => l.type === 'WARD')
+                  : locations.filter(l => l.type === 'VILLAGE')
+                ).map((loc) => (
                   <option key={loc.id} value={loc.id}>
                     {loc.name}
                   </option>

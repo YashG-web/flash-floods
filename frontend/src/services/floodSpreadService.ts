@@ -28,7 +28,7 @@ export interface FloodSpreadStage {
   polygon: [number, number][];
   centroid: [number, number];
   flowArrows: FlowArrow[];
-  secondaryAffectedWards: string[];
+  secondaryAffectedVillages: string[];
   affectedCorridors: string[];
   description: string;
 }
@@ -46,8 +46,8 @@ export interface FloodSpreadSimulation {
 /**
  * Deterministically computes polygon centroid: [latitude, longitude]
  */
-function getCentroid(coords: [number, number][]): [number, number] {
-  if (!coords || coords.length === 0) return [30.0845, 78.2618];
+export function getCentroid(coords: [number, number][]): [number, number] {
+  if (!coords || coords.length === 0) return [30.1040, 78.2830];
   let sumLat = 0;
   let sumLon = 0;
   for (const c of coords) {
@@ -58,35 +58,72 @@ function getCentroid(coords: [number, number][]): [number, number] {
 }
 
 /**
- * Deterministically expands a polygon outward from its centroid along the river valley gradient.
- * Vector bias towards the river valley (southwest / downstream, lower elevation).
+ * Generates an organically curved, realistic hydrodynamic flood shape (smooth plume).
+ * Simulates fluid spreading along the river valley topography (downstream elongation,
+ * lateral channel confinement, and natural harmonic fluid lobes).
+ * Completely eliminates any square, rectangular, or grid artifacts.
  */
-function expandPolygon(
-  coords: [number, number][],
+export function generateRealisticFloodContour(
+  center: [number, number],
+  baseRadiusKm: number,
   scaleFactor: number,
-  downstreamBias: number = 0.0003
+  valleyHeadingDeg: number = 205, // Downstream river flow heading (South-Southwest)
+  seedFactor: number = 1.0
 ): [number, number][] {
-  const [cLat, cLon] = getCentroid(coords);
-  return coords.map(([lat, lon]) => {
-    // Distance from centroid
-    const dLat = lat - cLat;
-    const dLon = lon - cLon;
+  const [cLat, cLon] = center;
+  const numPoints = 42; // High-resolution smooth fluid boundary
+  const flowRad = (valleyHeadingDeg * Math.PI) / 180;
+  const rawCoords: [number, number][] = [];
 
-    // Downstream gravity bias (simulating water flowing towards river valley depression)
-    const driftLat = -downstreamBias * (scaleFactor - 1.0);
-    const driftLon = -downstreamBias * 0.8 * (scaleFactor - 1.0);
+  const effectiveRadius = baseRadiusKm * scaleFactor;
 
-    const newLat = cLat + dLat * scaleFactor + driftLat;
-    const newLon = cLon + dLon * scaleFactor + driftLon;
+  for (let i = 0; i < numPoints; i++) {
+    const theta = (i / numPoints) * 2 * Math.PI;
 
-    return [parseFloat(newLat.toFixed(5)), parseFloat(newLon.toFixed(5))];
-  });
+    // Hydrodynamic valley elongation: water surges downstream along valley axis
+    const downstreamFactor = 1.0 + 0.65 * Math.cos(theta - flowRad);
+
+    // Natural fluid wave lobes & riparian depressions
+    const waveHarmonics =
+      0.14 * Math.cos(2 * (theta - flowRad)) +
+      0.08 * Math.sin(3 * theta + seedFactor) +
+      0.04 * Math.cos(4 * theta);
+
+    // Radius in km at angle theta
+    const rKm = Math.max(0.08, effectiveRadius * (downstreamFactor + waveHarmonics));
+
+    // Downstream gravity drift for the entire plume
+    const driftLat = -0.00045 * (scaleFactor - 0.9);
+    const driftLon = -0.00035 * (scaleFactor - 0.9);
+
+    // Convert km offset to degrees
+    const latOffset = (rKm * Math.cos(theta)) / 111.0 + driftLat;
+    const lonOffset = (rKm * Math.sin(theta)) / (111.0 * Math.cos((cLat * Math.PI) / 180)) + driftLon;
+
+    rawCoords.push([cLat + latOffset, cLon + lonOffset]);
+  }
+
+  // Smooth the points with 3-point rolling average for organic fluid curvature
+  const smoothCoords: [number, number][] = [];
+  const len = rawCoords.length;
+
+  for (let i = 0; i < len; i++) {
+    const prev = rawCoords[(i - 1 + len) % len];
+    const curr = rawCoords[i];
+    const next = rawCoords[(i + 1) % len];
+
+    const sLat = prev[0] * 0.25 + curr[0] * 0.5 + next[0] * 0.25;
+    const sLon = prev[1] * 0.25 + curr[1] * 0.5 + next[1] * 0.25;
+
+    smoothCoords.push([parseFloat(sLat.toFixed(5)), parseFloat(sLon.toFixed(5))]);
+  }
+
+  return smoothCoords;
 }
 
 /**
- * Calculates deterministic flood spread stages based on current simulation telemetry.
- * NO RANDOM NUMBERS: All values are mathematical functions of current rainfall, soil moisture,
- * river water level, and warning status.
+ * Calculates deterministic, realistic flood spread stages for a selected VILLAGE.
+ * Generates smooth, realistic hydrodynamic flood wave contours without grids or boxes.
  */
 export function calculateFloodSpreadSimulation(
   location: LocationData,
@@ -96,7 +133,7 @@ export function calculateFloodSpreadSimulation(
   const sm = Number(location.soil_moisture ?? 80);
   const riverLvl = Number(location.sensor_water_level ?? 3.8);
 
-  // Normalized severity factor (0.15 - 1.0) derived deterministically from simulation state
+  // Normalized severity factor (0.15 - 1.0) derived deterministically from village telemetry
   const rainFactor = Math.min(1.0, Math.max(0.1, rf / 90));
   const soilFactor = Math.min(1.0, Math.max(0.1, sm / 95));
   const riverFactor = Math.min(1.0, Math.max(0.1, riverLvl / 5.0));
@@ -105,36 +142,26 @@ export function calculateFloodSpreadSimulation(
     (rainFactor * 0.5 + soilFactor * 0.35 + riverFactor * 0.15) * 100
   );
 
-  // Base polygon from location geometry
-  const basePolygon: [number, number][] =
-    location.polygon && location.polygon.length >= 3
-      ? location.polygon
-      : [
-          [30.0820, 78.2580],
-          [30.0860, 78.2590],
-          [30.0870, 78.2660],
-          [30.0840, 78.2670],
-          [30.0810, 78.2620]
-        ];
+  const centroid = location.coordinates && location.coordinates.length === 2
+    ? location.coordinates
+    : getCentroid(location.polygon || []);
+  const [cLat, cLon] = centroid;
 
-  // Base footprint scale
-  const baseAreaKm2 = 0.55 + (simulationSeverityScore / 100) * 0.85;
-
-  // Corridors in the catchment zone
-  const isWarned = activeWarning && activeWarning.status !== 'NONE';
-  const locationLabel = location.name.split('(')[0].trim();
-  const [cLat, cLon] = getCentroid(basePolygon);
+  // Base footprint scale (in km) tailored to village valley geography
+  const baseRadiusKm = 0.38 + (simulationSeverityScore / 100) * 0.22;
+  const baseAreaKm2 = parseFloat((Math.PI * Math.pow(baseRadiusKm * 1.3, 2)).toFixed(2));
+  const villageLabel = location.name.split('(')[0].trim();
 
   // STAGE 1: NOW (T = 0) - Initial Inundation
   // Color: Yellow = Approaching Risk
-  const polyNow = expandPolygon(basePolygon, 1.0);
+  const polyNow = generateRealisticFloodContour(centroid, baseRadiusKm, 0.95, 205, 1.1);
   const stageNow: FloodSpreadStage = {
     key: 'NOW',
     label: 'NOW (Initial Inundation)',
     timeOffsetMinutes: 0,
     color: '#eab308', // Yellow
     fillColor: '#fef08a',
-    fillOpacity: 0.35,
+    fillOpacity: 0.38,
     severityLabel: simulationSeverityScore >= 70 ? 'HIGH' : 'MODERATE',
     severityBadgeColor: simulationSeverityScore >= 70 ? 'bg-orange-500 text-white' : 'bg-yellow-500 text-slate-950',
     inundatedAreaKm2: parseFloat((baseAreaKm2 * 1.0).toFixed(2)),
@@ -147,39 +174,40 @@ export function calculateFloodSpreadSimulation(
       {
         id: 'arrow-downstream-now',
         label: 'Flood spread direction →',
-        sublabel: 'Downstream River Trunk',
+        sublabel: `${villageLabel} River Channel`,
         path: [
-          [cLat + 0.001, cLon - 0.001],
-          [cLat - 0.003, cLon + 0.001]
+          [cLat + 0.0015, cLon + 0.001],
+          [cLat - 0.002, cLon - 0.001],
+          [cLat - 0.005, cLon - 0.0025]
         ],
-        arrowheadAngle: 160,
+        arrowheadAngle: 205,
         color: '#eab308',
         flowVelocityKmh: '8 – 12 km/h'
       }
     ],
-    secondaryAffectedWards: [],
+    secondaryAffectedVillages: [],
     affectedCorridors: [
-      `${locationLabel} River Ghat Terraces`,
-      'Lower Embankment Steps',
-      'Culvert Ingress #01'
+      `${villageLabel} Lowland Riverbank`,
+      'Ghat Access Trail',
+      'Lower Terraced Cultivation'
     ],
-    description: 'Initial water overtopping riverbank steps. Fast-moving surface sheet flow accumulating in lowest depressions.'
+    description: 'Initial river overtopping along the low-lying valley stream bed. Rapid surface runoff accumulating in natural depressions.'
   };
 
   // STAGE 2: +30 MIN (T = 30) - Expanding Floodwave
   // Color: Orange = Increasing Risk
-  const area30m = baseAreaKm2 * (1.65 + (rainFactor * 0.2));
-  const poly30m = expandPolygon(basePolygon, 1.48);
+  const area30m = parseFloat((baseAreaKm2 * 1.65).toFixed(2));
+  const poly30m = generateRealisticFloodContour(centroid, baseRadiusKm, 1.45, 205, 1.4);
   const stage30Min: FloodSpreadStage = {
     key: '+30 MIN',
     label: '+30 MIN (Valley Runoff Expansion)',
     timeOffsetMinutes: 30,
     color: '#f97316', // Orange
     fillColor: '#fdba74',
-    fillOpacity: 0.45,
+    fillOpacity: 0.44,
     severityLabel: simulationSeverityScore >= 50 ? 'HIGH' : 'MODERATE',
     severityBadgeColor: 'bg-orange-500 text-white',
-    inundatedAreaKm2: parseFloat(area30m.toFixed(2)),
+    inundatedAreaKm2: area30m,
     inundatedHectares: Math.round(area30m * 100),
     depthRangeMeters: '0.9 – 1.4 m',
     flowVelocityKmh: '14 – 18 km/h',
@@ -189,53 +217,40 @@ export function calculateFloodSpreadSimulation(
       {
         id: 'arrow-downstream-30m',
         label: 'Flood spread direction →',
-        sublabel: 'Downstream River Trunk',
+        sublabel: 'Downstream Riparian Corridor',
         path: [
-          [cLat + 0.001, cLon - 0.001],
-          [cLat - 0.003, cLon + 0.001],
-          [cLat - 0.007, cLon + 0.003]
+          [cLat + 0.002, cLon + 0.001],
+          [cLat - 0.003, cLon - 0.0015],
+          [cLat - 0.0075, cLon - 0.0038]
         ],
-        arrowheadAngle: 160,
+        arrowheadAngle: 205,
         color: '#f97316',
         flowVelocityKmh: '14 – 18 km/h'
-      },
-      {
-        id: 'arrow-road-30m',
-        label: 'Flood spread direction →',
-        sublabel: 'Embankment Road Overspill',
-        path: [
-          [cLat, cLon],
-          [cLat + 0.004, cLon + 0.005]
-        ],
-        arrowheadAngle: 45,
-        color: '#f97316',
-        flowVelocityKmh: '12 – 15 km/h'
       }
     ],
-    secondaryAffectedWards: ['ward-04'],
+    secondaryAffectedVillages: [],
     affectedCorridors: [
-      `${locationLabel} Riverfront Road`,
-      'Riverside Embankment Approach',
-      'Lower Bazaar Link Culvert',
-      'Tributary Sluice Channel'
+      `${villageLabel} Riverside Road Link`,
+      'Lower Terraces & Homesteads',
+      'Pedestrian Suspension Bridge Footing'
     ],
-    description: 'River backwater ingressing onto parallel roadway. Surface flow speeds rising as catchment tributary surges.'
+    description: 'Flood wave expanding down the valley floor. Water entering agricultural fields and lower residential habitations.'
   };
 
-  // STAGE 3: +1 HR (T = 60) - Severe Valley Submergence
-  // Color: Red-Orange / Deep Orange = Increasing / Severe Risk
-  const area1h = baseAreaKm2 * (2.45 + (rainFactor * 0.35));
-  const poly1h = expandPolygon(basePolygon, 2.05);
+  // STAGE 3: +1 HR (T = 60) - Peak Catchment Surge
+  // Color: Red-Orange = Severe Risk
+  const area1h = parseFloat((baseAreaKm2 * 2.45).toFixed(2));
+  const poly1h = generateRealisticFloodContour(centroid, baseRadiusKm, 2.05, 205, 1.8);
   const stage1Hr: FloodSpreadStage = {
     key: '+1 HR',
     label: '+1 HR (Peak Catchment Surge)',
     timeOffsetMinutes: 60,
     color: '#ea580c', // Deep Orange
     fillColor: '#fb923c',
-    fillOpacity: 0.55,
+    fillOpacity: 0.50,
     severityLabel: 'CRITICAL',
     severityBadgeColor: 'bg-red-600 text-white',
-    inundatedAreaKm2: parseFloat(area1h.toFixed(2)),
+    inundatedAreaKm2: area1h,
     inundatedHectares: Math.round(area1h * 100),
     depthRangeMeters: '1.5 – 2.2 m',
     flowVelocityKmh: '20 – 26 km/h',
@@ -245,69 +260,42 @@ export function calculateFloodSpreadSimulation(
       {
         id: 'arrow-downstream-1h',
         label: 'Flood spread direction →',
-        sublabel: 'Downstream River Basin',
+        sublabel: 'Main Valley Floodplain Surge',
         path: [
-          [cLat + 0.001, cLon - 0.001],
-          [cLat - 0.004, cLon + 0.002],
-          [cLat - 0.010, cLon + 0.004]
+          [cLat + 0.0025, cLon + 0.0015],
+          [cLat - 0.004, cLon - 0.002],
+          [cLat - 0.010, cLon - 0.005]
         ],
-        arrowheadAngle: 160,
+        arrowheadAngle: 205,
         color: '#ea580c',
         flowVelocityKmh: '20 – 26 km/h'
-      },
-      {
-        id: 'arrow-road-1h',
-        label: 'Flood spread direction →',
-        sublabel: 'NH Corridor Ingress',
-        path: [
-          [cLat, cLon],
-          [cLat + 0.005, cLon + 0.006],
-          [cLat + 0.008, cLon + 0.009]
-        ],
-        arrowheadAngle: 45,
-        color: '#ea580c',
-        flowVelocityKmh: '18 – 22 km/h'
-      },
-      {
-        id: 'arrow-trib-1h',
-        label: 'Flood spread direction →',
-        sublabel: 'Tributary Confluence Surge',
-        path: [
-          [cLat + 0.002, cLon + 0.002],
-          [cLat + 0.009, cLon + 0.011],
-          [cLat + 0.015, cLon + 0.018]
-        ],
-        arrowheadAngle: 35,
-        color: '#ea580c',
-        flowVelocityKmh: '16 – 20 km/h'
       }
     ],
-    secondaryAffectedWards: ['ward-04', 'village-sangam'],
+    secondaryAffectedVillages: [],
     affectedCorridors: [
-      `${locationLabel} Roadway Deck`,
-      'Valley Connecting Bridge Ingress',
-      'Lowland Residential Terraces',
-      'NH-58 River Corridor Feeder'
+      `${villageLabel} Central Valley Floor`,
+      'Main Embankment Approach Road',
+      'Secondary Drainage Sluice Outfall'
     ],
-    description: 'High-velocity torrent submerging bridge ingress. Lowland terraces fully covered by turbulent floodwater.'
+    description: 'High velocity flash flood surge occupying the full valley width. Lower road links impassable.'
   };
 
-  // STAGE 4: +2 HR (T = 120) - Maximum Projected Extent
-  // Color: Crimson Red = Severe / Affected
-  const area2h = baseAreaKm2 * (3.35 + (rainFactor * 0.5));
-  const poly2h = expandPolygon(basePolygon, 2.75);
+  // STAGE 4: +2 HR (T = 120) - Maximum Inundation Extent
+  // Color: Red = Critical Threat
+  const area2h = parseFloat((baseAreaKm2 * 3.3).toFixed(2));
+  const poly2h = generateRealisticFloodContour(centroid, baseRadiusKm, 2.7, 205, 2.2);
   const stage2Hr: FloodSpreadStage = {
     key: '+2 HR',
-    label: '+2 HR (Maximum Projected Inundation)',
+    label: '+2 HR (Maximum Inundation Extent)',
     timeOffsetMinutes: 120,
-    color: '#dc2626', // Crimson Red
+    color: '#dc2626', // Red
     fillColor: '#f87171',
-    fillOpacity: 0.65,
+    fillOpacity: 0.55,
     severityLabel: 'CRITICAL',
-    severityBadgeColor: 'bg-red-700 text-white animate-pulse',
-    inundatedAreaKm2: parseFloat(area2h.toFixed(2)),
+    severityBadgeColor: 'bg-red-700 text-white',
+    inundatedAreaKm2: area2h,
     inundatedHectares: Math.round(area2h * 100),
-    depthRangeMeters: '2.3 – 3.2 m',
+    depthRangeMeters: '2.2 – 3.4 m',
     flowVelocityKmh: '24 – 32 km/h',
     polygon: poly2h,
     centroid: getCentroid(poly2h),
@@ -315,58 +303,24 @@ export function calculateFloodSpreadSimulation(
       {
         id: 'arrow-downstream-2h',
         label: 'Flood spread direction →',
-        sublabel: 'Full River Floodplain Inundation',
+        sublabel: 'Maximum Catchment Extent',
         path: [
-          [cLat + 0.002, cLon - 0.002],
-          [cLat - 0.005, cLon + 0.002],
-          [cLat - 0.014, cLon + 0.005]
+          [cLat + 0.003, cLon + 0.002],
+          [cLat - 0.005, cLon - 0.003],
+          [cLat - 0.013, cLon - 0.007]
         ],
-        arrowheadAngle: 160,
+        arrowheadAngle: 205,
         color: '#dc2626',
         flowVelocityKmh: '24 – 32 km/h'
-      },
-      {
-        id: 'arrow-road-2h',
-        label: 'Flood spread direction →',
-        sublabel: 'NH Bypass Submergence',
-        path: [
-          [cLat, cLon],
-          [cLat + 0.006, cLon + 0.007],
-          [cLat + 0.011, cLon + 0.012]
-        ],
-        arrowheadAngle: 45,
-        color: '#dc2626',
-        flowVelocityKmh: '22 – 28 km/h'
-      },
-      {
-        id: 'arrow-trib-2h',
-        label: 'Flood spread direction →',
-        sublabel: 'Village Sangam Basin Submergence',
-        path: [
-          [cLat + 0.002, cLon + 0.002],
-          [cLat + 0.010, cLon + 0.012],
-          [cLat + 0.018, cLon + 0.021]
-        ],
-        arrowheadAngle: 35,
-        color: '#dc2626',
-        flowVelocityKmh: '20 – 26 km/h'
       }
     ],
-    secondaryAffectedWards: ['ward-04', 'village-sangam', 'ward-12'],
+    secondaryAffectedVillages: [],
     affectedCorridors: [
-      'Entire River Floodplain Basin',
-      'NH Bypass Low Overpass Approach',
-      'Downstream River Terraces & Settlements',
-      'Inter-Ward Drainage Trunk Culvert Zone'
+      `${villageLabel} Complete Riparian Lowland`,
+      'Inter-Village Road Corridor',
+      'Valley Bottom Settlement Zone'
     ],
-    description: 'Maximum predicted flood footprint reached. River channel discharge exceeding historical high-water mark.'
-  };
-
-  const stages: Record<FloodSpreadStageKey, FloodSpreadStage> = {
-    'NOW': stageNow,
-    '+30 MIN': stage30Min,
-    '+1 HR': stage1Hr,
-    '+2 HR': stage2Hr
+    description: 'Peak hydrodynamic inundation envelope reached. Complete evacuation of valley floor required.'
   };
 
   return {
@@ -375,7 +329,12 @@ export function calculateFloodSpreadSimulation(
     rainfallIntensityMmHr: rf,
     soilMoisturePct: sm,
     riverLevelM: riverLvl,
-    stages,
+    stages: {
+      'NOW': stageNow,
+      '+30 MIN': stage30Min,
+      '+1 HR': stage1Hr,
+      '+2 HR': stage2Hr
+    },
     stageOrder: ['NOW', '+30 MIN', '+1 HR', '+2 HR']
   };
 }

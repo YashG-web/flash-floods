@@ -46,12 +46,12 @@ interface DisasterMapProps {
 }
 
 // 100% Free, High-Speed Map Tile Providers (Zero Watermarks, No API Key, No Billing, No Sign-up Required)
-export const BASE_MAP_PROVIDERS = {
+const BASE_MAP_PROVIDERS = {
   osm: {
     id: 'osm',
     name: 'Real Map of India (OpenStreetMap)',
-    shortName: 'India Streets',
-    icon: '🇮🇳',
+    shortName: 'Streets',
+    icon: '🗺️',
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     options: {
       maxZoom: 19,
@@ -68,33 +68,11 @@ export const BASE_MAP_PROVIDERS = {
       maxZoom: 19,
       attribution: 'Tiles &copy; Esri &mdash; Earthstar Geographics'
     }
-  },
-  topo: {
-    id: 'topo',
-    name: 'Topographic & Contours (OpenTopoMap)',
-    shortName: 'Terrain',
-    icon: '⛰️',
-    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-    options: {
-      maxZoom: 17,
-      subdomains: 'abc',
-      attribution: 'Map data: &copy; OpenStreetMap, SRTM | Style: OpenTopoMap'
-    }
-  },
-  esriStreet: {
-    id: 'esriStreet',
-    name: 'ESRI World Street Map',
-    shortName: 'Clean Street',
-    icon: '🗺️',
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-    options: {
-      maxZoom: 19,
-      attribution: 'Tiles &copy; Esri'
-    }
   }
 } as const;
 
-export type BaseMapKey = keyof typeof BASE_MAP_PROVIDERS;
+type BaseMapKey = keyof typeof BASE_MAP_PROVIDERS;
+
 
 export const DisasterMap: React.FC<DisasterMapProps> = ({
   locations,
@@ -234,86 +212,172 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
     // Clear previous dynamic layers
     Object.values(layerGroupsRef.current).forEach(lg => lg.clearLayers());
 
-    // 1. FLOOD RISK ZONES (Wards & Locations) - Visible strictly in Flash Flood mode
+    // 1. FLASH FLOOD: CLEAN VILLAGE-LEVEL RISK VISUALIZATION (Village-wise only, selected village focus)
     if (effectiveSystemMode === 'flash-flood' && activeLayers.floodRisk) {
-      locations.forEach(loc => {
-        const isSelected = selectedLocation?.id === loc.id;
-        const isWarnedZone = activeFlashWarning && activeFlashWarning.status !== 'NONE' && activeFlashWarning.locationId === loc.id;
+      const villages = locations.filter(l => l.type === 'VILLAGE');
+      const activeVillage = villages.find(v => v.id === selectedLocation?.id) || villages[0];
+
+      if (activeVillage) {
+        const isWarnedZone = activeFlashWarning && activeFlashWarning.status !== 'NONE' && (
+          activeFlashWarning.locationId === activeVillage.id || activeFlashWarning.locationName.includes(activeVillage.name.split('(')[0].trim())
+        );
 
         const color = isWarnedZone
           ? '#dc2626'
-          : loc.risk_color || (
-            loc.risk_level === 'CRITICAL' ? '#dc2626' :
-            loc.risk_level === 'HIGH' ? '#f97316' :
-            loc.risk_level === 'MODERATE' ? '#eab308' :
+          : activeVillage.risk_color || (
+            activeVillage.risk_level === 'CRITICAL' ? '#dc2626' :
+            activeVillage.risk_level === 'HIGH' ? '#f97316' :
+            activeVillage.risk_level === 'MODERATE' ? '#eab308' :
             '#16a34a'
           );
 
-        const polygon = L.polygon(loc.polygon, {
-          color: isWarnedZone ? '#991b1b' : isSelected ? '#1e1b4b' : color,
-          weight: isWarnedZone ? 4.5 : isSelected ? 3.5 : 2,
+        // High-definition clean village boundary
+        const villagePolygon = L.polygon(activeVillage.polygon, {
+          color: color,
+          weight: 4.0,
           fillColor: color,
-          fillOpacity: isWarnedZone ? 0.55 : isSelected ? 0.45 : 0.25
+          fillOpacity: 0.24,
+          lineCap: 'round',
+          lineJoin: 'round',
+          className: 'village-boundary-clean'
         });
 
-        polygon.on('click', () => {
-          onSelectLocation(loc);
+        villagePolygon.on('click', () => {
+          onSelectLocation(activeVillage);
           setShowLocationPanel(true);
         });
 
-        // Simple tooltip
-        polygon.bindTooltip(`
-          <div style="font-family: system-ui; font-size: 11px; padding: 2px;">
-            <div style="font-weight: 800; color: #0f172a;">${loc.name}</div>
-            <div style="color: ${color}; font-weight: 800; margin-top: 2px;">
-              ${isWarnedZone ? '🚨 FLASH FLOOD WARNING ZONE' : `${loc.risk_level || 'EVALUATING'} RISK`}
+        villagePolygon.bindTooltip(`
+          <div style="font-family: system-ui, sans-serif; font-size: 11px; padding: 4px; min-width: 220px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 3px;">
+              <span style="font-size: 9px; font-family: monospace; font-weight: 900; color: #1e3a8a; background: #e0f2fe; padding: 1px 6px; border-radius: 4px;">
+                🏡 VILLAGE SECTOR
+              </span>
+              <span style="font-size: 9px; font-weight: 800; background: ${color}; color: #ffffff; padding: 1px 6px; border-radius: 4px;">
+                ${isWarnedZone ? 'CRITICAL WARNING' : `${activeVillage.risk_level || 'EVALUATING'}`}
+              </span>
+            </div>
+            <div style="font-weight: 800; color: #0f172a; font-size: 12px;">${activeVillage.name}</div>
+            <div style="margin-top: 5px; font-size: 10px; color: #334155; border-top: 1px solid #e2e8f0; padding-top: 4px; line-height: 1.5;">
+              <div>• Rainfall Intensity: <b>${activeVillage.rainfall} mm/h</b></div>
+              <div>• Soil Moisture: <b>${activeVillage.soil_moisture}%</b></div>
+              <div>• River Water Level: <b>${activeVillage.sensor_water_level} m</b></div>
+              <div>• Expected Window: <b>${activeVillage.expected_window}</b></div>
             </div>
           </div>
         `, { sticky: true });
 
-        layerGroupsRef.current.zones.addLayer(polygon);
+        layerGroupsRef.current.zones.addLayer(villagePolygon);
 
-        // Center Label Marker
-        const labelIcon = L.divIcon({
+        // Clean Centered Village Overall Risk HUD Badge
+        const villageHudIcon = L.divIcon({
           className: 'custom-div-icon',
-          html: isWarnedZone ? `
+          html: `
             <div style="
-              background: #dc2626;
+              background: rgba(15, 23, 42, 0.95);
               color: #ffffff;
-              padding: 3px 8px;
-              border-radius: 6px;
+              padding: 5px 11px;
+              border-radius: 10px;
               font-size: 11px;
-              font-weight: 900;
+              font-weight: 800;
               white-space: nowrap;
-              border: 2px solid #ffffff;
-              box-shadow: 0 0 12px rgba(220, 38, 38, 0.8);
+              border: 2px solid ${color};
+              box-shadow: 0 4px 14px rgba(0,0,0,0.45);
               transform: translate(-50%, -50%);
               cursor: pointer;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 2px;
             ">
-              🚨 WARNING ZONE: ${loc.name.split(' ')[0]} ${loc.name.split(' ')[1] || ''}
-            </div>
-          ` : `
-            <div style="
-              background: rgba(15, 23, 42, 0.9);
-              color: #ffffff;
-              padding: 2px 6px;
-              border-radius: 4px;
-              font-size: 10px;
-              font-weight: 700;
-              white-space: nowrap;
-              border: 1px solid ${color};
-              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-              transform: translate(-50%, -50%);
-              cursor: pointer;
-            ">
-              ${loc.name.split(' ')[0]} ${loc.name.split(' ')[1] || ''}: <span style="color: ${color}; font-weight: 900;">${loc.risk_level}</span>
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <span>🏡</span>
+                <span style="font-weight: 900; letter-spacing: -0.2px;">${activeVillage.name.split('(')[0].trim()}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 5px; font-size: 9px; font-family: monospace;">
+                <span style="background: ${color}; color: #ffffff; padding: 1px 5px; border-radius: 4px; font-weight: 900;">
+                  ${activeVillage.risk_level || 'EVALUATING'} RISK
+                </span>
+                <span style="color: #94a3b8; font-weight: 700;">Score: ${activeVillage.risk_probability || 78}%</span>
+              </div>
             </div>
           `
         });
 
-        const labelMarker = L.marker(loc.coordinates, { icon: labelIcon });
+        const villageMarker = L.marker(activeVillage.coordinates, { icon: villageHudIcon });
+        villageMarker.on('click', () => {
+          onSelectLocation(activeVillage);
+          setShowLocationPanel(true);
+        });
+        layerGroupsRef.current.zones.addLayer(villageMarker);
+      }
+    }
+
+    // 1c. STREET WATERLOGGING: WARD-WISE BOUNDARIES AND DATA
+    if (effectiveSystemMode === 'street-waterlogging' && activeLayers.floodRisk !== false) {
+      const wards = locations.filter(l => l.type === 'WARD');
+      wards.forEach(ward => {
+        const isSelected = selectedLocation?.id === ward.id;
+        const color = ward.risk_color || (
+          ward.risk_level === 'CRITICAL' ? '#dc2626' :
+          ward.risk_level === 'HIGH' ? '#f97316' :
+          ward.risk_level === 'MODERATE' ? '#eab308' :
+          '#16a34a'
+        );
+
+        const wardPolygon = L.polygon(ward.polygon, {
+          color: isSelected ? '#1e1b4b' : color,
+          weight: isSelected ? 3.5 : 2,
+          fillColor: color,
+          fillOpacity: isSelected ? 0.35 : 0.18,
+          lineCap: 'round',
+          lineJoin: 'round'
+        });
+
+        wardPolygon.on('click', () => {
+          onSelectLocation(ward);
+          setShowLocationPanel(true);
+        });
+
+        wardPolygon.bindTooltip(`
+          <div style="font-family: system-ui; font-size: 11px; padding: 3px;">
+            <div style="font-weight: 800; color: #0f172a;">🏢 ${ward.name}</div>
+            <div style="color: ${color}; font-weight: 800; margin-top: 2px;">
+              ${ward.risk_level || 'MODERATE'} WATERLOGGING RISK
+            </div>
+            <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
+              Drain Condition: ${ward.drainage_condition}% | Reports: ${ward.citizen_reports_count}
+            </div>
+          </div>
+        `, { sticky: true });
+
+        layerGroupsRef.current.zones.addLayer(wardPolygon);
+
+        // Center Label Marker for Ward
+        const labelIcon = L.divIcon({
+          className: 'custom-div-icon',
+          html: `
+            <div style="
+              background: rgba(15, 23, 42, 0.9);
+              color: #ffffff;
+              padding: 2px 7px;
+              border-radius: 5px;
+              font-size: 10px;
+              font-weight: 700;
+              white-space: nowrap;
+              border: 1px solid ${color};
+              box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+              transform: translate(-50%, -50%);
+              cursor: pointer;
+            ">
+              ${ward.name.split(' ')[0]} ${ward.name.split(' ')[1] || ''}: <span style="color: ${color}; font-weight: 900;">${ward.risk_level}</span>
+            </div>
+          `
+        });
+
+        const labelMarker = L.marker(ward.coordinates, { icon: labelIcon });
         labelMarker.on('click', () => {
-          onSelectLocation(loc);
+          onSelectLocation(ward);
           setShowLocationPanel(true);
         });
         layerGroupsRef.current.zones.addLayer(labelMarker);
@@ -322,25 +386,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
     // 1b. FLOOD SPREAD PREDICTION SIMULATION (Visible strictly in Flash Flood mode when spread stage is provided)
     if (effectiveSystemMode === 'flash-flood' && activeSpreadStage) {
-      // Prior stage ghost contours (showing progressive wave expansion)
-      if (allSpreadStages && allSpreadStages.length > 0) {
-        const activeIdx = allSpreadStages.findIndex(s => s.key === activeSpreadStage.key);
-        allSpreadStages.forEach((stage, idx) => {
-          if (idx < activeIdx) {
-            const ghostPolygon = L.polygon(stage.polygon, {
-              color: stage.color,
-              weight: 1.8,
-              dashArray: '5, 5',
-              fillColor: stage.fillColor,
-              fillOpacity: 0.1
-            });
-            ghostPolygon.bindTooltip(`Stage ${stage.label} contour (${stage.inundatedAreaKm2} km²)`, { sticky: true });
-            layerGroupsRef.current.spread?.addLayer(ghostPolygon);
-          }
-        });
-      }
-
-      // Active Spread Inundation Zone with Progressive Glow
+      // Single Active Flood Inundation Zone
       const activePolygon = L.polygon(activeSpreadStage.polygon, {
         color: activeSpreadStage.color,
         weight: 3.8,
@@ -450,31 +496,6 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
         });
       }
 
-      // Highlight Secondary Affected Wards Reached by Flood Wave
-      if (activeSpreadStage.secondaryAffectedWards && activeSpreadStage.secondaryAffectedWards.length > 0) {
-        locations.forEach(loc => {
-          if (activeSpreadStage.secondaryAffectedWards.includes(loc.id) && loc.id !== activeLoc.id) {
-            const alertPoly = L.polygon(loc.polygon, {
-              color: activeSpreadStage.color,
-              weight: 2.5,
-              dashArray: '5, 5',
-              fillColor: activeSpreadStage.fillColor,
-              fillOpacity: 0.22,
-              className: 'flood-polygon-glow'
-            });
-            alertPoly.bindTooltip(`
-              <div style="font-family: system-ui; font-size: 11px; padding: 2px;">
-                <div style="color: ${activeSpreadStage.color}; font-weight: 800;">⚠️ APPROACHING FLOOD FRONT</div>
-                <div style="font-weight: 800; color: #0f172a;">${loc.name}</div>
-                <div style="color: #64748b; font-size: 10px; margin-top: 2px;">
-                  Wavefront reaching sector at Stage ${activeSpreadStage.label}
-                </div>
-              </div>
-            `, { sticky: true });
-            layerGroupsRef.current.spread?.addLayer(alertPoly);
-          }
-        });
-      }
 
       // Centroid marker badge
       const spreadLabelIcon = L.divIcon({
@@ -792,10 +813,6 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
     // 7. HOSPITALS LAYER (Nearby Emergency Healthcare Facilities)
     if (activeLayers.hospitals && hospitals.length > 0) {
       hospitals.forEach(hosp => {
-        const isGood = hosp.accessibilityStatus === 'GOOD';
-        const isLimited = hosp.accessibilityStatus === 'LIMITED';
-        const statusBorderColor = isLimited ? '#dc2626' : isGood ? '#16a34a' : '#d97706';
-
         const hospIcon = L.divIcon({
           className: 'custom-div-icon',
           html: `
@@ -803,7 +820,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
               width: 28px;
               height: 28px;
               background: #ffffff;
-              border: 2.5px solid ${statusBorderColor};
+              border: 2.5px solid #0284c7;
               border-radius: 8px;
               display: flex;
               align-items: center;
@@ -830,7 +847,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
              </div>`;
 
         marker.bindPopup(`
-          <div style="font-family: system-ui, sans-serif; min-width: 210px; padding: 4px;">
+          <div style="font-family: system-ui, sans-serif; min-width: 220px; padding: 4px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
               <span style="font-size: 16px;">🏥</span>
               <strong style="font-size: 13px; color: #0f172a;">${hosp.name}</strong>
@@ -841,8 +858,10 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
               <div>⏱️ ~${hosp.estimatedTravelMinutes} min travel time</div>
             </div>
             ${capacityHtml}
-            <div style="margin-top: 4px; font-size: 11px; font-weight: 700; color: ${statusBorderColor};">
-              Route Access: ${hosp.accessibilityStatus} (${hosp.floodAccessibilityStatus || 'Normal'})
+            <div style="margin-top: 8px;">
+              <a href="https://www.google.com/maps/dir/?api=1&destination=${hosp.coordinates[0]},${hosp.coordinates[1]}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; justify-content: center; gap: 6px; background: #0284c7; color: white; padding: 6px 10px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 11px; box-shadow: 0 1px 4px rgba(2,132,199,0.3);">
+                <span>🧭 Navigate (Fastest Route) ↗</span>
+              </a>
             </div>
             <div style="margin-top: 6px; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 4px;">
               ${hosp.dataMode === 'DEMO' ? '⚠️ Simulated demonstration data' : 'Verified statutory health metadata'}
@@ -850,10 +869,11 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
           </div>
         `);
 
-        marker.bindTooltip(`<b>🏥 ${hosp.name}</b><br/>${hosp.distanceKm} km away • ${hosp.accessibilityStatus} access`, { sticky: true });
+        marker.bindTooltip(`<b>🏥 ${hosp.name}</b><br/>${hosp.distanceKm} km away • ~${hosp.estimatedTravelMinutes} min`, { sticky: true });
         layerGroupsRef.current.hospitals.addLayer(marker);
       });
     }
+
 
   }, [locations, selectedLocation, activeLayers, riverNetworks, drainageLines, sensors, citizenReports, historicalEvents, activeFlashWarning, hospitals, isDemoMode, effectiveSystemMode, selectedRoad, effectiveWaterloggingMode, activeSpreadStage, allSpreadStages, animationActive, animationFinished]);
 
@@ -1098,21 +1118,11 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
         <button
           type="button"
           onClick={() => mapInstanceRef.current?.setView([30.0920, 78.2676], 13)}
-          className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-white/95 backdrop-blur-md rounded-xl border border-slate-300 shadow-md text-xs font-bold text-slate-800 hover:bg-white hover:text-sky-600 transition cursor-pointer"
-          title="Reset View to Rishikesh Basin"
+          className="flex items-center gap-1.5 px-3 py-2 bg-white/95 backdrop-blur-md rounded-xl border border-slate-300 shadow-md text-xs font-bold text-slate-800 hover:bg-white hover:text-sky-600 transition cursor-pointer"
+          title="Reset View to Basin"
         >
           <span>🎯</span>
           <span>{tr('Basin')}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => mapInstanceRef.current?.setView([22.5937, 78.9629], 5)}
-          className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-white/95 backdrop-blur-md rounded-xl border border-slate-300 shadow-md text-xs font-bold text-slate-800 hover:bg-white hover:text-sky-600 transition cursor-pointer"
-          title="View Entire Map of India"
-        >
-          <span>🇮🇳</span>
-          <span>{tr('India View')}</span>
         </button>
 
         <div className="relative">
@@ -1125,7 +1135,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
           </button>
 
         {layersMenuOpen && (
-          <div className="mt-2 bg-white rounded-2xl p-3.5 border border-slate-200 shadow-xl text-xs w-60 space-y-3">
+          <div className="absolute right-0 mt-2 bg-white rounded-2xl p-3.5 border border-slate-200 shadow-xl text-xs w-60 space-y-3">
             {/* Free Base Map Selector (No API / No Sign-up) */}
             <div>
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
@@ -1164,83 +1174,105 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
               {tr('Display Layers')}
             </div>
 
-            <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
-              <span className="flex items-center gap-2 text-slate-800 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                <span>{tr('Flood Risk')}</span>
-              </span>
-              <input
-                type="checkbox"
-                checked={activeLayers.floodRisk}
-                onChange={() => onToggleLayer('floodRisk')}
-                className="rounded text-sky-600 focus:ring-0 cursor-pointer"
-              />
-            </label>
+            {/* Mode-specific Clean Essential Layers */}
+            {effectiveSystemMode === 'flash-flood' ? (
+              <>
+                <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg">
+                  <span className="flex items-center gap-2 text-slate-800 font-semibold text-xs">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                    <span>{tr('Flood Inundation Zone')}</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={activeLayers.floodRisk}
+                    onChange={() => onToggleLayer('floodRisk')}
+                    className="rounded text-sky-600 focus:ring-0 cursor-pointer"
+                  />
+                </label>
 
-            <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
-              <span className="flex items-center gap-2 text-slate-800 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                <span>{tr('Rainfall')}</span>
-              </span>
-              <input
-                type="checkbox"
-                checked={activeLayers.rainfall}
-                onChange={() => onToggleLayer('rainfall')}
-                className="rounded text-sky-600 focus:ring-0 cursor-pointer"
-              />
-            </label>
+                <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg">
+                  <span className="flex items-center gap-2 text-slate-800 font-semibold text-xs">
+                    <span className="text-xs">📡</span>
+                    <span>{tr('River & Rain Sensors')}</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={activeLayers.iotSensors}
+                    onChange={() => onToggleLayer('iotSensors')}
+                    className="rounded text-sky-600 focus:ring-0 cursor-pointer"
+                  />
+                </label>
+              </>
+            ) : effectiveSystemMode === 'street-waterlogging' ? (
+              <>
+                <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg">
+                  <span className="flex items-center gap-2 text-slate-800 font-semibold text-xs">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                    <span>{tr('Ward Risk Boundaries')}</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={activeLayers.floodRisk}
+                    onChange={() => onToggleLayer('floodRisk')}
+                    className="rounded text-sky-600 focus:ring-0 cursor-pointer"
+                  />
+                </label>
 
-            <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
-              <span className="flex items-center gap-2 text-slate-800 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-600" />
-                <span>{tr('Drainage')}</span>
-              </span>
-              <input
-                type="checkbox"
-                checked={activeLayers.drainage}
-                onChange={() => onToggleLayer('drainage')}
-                className="rounded text-sky-600 focus:ring-0 cursor-pointer"
-              />
-            </label>
+                <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg">
+                  <span className="flex items-center gap-2 text-slate-800 font-semibold text-xs">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-600" />
+                    <span>{tr('Drainage Network')}</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={activeLayers.drainage}
+                    onChange={() => onToggleLayer('drainage')}
+                    className="rounded text-sky-600 focus:ring-0 cursor-pointer"
+                  />
+                </label>
 
-            <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
-              <span className="flex items-center gap-2 text-slate-800 font-semibold">
-                <span className="text-xs">📡</span>
-                <span>{tr('Sensors')}</span>
-              </span>
-              <input
-                type="checkbox"
-                checked={activeLayers.iotSensors}
-                onChange={() => onToggleLayer('iotSensors')}
-                className="rounded text-sky-600 focus:ring-0 cursor-pointer"
-              />
-            </label>
+                <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg">
+                  <span className="flex items-center gap-2 text-slate-800 font-semibold text-xs">
+                    <span className="text-xs">📸</span>
+                    <span>{tr('Citizen Reports')}</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={activeLayers.citizenReports !== false}
+                    onChange={() => onToggleLayer('citizenReports')}
+                    className="rounded text-sky-600 focus:ring-0 cursor-pointer"
+                  />
+                </label>
+              </>
+            ) : (
+              <>
+                <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg">
+                  <span className="flex items-center gap-2 text-slate-800 font-semibold text-xs">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                    <span>{tr('Risk Zones')}</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={activeLayers.floodRisk}
+                    onChange={() => onToggleLayer('floodRisk')}
+                    className="rounded text-sky-600 focus:ring-0 cursor-pointer"
+                  />
+                </label>
 
-            <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
-              <span className="flex items-center gap-2 text-slate-800 font-semibold">
-                <span className="w-2 h-2 rounded-xs bg-slate-600" />
-                <span>{tr('Historical Events')}</span>
-              </span>
-              <input
-                type="checkbox"
-                checked={activeLayers.historicalEvents}
-                onChange={() => onToggleLayer('historicalEvents')}
-                className="rounded text-sky-600 focus:ring-0 cursor-pointer"
-              />
-            </label>
-
-            <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg">
-              <span className="flex items-center gap-2 text-slate-800 font-semibold">
-                <span className="text-xs">🏥</span>
-                <span>{tr('Hospitals & Trauma')}</span>
-              </span>
-              <input
-                type="checkbox"
-                checked={!!activeLayers.hospitals}
-                onChange={() => onToggleLayer('hospitals')}
-                className="rounded text-indigo-600 focus:ring-0 cursor-pointer"
-              />
-            </label>
+                <label className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg">
+                  <span className="flex items-center gap-2 text-slate-800 font-semibold text-xs">
+                    <span className="text-xs">📡</span>
+                    <span>{tr('IoT Sensors')}</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={activeLayers.iotSensors}
+                    onChange={() => onToggleLayer('iotSensors')}
+                    className="rounded text-sky-600 focus:ring-0 cursor-pointer"
+                  />
+                </label>
+              </>
+            )}
           </div>
         )}
         </div>

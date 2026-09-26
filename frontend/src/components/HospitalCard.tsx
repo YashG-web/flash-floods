@@ -1,12 +1,11 @@
 import React from 'react';
-import type { Hospital, HospitalStatus, AccessibilityStatus, AmbulanceStatus } from '../types/hospital';
+import type { Hospital, HospitalStatus } from '../types/hospital';
 import { useTranslation } from '../services/LanguageContext';
 import {
   Building2,
   Navigation,
   Clock,
   Activity,
-  Ambulance,
   CheckCircle2,
   AlertTriangle,
   HelpCircle,
@@ -81,65 +80,8 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
     ? hospital.status
     : (availBeds > 10 ? 'AVAILABLE' : availBeds > 2 ? 'LIMITED' : 'FULL');
 
-  const accStatus: AccessibilityStatus = hospital.accessibilityStatus && hospital.accessibilityStatus !== 'UNKNOWN'
-    ? hospital.accessibilityStatus
-    : (hospital.id.includes('aiims') ? 'GOOD' : hospital.id.includes('doon') ? 'MODERATE' : 'LIMITED');
-
-  const ambStatus: AmbulanceStatus = hospital.ambulanceAccess && hospital.ambulanceAccess !== 'UNKNOWN'
-    ? hospital.ambulanceAccess
-    : (hospital.id.includes('aiims') ? 'AVAILABLE' : 'LIMITED');
-
-  // Accessibility visual mapping
-  const getAccessibilityBadge = (acc: AccessibilityStatus) => {
-    switch (acc) {
-      case 'GOOD':
-        return {
-          label: tr('GOOD'),
-          sub: tr('Road access normal'),
-          badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-          color: 'text-emerald-700'
-        };
-      case 'MODERATE':
-        return {
-          label: tr('MODERATE'),
-          sub: tr('Some route restrictions'),
-          badge: 'bg-amber-50 text-amber-700 border-amber-200',
-          color: 'text-amber-700'
-        };
-      case 'LIMITED':
-        return {
-          label: tr('LIMITED'),
-          sub: tr('Flooded / restricted approach'),
-          badge: 'bg-red-50 text-red-700 border-red-200',
-          color: 'text-red-700'
-        };
-      default:
-        return {
-          label: tr('GOOD'),
-          sub: tr('Road access normal'),
-          badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-          color: 'text-emerald-700'
-        };
-    }
-  };
-
-  // Ambulance visual mapping
-  const getAmbulanceBadge = (amb: AmbulanceStatus) => {
-    switch (amb) {
-      case 'AVAILABLE':
-        return { label: tr('AVAILABLE'), color: 'text-emerald-700', bg: 'bg-emerald-50' };
-      case 'LIMITED':
-        return { label: tr('LIMITED'), color: 'text-amber-700', bg: 'bg-amber-50' };
-      case 'UNAVAILABLE':
-        return { label: tr('CONSTRAINED'), color: 'text-rose-700', bg: 'bg-rose-50' };
-      default:
-        return { label: tr('AVAILABLE'), color: 'text-emerald-700', bg: 'bg-emerald-50' };
-    }
-  };
-
   const statusBadge = getStatusBadge(status);
-  const accBadge = getAccessibilityBadge(accStatus);
-  const ambBadge = getAmbulanceBadge(ambStatus);
+
 
   const availPercent = totalBeds > 0 ? Math.min(100, Math.round((availBeds / totalBeds) * 100)) : 0;
 
@@ -259,44 +201,26 @@ export const HospitalCard: React.FC<HospitalCardProps> = ({ hospital, onViewOnMa
           )}
         </div>
 
-        {/* Accessibility & Ambulance Quick Attributes */}
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          {/* Accessibility */}
-          <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/70">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">
-              {tr('Accessibility')}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <span className={`font-black text-xs font-mono ${accBadge.color}`}>
-                {accBadge.label}
-              </span>
-            </div>
-            <span className="text-[10px] text-slate-500 block leading-tight mt-0.5">
-              {hospital.floodAccessibilityStatus ? tr(hospital.floodAccessibilityStatus) : accBadge.sub}
-            </span>
-          </div>
-
-          {/* Ambulance Access */}
-          <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/70">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">
-              {tr('Ambulance')}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <Ambulance className={`w-3.5 h-3.5 ${ambBadge.color}`} />
-              <span className={`font-black text-xs font-mono ${ambBadge.color}`}>
-                {ambBadge.label}
-              </span>
-            </div>
-            <span className="text-[10px] text-slate-500 block leading-tight mt-0.5">
-              {hospital.ambulanceAccess === 'AVAILABLE'
-                ? tr('Corridor clear')
-                : hospital.ambulanceAccess === 'LIMITED'
-                ? tr('Constrained route')
-                : tr('Status pending')}
-            </span>
-          </div>
+        {/* Navigation Using Fastest Route Action Button */}
+        <div className="pt-1">
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${hospital.coordinates[0]},${hospital.coordinates[1]}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
+              if (onViewOnMap) {
+                onViewOnMap(hospital);
+              }
+            }}
+            className="w-full py-2.5 px-4 bg-gradient-to-r from-sky-600 via-indigo-600 to-blue-600 hover:from-sky-500 hover:via-indigo-500 hover:to-blue-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm hover:shadow-indigo-500/25 transition transform active:scale-[0.99] cursor-pointer no-underline"
+          >
+            <Navigation className="w-3.5 h-3.5 fill-white text-white shrink-0" />
+            <span className="font-mono text-xs">{tr('Navigate via Fastest Route')}</span>
+            <ExternalLink className="w-3.5 h-3.5 opacity-80 shrink-0 ml-auto" />
+          </a>
         </div>
       </div>
+
 
       {/* Footer / Provenance & Action */}
       <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">

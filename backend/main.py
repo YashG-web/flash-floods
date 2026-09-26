@@ -14,6 +14,7 @@ from services.impact_engine import impact_assessment_engine
 from services.alert_engine import alert_engine
 from services.live_data_service import live_data_service, LOCATION_COORDINATES
 from services.hospital_service import hospital_service
+from services.drainage_service import drainage_service
 from data.geodata import (
     WARDS_AND_VILLAGES,
     RIVER_NETWORKS,
@@ -149,6 +150,30 @@ def get_live_warnings(
         "retrieved_at": live_data_service.get_ist_now_str()
     }
 
+WMO_WEATHER_CODES = {
+    0: "Clear Sky",
+    1: "Mainly Clear",
+    2: "Partly Cloudy",
+    3: "Overcast",
+    45: "Foggy",
+    48: "Depositing Rime Fog",
+    51: "Light Drizzle",
+    53: "Moderate Drizzle",
+    55: "Dense Drizzle",
+    61: "Slight Rain",
+    63: "Moderate Rain",
+    65: "Heavy Rain",
+    71: "Slight Snow Fall",
+    73: "Moderate Snow Fall",
+    75: "Heavy Snow Fall",
+    80: "Slight Rain Showers",
+    81: "Moderate Rain Showers",
+    82: "Violent Rain Showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with Slight Hail",
+    99: "Thunderstorm with Heavy Hail"
+}
+
 @app.get("/api/location-safety")
 def get_location_safety(
     lat: float = Query(..., description="Latitude"),
@@ -160,22 +185,24 @@ def get_location_safety(
     """
     Evaluates real-time location flood safety for any coordinates in India using Open-Meteo
     and the JalRakshak risk & cause intelligence engine.
+    Always prioritizes real-time Open-Meteo weather API observations.
     """
     effective_mode = (mode or CURRENT_MODE).upper()
-    is_live = (effective_mode == "LIVE")
     
     # Fetch live Open-Meteo data for coordinates
     om_data = live_data_service.fetch_open_meteo_data(lat, lon)
     curr = om_data.get("current", {}) if om_data else {}
     hourly = om_data.get("hourly", {}) if om_data else {}
 
-    # Extract weather metrics
+    # Extract weather metrics from live Open-Meteo API
     temp_c = curr.get("temperature_2m", 24.0)
     humidity_pct = curr.get("relative_humidity_2m", 70.0)
     wind_kmh = curr.get("wind_speed_10m", 12.0)
     precipitation_mm = curr.get("precipitation")
     if precipitation_mm is None:
         precipitation_mm = curr.get("rain", 0.0)
+    weather_code = curr.get("weather_code", 0)
+    weather_condition = WMO_WEATHER_CODES.get(weather_code, "Partly Cloudy")
 
     # 24h precipitation forecast
     precip_arr = hourly.get("precipitation", [])
@@ -189,14 +216,16 @@ def get_location_safety(
         saturation = round(min(100.0, max(5.0, (float(soil_arr[0]) / 0.45) * 100.0)), 1)
         soil_moisture_pct = saturation
 
-    # If DEMO mode, adjust parameters according to flash flood scenario
-    if not is_live:
+    # If Open-Meteo data was completely unavailable, fallback to baseline
+    if not om_data and effective_mode != "LIVE":
         if CURRENT_SCENARIO == "scenario_1_heavy_rain":
             precipitation_mm = 92.0
             soil_moisture_pct = 94.0
+            weather_condition = "Cloudburst Rain"
         else:
             precipitation_mm = 14.0
             soil_moisture_pct = 48.0
+            weather_condition = "Overcast Rain"
 
     # Flash Flood Infiltration Excess & Surge Model:
     # Pure Flash Flood Hydrology (Rainfall Intensity + Soil Moisture Saturation + River Catchment Surge)
@@ -217,7 +246,7 @@ def get_location_safety(
         risk_level = "LOW"
         risk_color = "#16a34a"
 
-    # Flash Flood Probable Causes (Pure Flash Flood Hydrology - Zero street drainage references)
+    # Flash Flood Probable Causes
     if precipitation_mm >= 60.0 and soil_moisture_pct >= 75.0:
         probable_cause = "Cloudburst Surge & Severe Soil Saturation"
         explanation = f"Torrential cloudburst precipitation ({precipitation_mm} mm/h) colliding with near-saturated ground ({soil_moisture_pct}%) produces critical flash flood surface runoff and rapid river swell."
@@ -237,7 +266,7 @@ def get_location_safety(
     # Official IMD warnings
     official_warnings = live_data_service.fetch_imd_cap_warnings(force_refresh=force_refresh)
 
-    # Actionable safety advice for citizens (Flash Flood specific)
+    # Actionable safety advice for citizens
     if risk_level in ["CRITICAL", "HIGH"]:
         advice = [
             "Evacuate immediately to designated highland shelters away from riverbanks and mountain streams.",
@@ -252,9 +281,9 @@ def get_location_safety(
         ]
     else:
         advice = [
-            "Precipitation and soil moisture levels present low regional flood vulnerability.",
-            "Mountain catchments and regional river trunks are currently maintaining nominal flow.",
-            "Maintain standard weather vigilance during monsoon periods."
+            "Current weather observations show safe atmospheric and runoff conditions.",
+            "River channels and drainage conduits in this sector are maintaining safe baseline flow.",
+            "No immediate evacuation or flood danger in effect for this vicinity."
         ]
 
     return {
@@ -264,18 +293,20 @@ def get_location_safety(
             "latitude": lat,
             "longitude": lon
         },
-        "mode": effective_mode,
-        "is_demo_mode": not is_live,
+        "mode": "LIVE" if om_data else effective_mode,
+        "is_demo_mode": False if om_data else (effective_mode != "LIVE"),
         "assessment": {
             "risk_level": risk_level,
             "risk_color": risk_color,
             "risk_probability": prob,
             "status_wording": f"currently assessed as {risk_level} RISK",
-            "probable_cause": cause_res.get("probable_cause", "Normal Runoff Dynamics"),
-            "explanation": cause_res.get("explanation", "Precipitation and soil moisture remain within safe absorption capacity."),
+            "probable_cause": probable_cause,
+            "explanation": explanation,
             "advice": advice
         },
         "weather_telemetry": {
+            "condition": weather_condition,
+            "weather_code": weather_code,
             "temperature_c": temp_c,
             "humidity_pct": humidity_pct,
             "wind_kmh": wind_kmh,
@@ -283,11 +314,11 @@ def get_location_safety(
             "soil_moisture_pct": soil_moisture_pct,
             "forecast_peak_24h_mm_hr": max_next_24h_rain,
             "forecast_total_24h_mm": total_next_24h_rain,
-            "source": "Open-Meteo Weather API" if is_live else "Demonstration Scenario Model",
+            "source": "Open-Meteo Weather API (Live)" if om_data else "Demonstration Scenario Model",
             "observed_at": live_data_service.get_ist_now_str()
         },
         "official_warnings": official_warnings,
-        "disclaimer": "Assessments reflect current sensor telemetry, meteorological models, and official bulletins. Ground conditions can change rapidly during cloudbursts or river swells; always adhere to local disaster management and evacuation instructions."
+        "disclaimer": "Assessments reflect real-time external sensor telemetry, meteorological models, and official bulletins. Natural hazards can evolve rapidly; always adhere to local disaster management instructions."
     }
 
 @app.get("/api/risk/map")
@@ -664,3 +695,73 @@ def switch_scenario(scenario_id: str):
             loc["citizen_reports_count"] = 0
             loc["waterlogging_trend"] = "none"
         return {"success": True, "scenario": "baseline", "message": "Nominal Baseline Scenario Activated"}
+
+@app.get("/api/drainage/search")
+def search_drainage(
+    q: str = Query(default="", description="Search road, area, or ward"),
+    limit: int = Query(default=15, ge=1, le=100)
+):
+    results = drainage_service.search(q, limit=limit)
+    return {
+        "success": True,
+        "count": len(results),
+        "results": results
+    }
+
+@app.get("/api/drainage/records")
+def get_drainage_records(
+    limit: int = Query(default=100, ge=1, le=505),
+    offset: int = Query(default=0, ge=0)
+):
+    records = drainage_service.get_all_records(limit=limit, offset=offset)
+    return {
+        "success": True,
+        "total": len(drainage_service.records),
+        "count": len(records),
+        "records": records
+    }
+
+@app.get("/api/drainage/record/{sr_no}")
+def get_drainage_record(sr_no: int):
+    rec = drainage_service.get_record(sr_no)
+    if not rec:
+        raise HTTPException(status_code=404, detail=f"Drainage record {sr_no} not found")
+    return {
+        "success": True,
+        "record": rec
+    }
+
+@app.get("/api/drainage/diagnosis")
+def get_drainage_diagnosis(
+    sr_no: int = Query(default=1),
+    mode: Optional[str] = Query(default=None),
+    rainfall: Optional[float] = Query(default=None),
+    accumulation: Optional[str] = Query(default=None),
+    citizen_reports: Optional[int] = Query(default=None)
+):
+    effective_mode = mode or CURRENT_MODE
+    try:
+        res = drainage_service.diagnose(
+            sr_no=sr_no,
+            mode=effective_mode,
+            rainfall_override=rainfall,
+            accumulation_override=accumulation,
+            reports_override=citizen_reports
+        )
+        return {
+            "success": True,
+            **res
+        }
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@app.get("/api/drainage/mumbai-roads")
+def get_mumbai_drainage_roads(
+    rainfall: float = Query(default=24.0, description="Rainfall intensity in mm/hr for dynamic risk assessment")
+):
+    """
+    Returns authentic geocoded Mumbai roads with drainage segments and dynamic waterlogging risk.
+    """
+    return drainage_service.get_mumbai_geocoded_roads(rainfall_mm=rainfall)
+
+

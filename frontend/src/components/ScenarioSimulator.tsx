@@ -41,8 +41,13 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
   // Mode switcher: Flash Flood vs Street Waterlogging
   const [simulatorMode, setSimulatorMode] = useState<'flash-flood' | 'street-waterlogging'>('flash-flood');
 
-  // FLASH FLOOD CONTROLS
-  const [ffWardId, setFfWardId] = useState<string>('ward-04');
+  // FLASH FLOOD CONTROLS (Village-wise)
+  const villages = useMemo(() => {
+    const list = locations.filter(l => l.type === 'VILLAGE');
+    return list.length > 0 ? list : locations;
+  }, [locations]);
+
+  const [ffWardId, setFfWardId] = useState<string>('village-sangam');
   const [rainfall, setRainfall] = useState<number>(94); // mm/h
   const [soilMoisture, setSoilMoisture] = useState<number>(85); // %
   const [slope, setSlope] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('HIGH');
@@ -293,13 +298,13 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500">{tr('Target Ward:')}</span>
+              <span className="text-xs font-bold text-slate-600">{tr('Target Village:')}</span>
               <select
                 value={ffWardId}
                 onChange={(e) => setFfWardId(e.target.value)}
-                className="bg-slate-100 border border-slate-300 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 cursor-pointer"
+                className="bg-slate-100 border border-slate-300 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 cursor-pointer focus:ring-2 focus:ring-blue-500"
               >
-                {locations.map(loc => (
+                {villages.map(loc => (
                   <option key={loc.id} value={loc.id}>
                     {tr(loc.name)}
                   </option>

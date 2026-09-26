@@ -4,12 +4,12 @@ import { MUNICIPAL_ROADS, type MunicipalRoad } from '../data/municipalRoads';
 import { useTranslation } from '../services/LanguageContext';
 import { DisasterMap } from './Map/DisasterMap';
 import { InverseHydraulicDiagnosisCard } from './InverseHydraulicDiagnosisCard';
-import type { HydraulicDiagnosisInput } from '../services/hydraulicDiagnosis';
 import {
   Camera,
-  Clock,
-  ArrowRight
+  Clock
 } from 'lucide-react';
+
+
 
 interface StreetWaterloggingPageProps {
   locations: LocationData[];
@@ -20,7 +20,7 @@ interface StreetWaterloggingPageProps {
   citizenReports: CitizenReport[];
   isDemoMode?: boolean;
   onOpenReportModal: () => void;
-  onNavigateToSimulator: () => void;
+  onNavigateToSimulator?: () => void;
 }
 
 export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
@@ -31,8 +31,7 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
   sensors,
   citizenReports,
   isDemoMode = true,
-  onOpenReportModal,
-  onNavigateToSimulator
+  onOpenReportModal
 }) => {
   const { t, tr } = useTranslation();
   const [roads, setRoads] = useState<MunicipalRoad[]>(MUNICIPAL_ROADS);
@@ -40,8 +39,13 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [waterloggingViewMode, setWaterloggingViewMode] = useState<'realtime' | 'predicted'>('predicted');
 
+  const wards = locations.filter(l => l.type === 'WARD');
+  const activeWard = (selectedLocation && selectedLocation.type === 'WARD')
+    ? selectedLocation
+    : (wards.find(w => w.id === 'ward-12') || wards[0] || locations[0]);
+
   const activeLayersState = {
-    floodRisk: false,
+    floodRisk: true,
     rainfall: false,
     drainage: true,
     iotSensors: false,
@@ -96,57 +100,21 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
     }
   ];
 
-  // Inverse Hydraulic Diagnosis input based on selected road
-  const diagnosisInput: HydraulicDiagnosisInput = {
-    roadId: selectedRoad.id,
-    roadName: selectedRoad.name,
-    wardId: selectedRoad.wardId || 'ward-12',
-    // Rainfall intensity calibrated to scenario:
-    // Main Market Road (Ward 12): 18 mm/hr moderate rain + knee-deep + 14 reports + choked drain -> ANOMALY -> MH-07 Probable Blockage (~89% confidence)
-    // Severe road with extreme cloudburst: 78 mm/hr -> consistent with heavy rain
-    // Clear road: 6 mm/hr -> nominal
-    rainfallMmHr: selectedRoad.id === 'road-market-01' || selectedRoad.id === 'road-01' ? 18 : selectedRoad.status === 'SEVERE' ? 78 : selectedRoad.status === 'MODERATE' ? 24 : 6,
-    runoffCoefficient: 0.82,
-    catchmentAreaHa: 12.5,
-    observedWaterDepthText: selectedRoad.waterDepth,
-    citizenReportsCount: selectedRoad.citizenReportsCount,
-    reportedDrainCondition: selectedRoad.id === 'road-market-01' || selectedRoad.id === 'road-01' ? 'CHOKED' : selectedRoad.status === 'SEVERE' ? 'STRESSED' : 'GOOD',
-    waterloggingTrend: selectedRoad.status === 'SEVERE' || selectedRoad.status === 'MODERATE' ? 'rapid' : 'stable'
-  };
-
   return (
+
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* 1. 🕳️ INVERSE HYDRAULIC DIAGNOSIS ENGINE */}
-      <section className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-amber-700 font-mono">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-              <span>{t.hydraulicDiagnosisSubtitle}</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-mono flex items-center gap-2 mt-0.5">
-              <span>{t.hydraulicDiagnosisTitle}</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-600">
-              {tr('Predicts street waterlogging onset times and hidden drainage blockages before flooding occurs.')}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-xs text-slate-700 font-mono bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-            <span>📍</span>
-            <span className="font-bold text-slate-900">{tr(selectedRoad.name)}</span>
-            <span className="text-slate-400">·</span>
-            <span>{selectedRoad.wardId ? tr(selectedRoad.wardId.replace('-', ' ').toUpperCase()) : 'WARD 12'}</span>
-          </div>
-        </div>
-
+      <section>
         <InverseHydraulicDiagnosisCard
-          input={diagnosisInput}
           onOpenReport={onOpenReportModal}
+          isDemoMode={isDemoMode}
         />
       </section>
 
+
+
       {/* 2. LARGE STREET-LEVEL MAP */}
+
       <section className="space-y-3">
         <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
@@ -194,9 +162,28 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
               </button>
             </div>
 
+            {/* Ward Selector */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-slate-600 font-bold">Inspect Ward:</span>
+              <select
+                value={activeWard.id}
+                onChange={(e) => {
+                  const found = wards.find(w => w.id === e.target.value);
+                  if (found) onSelectLocation(found);
+                }}
+                className="bg-slate-100 border border-slate-300 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 cursor-pointer focus:ring-2 focus:ring-amber-500"
+              >
+                {wards.map(w => (
+                  <option key={w.id} value={w.id}>
+                    {w.name} ({w.risk_level || 'EVALUATING'})
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Filter */}
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-slate-500 font-bold">Filter:</span>
+              <span className="text-xs text-slate-500 font-bold">Filter Roads:</span>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
@@ -215,7 +202,7 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
         {/* Map Locked to Street Waterlogging Mode */}
         <DisasterMap
           locations={locations}
-          selectedLocation={selectedLocation}
+          selectedLocation={activeWard}
           onSelectLocation={onSelectLocation}
           riverNetworks={[]}
           drainageLines={drainageLines}
@@ -320,24 +307,6 @@ export const StreetWaterloggingPage: React.FC<StreetWaterloggingPageProps> = ({
           ))}
         </div>
       </section>
-
-      {/* 6. BOTTOM NAVIGATION */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-5 bg-slate-900 text-white rounded-3xl">
-        <div>
-          <h4 className="text-sm font-black font-mono">{tr('SIMULATE DRAINAGE BLOCKAGE')}</h4>
-          <p className="text-xs text-slate-400">
-            {tr('Test how choked stormwater drains and local rainfall produce street-level waterlogging.')}
-          </p>
-        </div>
-
-        <button
-          onClick={onNavigateToSimulator}
-          className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs"
-        >
-          <span>{tr('OPEN STREET WATERLOGGING SIMULATOR')}</span>
-          <ArrowRight className="w-4 h-4" />
-        </button>
-      </div>
     </div>
   );
 };

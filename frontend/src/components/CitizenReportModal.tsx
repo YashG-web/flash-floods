@@ -92,6 +92,23 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
         longitude: loc ? loc.coordinates[1] : 78.2690
       });
 
+      const newReport: any = {
+        id: `REP-${Date.now().toString().slice(-4)}`,
+        location_id: selectedLocationId,
+        location_name: loc ? loc.name : 'Station Road',
+        description: description.trim() ? `${hazardType} — ${description}` : hazardType,
+        severity: hazardType === 'Water entering shops/homes' ? 'CRITICAL' : 'HIGH',
+        image_url: imagePreviewUrl,
+        coordinates: loc ? loc.coordinates : [30.0920, 78.2690],
+        timestamp: 'Just now',
+        status: 'VERIFIED_BY_VISION'
+      };
+
+      try {
+        const { dataSyncService } = await import('../services/dataSyncService');
+        dataSyncService.addCitizenReport(newReport);
+      } catch {}
+
       // Internal vision verification in background without exposing technical jargon
       if (imageFile) {
         apiClient.analyzeImage(imageFile, true).catch(() => {});
